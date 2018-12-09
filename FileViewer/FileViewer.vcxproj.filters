@@ -16,6 +16,12 @@
     <Filter Include="头文件\console">
       <UniqueIdentifier>{ece479dc-43a7-4da0-aa1e-a773d6fb6364}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\probe">
+      <UniqueIdentifier>{cc9a2c0f-62e6-40a5-89f3-95c6152575bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\probe">
+      <UniqueIdentifier>{22384849-8f23-493a-a158-21a231d13aab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cc">
@@ -23,6 +29,21 @@
     </ClCompile>
     <ClCompile Include="resolve.cc">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="probe\elf.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
+    <ClCompile Include="probe\pe.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
+    <ClCompile Include="probe\probe.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
+    <ClCompile Include="probe\magic.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
+    <ClCompile Include="probe\zip.cc">
+      <Filter>源文件\probe</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -37,6 +58,9 @@
     </ClInclude>
     <ClInclude Include="console\console.hpp">
       <Filter>头文件\console</Filter>
+    </ClInclude>
+    <ClInclude Include="probe\probe.hpp">
+      <Filter>头文件\probe</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

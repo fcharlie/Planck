@@ -6,6 +6,7 @@
 #endif
 #include <windows.h>
 #endif
+#include <winioctl.h>
 #include <pathcch.h>
 #include <memory>
 #include "console/console.hpp"
@@ -223,6 +224,52 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv) {
 #ifndef _M_X64
   FsRedirection fsr;
 #endif
+  auto FileHandle = CreateFileW(
+      sv.data(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      nullptr, OPEN_EXISTING,
+      FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+  if (FileHandle == INVALID_HANDLE_VALUE) {
+    return std::nullopt;
+  }
+  auto rdb = std::make_unique<char>(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+  DWORD dwlen = 0;
+  if (DeviceIoControl(FileHandle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
+                      rdb.get(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwlen,
+                      nullptr) != TRUE) {
+    CloseHandle(FileHandle);
+    return std::nullopt;
+  }
+  CloseHandle(FileHandle);
+  auto resp = reinterpret_cast<PREPARSE_DATA_BUFFER>(rdb.get());
+  file_target_t target;
+  switch (resp->ReparseTag) {
+  case IO_REPARSE_TAG_SYMLINK:
+    target.type = L"Symbolic link";
+    break;
+  case IO_REPARSE_TAG_MOUNT_POINT:
+    target.type = L"Mount point";
+    break;
+  case IO_REPARSE_TAG_APPEXECLINK:
+    target.type = L"AppExec link";
+    break;
+  case IO_REPARSE_TAG_AF_UNIX:
+    target.type = L"Unix domain socket";
+    break;
+  case IO_REPARSE_TAG_ONEDRIVE:
+    target.type = L"OneDrive file";
+    break;
+  case IO_REPARSE_TAG_FILE_PLACEHOLDER:
+    target.type = L"Placeholder file";
+    break;
+  case IO_REPARSE_TAG_STORAGE_SYNC:
+    target.type = L"Storage sync file";
+    break;
+  case IO_REPARSE_TAG_PROJFS:
+    target.type = L"Projected File";
+    break;
+  default:
+    break;
+  }
   return std::nullopt;
 }
 
@@ -245,22 +292,22 @@ std::optional<file_links_t> ResolveLinks(std::wstring_view sv) {
     return std::nullopt;
   }
   priv::verbose(L"FullPath: %s\n", self.data());
-  auto hFile = CreateFileW(self.data(),           // file to open
-                           GENERIC_READ,          // open for reading
-                           FILE_SHARE_READ,       // share for reading
-                           NULL,                  // default security
-                           OPEN_EXISTING,         // existing file only
-                           FILE_ATTRIBUTE_NORMAL, // normal file
-                           NULL);
-  if (hFile == INVALID_HANDLE_VALUE) {
+  auto FileHandle = CreateFileW(self.data(),           // file to open
+                                GENERIC_READ,          // open for reading
+                                FILE_SHARE_READ,       // share for reading
+                                NULL,                  // default security
+                                OPEN_EXISTING,         // existing file only
+                                FILE_ATTRIBUTE_NORMAL, // normal file
+                                NULL);
+  if (FileHandle == INVALID_HANDLE_VALUE) {
     return std::nullopt;
   }
   BY_HANDLE_FILE_INFORMATION bi;
-  if (GetFileInformationByHandle(hFile, &bi) != TRUE) {
-    CloseHandle(hFile);
+  if (GetFileInformationByHandle(FileHandle, &bi) != TRUE) {
+    CloseHandle(FileHandle);
     return std::nullopt;
   }
-  CloseHandle(hFile);
+  CloseHandle(FileHandle);
   priv::info(L"File: %s links: %d\n", self.data(), bi.nNumberOfLinks);
   LARGE_INTEGER li;
   li.HighPart = bi.nFileIndexHigh;
@@ -283,8 +330,8 @@ std::optional<file_links_t> ResolveLinks(std::wstring_view sv) {
 
   do {
     auto s = self.substr(0, 2);
-    s.append(linkPath.get(),dwlen-1);
-    //priv::verbose(L"Find: %s %zu %zu\n", s, s.size(), self.size());
+    s.append(linkPath.get(), dwlen - 1);
+    // priv::verbose(L"Find: %s %zu %zu\n", s, s.size(), self.size());
     if (!HardLinkEqual(s, self)) {
       link.links.push_back(s);
     }
