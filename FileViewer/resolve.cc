@@ -9,6 +9,7 @@
 #include <winioctl.h>
 #include <pathcch.h>
 #include <memory>
+#include <vector>
 #include "console/console.hpp"
 
 /*
@@ -231,41 +232,106 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv) {
   if (FileHandle == INVALID_HANDLE_VALUE) {
     return std::nullopt;
   }
-  auto rdb = std::make_unique<char>(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+  auto mxrbuf = std::make_unique<char>(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
   DWORD dwlen = 0;
   if (DeviceIoControl(FileHandle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
-                      rdb.get(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwlen,
+                      mxrbuf.get(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwlen,
                       nullptr) != TRUE) {
     CloseHandle(FileHandle);
     return std::nullopt;
   }
   CloseHandle(FileHandle);
-  auto resp = reinterpret_cast<PREPARSE_DATA_BUFFER>(rdb.get());
-  file_target_t target;
-  switch (resp->ReparseTag) {
-  case IO_REPARSE_TAG_SYMLINK:
-    target.type = L"Symbolic link";
-    break;
-  case IO_REPARSE_TAG_MOUNT_POINT:
-    target.type = L"Mount point";
-    break;
+  auto rebuf = reinterpret_cast<PREPARSE_DATA_BUFFER>(mxrbuf.get());
+  file_target_t file;
+  switch (rebuf->ReparseTag) {
+  case IO_REPARSE_TAG_SYMLINK: {
+    file.type = SymbolicLink;
+    auto wstr =
+        rebuf->SymbolicLinkReparseBuffer.PathBuffer +
+        (rebuf->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
+    auto wlen =
+        rebuf->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
+    if (wlen >= 4 && wstr[0] == L'\\' && wstr[1] == L'?' && wstr[2] == L'?' &&
+        wstr[3] == L'\\') {
+      /* Starts with \??\ */
+      if (wlen >= 6 &&
+          ((wstr[4] >= L'A' && wstr[4] <= L'Z') ||
+           (wstr[4] >= L'a' && wstr[4] <= L'z')) &&
+          wstr[5] == L':' && (wlen == 6 || wstr[6] == L'\\')) {
+        /* \??\<drive>:\ */
+        wstr += 4;
+        wlen -= 4;
+
+      } else if (wlen >= 8 && (wstr[4] == L'U' || wstr[4] == L'u') &&
+                 (wstr[5] == L'N' || wstr[5] == L'n') &&
+                 (wstr[6] == L'C' || wstr[6] == L'c') && wstr[7] == L'\\') {
+        /* \??\UNC\<server>\<share>\ - make sure the final path looks like */
+        /* \\<server>\<share>\ */
+        wstr += 6;
+        wstr[0] = L'\\';
+        wlen -= 6;
+      }
+    }
+    file.path.assign(wstr, wlen);
+  } break;
+  case IO_REPARSE_TAG_MOUNT_POINT: {
+    file.type = MountPoint;
+    auto wstr =
+        rebuf->MountPointReparseBuffer.PathBuffer +
+        (rebuf->MountPointReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
+    auto wlen =
+        rebuf->MountPointReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
+    /* Only treat junctions that look like \??\<drive>:\ as symlink. */
+    /* Junctions can also be used as mount points, like \??\Volume{<guid>}, */
+    /* but that's confusing for programs since they wouldn't be able to */
+    /* actually understand such a path when returned by uv_readlink(). */
+    /* UNC paths are never valid for junctions so we don't care about them. */
+    if (!(wlen >= 6 && wstr[0] == L'\\' && wstr[1] == L'?' && wstr[2] == L'?' &&
+          wstr[3] == L'\\' &&
+          ((wstr[4] >= L'A' && wstr[4] <= L'Z') ||
+           (wstr[4] >= L'a' && wstr[4] <= L'z')) &&
+          wstr[5] == L':' && (wlen == 6 || wstr[6] == L'\\'))) {
+      return std::nullopt;
+    }
+
+    /* Remove leading \??\ */
+    wstr += 4;
+    wlen -= 4;
+    file.path.assign(wstr, wlen);
+  } break;
   case IO_REPARSE_TAG_APPEXECLINK:
-    target.type = L"AppExec link";
+    // L"AppExec link";
+    {
+      file.type = AppExecLink;
+      if (rebuf->AppExecLinkReparseBuffer.StringCount >= 3) {
+        LPWSTR szString = (LPWSTR)rebuf->AppExecLinkReparseBuffer.StringList;
+        std::vector<LPWSTR> strv;
+        for (ULONG i = 0; i < rebuf->AppExecLinkReparseBuffer.StringCount;
+             i++) {
+          strv.push_back(szString);
+          szString += wcslen(szString) + 1;
+        }
+        appexeclink_t alink{strv[0], strv[1], strv[2]};
+        file.av = alink;
+        file.path = strv[2];
+        // auto x=std::get<appexeclink_t>(file.av);
+      }
+    }
     break;
   case IO_REPARSE_TAG_AF_UNIX:
-    target.type = L"Unix domain socket";
+    // L"Unix domain socket";
     break;
   case IO_REPARSE_TAG_ONEDRIVE:
-    target.type = L"OneDrive file";
+    // L"OneDrive file";
     break;
   case IO_REPARSE_TAG_FILE_PLACEHOLDER:
-    target.type = L"Placeholder file";
+    // L"Placeholder file";
     break;
   case IO_REPARSE_TAG_STORAGE_SYNC:
-    target.type = L"Storage sync file";
+    // L"Storage sync file";
     break;
   case IO_REPARSE_TAG_PROJFS:
-    target.type = L"Projected File";
+    // L"Projected File";
     break;
   default:
     break;
