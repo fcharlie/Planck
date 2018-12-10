@@ -41,6 +41,9 @@ enum file_type_t : unsigned long {
   HardLink, /// If no reparse point, file always hardlink
   SymbolicLink,
   MountPoint,
+  WimImage,
+  Wof,
+  Wcifs,
   AppExecLink,
   AFUnix, /// Unix domain socket
   OneDrive,
@@ -56,14 +59,28 @@ static LPCWSTR AppExecLinkParts[] =
     L"TargetPath",
 };
 */
+
+inline std::wstring hexencode(const char *data, size_t len) {
+  const wchar_t hex[] = L"0123456789abcdef";
+  std::wstring hs(len * 2, L'0');
+  wchar_t *buf = &hs[0];
+  auto end = data + len;
+  for (auto it = data; it != end; it++) {
+    unsigned int val = *data;
+    *buf++ = hex[val >> 4];
+    *buf++ = hex[val & 0xf];
+  }
+  return hs;
+}
+
 struct appexeclink_t {
   std::wstring pkid;
   std::wstring appuserid;
   std::wstring target;
 };
 struct reparse_wim_t {
-  std::wstring imageguid;
-  std::wstring imagepathhash;
+  std::wstring guid;
+  std::wstring hash;
 };
 
 struct reparse_wof_t {
@@ -76,8 +93,9 @@ struct reparse_wof_t {
 struct reparse_wcifs_t {
   ULONG Version; // Expected to be 1 by wcifs.sys
   ULONG Reserved;
-  GUID LookupGuid;      // GUID used for lookup in wcifs!WcLookupLayer
-  USHORT WciNameLength; // Length of the WCI subname, in bytes
+  //GUID LookupGuid;      // GUID used for lookup in wcifs!WcLookupLayer
+  //USHORT WciNameLength; // Length of the WCI subname, in bytes
+  std::wstring LookupGuid;
   std::wstring WciName;
 };
 

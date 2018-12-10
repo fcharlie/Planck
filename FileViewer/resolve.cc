@@ -10,7 +10,17 @@
 #include <pathcch.h>
 #include <memory>
 #include <vector>
+#include <charconv>
 #include "console/console.hpp"
+
+std::wstring guidencode(const GUID &guid) {
+  wchar_t wbuf[64];
+  swprintf_s(wbuf, L"{%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X}",
+             guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
+             guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
+             guid.Data4[6], guid.Data4[7]);
+  return std::wstring(wbuf);
+}
 
 /*
 #define IO_REPARSE_TAG_MOUNT_POINT              (0xA0000003L)
@@ -232,16 +242,17 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv) {
   if (FileHandle == INVALID_HANDLE_VALUE) {
     return std::nullopt;
   }
-  auto mxrbuf = std::make_unique<char>(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+  BYTE mxbuf[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = {0};
+  auto rebuf = reinterpret_cast<PREPARSE_DATA_BUFFER>(mxbuf);
   DWORD dwlen = 0;
-  if (DeviceIoControl(FileHandle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
-                      mxrbuf.get(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwlen,
+  if (DeviceIoControl(FileHandle, FSCTL_GET_REPARSE_POINT, nullptr, 0, rebuf,
+                      MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwlen,
                       nullptr) != TRUE) {
     CloseHandle(FileHandle);
     return std::nullopt;
   }
   CloseHandle(FileHandle);
-  auto rebuf = reinterpret_cast<PREPARSE_DATA_BUFFER>(mxrbuf.get());
+
   file_target_t file;
   switch (rebuf->ReparseTag) {
   case IO_REPARSE_TAG_SYMLINK: {
@@ -299,44 +310,90 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv) {
     wlen -= 4;
     file.path.assign(wstr, wlen);
   } break;
-  case IO_REPARSE_TAG_APPEXECLINK:
+  case IO_REPARSE_TAG_APPEXECLINK: {
     // L"AppExec link";
-    {
-      file.type = AppExecLink;
-      if (rebuf->AppExecLinkReparseBuffer.StringCount >= 3) {
-        LPWSTR szString = (LPWSTR)rebuf->AppExecLinkReparseBuffer.StringList;
-        std::vector<LPWSTR> strv;
-        for (ULONG i = 0; i < rebuf->AppExecLinkReparseBuffer.StringCount;
-             i++) {
-          strv.push_back(szString);
-          szString += wcslen(szString) + 1;
-        }
-        appexeclink_t alink{strv[0], strv[1], strv[2]};
-        file.av = alink;
-        file.path = strv[2];
-        // auto x=std::get<appexeclink_t>(file.av);
+    file.type = AppExecLink;
+    if (rebuf->AppExecLinkReparseBuffer.StringCount >= 3) {
+      LPWSTR szString = (LPWSTR)rebuf->AppExecLinkReparseBuffer.StringList;
+      std::vector<LPWSTR> strv;
+      for (ULONG i = 0; i < rebuf->AppExecLinkReparseBuffer.StringCount; i++) {
+        strv.push_back(szString);
+        szString += wcslen(szString) + 1;
       }
+      appexeclink_t alink{strv[0], strv[1], strv[2]};
+      file.av = alink;
+      file.path = strv[2];
+      // to get value auto x=std::get<appexeclink_t>(file.av);
     }
-    break;
+  } break;
   case IO_REPARSE_TAG_AF_UNIX:
     // L"Unix domain socket";
+    file.type = AFUnix;
+    file.path = sv;
     break;
   case IO_REPARSE_TAG_ONEDRIVE:
     // L"OneDrive file";
+    file.type = OneDrive;
+    file.path = sv;
     break;
   case IO_REPARSE_TAG_FILE_PLACEHOLDER:
     // L"Placeholder file";
+    file.type = Placeholder;
+    file.path = sv;
+
     break;
   case IO_REPARSE_TAG_STORAGE_SYNC:
     // L"Storage sync file";
+    file.type = StorageSync;
+    file.path = sv;
     break;
   case IO_REPARSE_TAG_PROJFS:
     // L"Projected File";
+    file.type = ProjFS;
+    file.path = sv;
+    break;
+  case IO_REPARSE_TAG_WIM: {
+    file.type = WimImage;
+    file.path = sv;
+    reparse_wim_t wim;
+    wim.guid = guidencode(rebuf->WimImageReparseBuffer.ImageGuid);
+    wim.hash = hexencode(reinterpret_cast<const char *>(
+                             rebuf->WimImageReparseBuffer.ImagePathHash),
+                         sizeof(rebuf->WimImageReparseBuffer.ImagePathHash));
+    file.av = wim;
+  } break;
+  case IO_REPARSE_TAG_WOF: {
+    // wof.sys Windows Overlay File System Filter Driver
+    file.type = Wof;
+    file.path = sv;
+    reparse_wof_t wof;
+    wof.algorithm = rebuf->WofReparseBuffer.FileInfo_Algorithm;
+    wof.version = rebuf->WofReparseBuffer.FileInfo_Version;
+    wof.wofprovider = rebuf->WofReparseBuffer.Wof_Provider;
+    wof.wofversion = rebuf->WofReparseBuffer.Wof_Version;
+    file.av = wof;
+  } break;
+  case IO_REPARSE_TAG_WCI: {
+    // wcifs.sys Windows Container Isolation FS Filter Driver
+    file.type = Wcifs;
+    file.path = sv;
+    reparse_wcifs_t wci;
+    wci.WciName.assign(rebuf->WcifsReparseBuffer.WciName,
+                       rebuf->WcifsReparseBuffer.WciNameLength);
+    wci.Version = rebuf->WcifsReparseBuffer.Version;
+    wci.Reserved = rebuf->WcifsReparseBuffer.Reserved;
+    wci.LookupGuid = guidencode(rebuf->WcifsReparseBuffer.LookupGuid);
+    file.av = wci;
+  } break;
+  case IO_REPARSE_TAG_HSM:
     break;
   default:
     break;
   }
-  return std::nullopt;
+  if (file.type == HardLink) {
+    return std::nullopt;
+  }
+  return std::make_optional<file_target_t>(file);
 }
 
 inline bool HardLinkEqual(std::wstring_view lh, std::wstring_view rh) {
