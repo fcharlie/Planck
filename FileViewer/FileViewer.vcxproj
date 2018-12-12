@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClCompile Include="main.cc" />
     <ClCompile Include="probe\elf.cc" />
+    <ClCompile Include="probe\macho.cc" />
     <ClCompile Include="probe\magic.cc" />
     <ClCompile Include="probe\pe.cc" />
     <ClCompile Include="probe\probe.cc" />
@@ -159,6 +160,8 @@
     <ClInclude Include="console\adapter.hpp" />
     <ClInclude Include="console\adapter.ipp" />
     <ClInclude Include="console\console.hpp" />
+    <ClInclude Include="probe\details.hpp" />
+    <ClInclude Include="probe\elf.h" />
     <ClInclude Include="probe\probe.hpp" />
     <ClInclude Include="resolve.hpp" />
   </ItemGroup>

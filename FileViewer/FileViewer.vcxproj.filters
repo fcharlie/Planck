@@ -45,6 +45,9 @@
     <ClCompile Include="probe\zip.cc">
       <Filter>源文件\probe</Filter>
     </ClCompile>
+    <ClCompile Include="probe\macho.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resolve.hpp">
@@ -60,6 +63,12 @@
       <Filter>头文件\console</Filter>
     </ClInclude>
     <ClInclude Include="probe\probe.hpp">
+      <Filter>头文件\probe</Filter>
+    </ClInclude>
+    <ClInclude Include="probe\details.hpp">
+      <Filter>头文件\probe</Filter>
+    </ClInclude>
+    <ClInclude Include="probe\elf.h">
       <Filter>头文件\probe</Filter>
     </ClInclude>
   </ItemGroup>
