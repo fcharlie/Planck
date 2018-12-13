@@ -24,6 +24,12 @@ public:
   std::optional<std::wstring> view(std::wstring_view sv);
   std::size_t size() const { return size_; }
   const char *data() const { return data_; }
+  bool startswith(const char *prefix, int64_t pl) {
+    if (pl >= size_) {
+      return false;
+    }
+    return memcmp(data_, prefix, pl) == 0;
+  }
 
 private:
   HANDLE FileHandle{INVALID_HANDLE_VALUE};
