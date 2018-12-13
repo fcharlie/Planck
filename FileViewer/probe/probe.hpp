@@ -12,6 +12,7 @@
 #include <string_view>
 #include <optional>
 #include <vector>
+#include "details.hpp"
 
 namespace probe {
 class mapview {
@@ -24,12 +25,22 @@ public:
   std::optional<std::wstring> view(std::wstring_view sv);
   std::size_t size() const { return size_; }
   const char *data() const { return data_; }
-  bool startswith(const char *prefix, int64_t pl) {
+  unsigned char operator[](const std::uint64_t off) const {
+    if (off >= size_) {
+      return 255;
+    }
+    return (unsigned char)data_[off];
+  }
+  bool startswith(const char *prefix, int64_t pl) const {
     if (pl >= size_) {
       return false;
     }
     return memcmp(data_, prefix, pl) == 0;
   }
+  bool startswith(std::string_view sv) const {
+    return startswith(sv.data(), sv.size());
+  }
+  details::Types identify();
 
 private:
   HANDLE FileHandle{INVALID_HANDLE_VALUE};

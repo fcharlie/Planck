@@ -7,6 +7,7 @@
 namespace probe {
 namespace details {
 enum Types {
+  NONE,
   ANSI,
   UTF8,
   UTF8BOM,
@@ -14,8 +15,13 @@ enum Types {
   UTF16BE,
   ///
   EPUB,
-  PE,  // EXE DLL
-  ELF, //
+  PE,   // EXE DLL
+  COFF, //
+  PDB,
+  ELF,      // \177ELF >18
+  MachO_32, // 0xfeedface
+  MachO_64, // 0xfeedfacf
+  UniversalMachO,
   CAB,
   MSI,
   ZIP,
