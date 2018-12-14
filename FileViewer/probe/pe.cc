@@ -1,5 +1,4 @@
 /// PE details
-#include <windows.h>
 
 // PE32+ executable (console) x86-64, for MS Windows
 // PE32 executable (DLL) (console) Intel 80386 Mono/.Net assembly, for MS

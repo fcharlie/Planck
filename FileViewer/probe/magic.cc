@@ -1,7 +1,26 @@
 /// file type with magic
 #include "probe.hpp"
+#include "includes.hpp"
 
 namespace probe {
+// The PE signature bytes that follows the DOS stub header.
+static const char PEMagic[] = {'P', 'E', '\0', '\0'};
+
+static const char BigObjMagic[] = {
+    '\xc7', '\xa1', '\xba', '\xd1', '\xee', '\xba', '\xa9', '\x4b',
+    '\xaf', '\x20', '\xfa', '\xf6', '\x6a', '\xa4', '\xdc', '\xb8',
+};
+
+static const char ClGlObjMagic[] = {
+    '\x38', '\xfe', '\xb3', '\x0c', '\xa5', '\xd9', '\xab', '\x4d',
+    '\xac', '\x9b', '\xd6', '\xb6', '\x22', '\x26', '\x53', '\xc2',
+};
+
+// The signature bytes that start a .res file.
+static const char WinResMagic[] = {
+    '\x00', '\x00', '\x00', '\x00', '\x20', '\x00', '\x00', '\x00',
+    '\xff', '\xff', '\x00', '\x00', '\xff', '\xff', '\x00', '\x00',
+};
 
 details::Types identifybin(const mapview &mv) {
   if (mv.size() < 4) {
@@ -24,6 +43,10 @@ details::Types identifybin(const mapview &mv) {
     }
     if (mv.startswith("MZ") && mv.size() >= 0x3c + 4) {
       // read32le
+      uint32_t off = llvm::support::endian::read32le(mv.data() + 0x32);
+      if (mv.indexswith(off, PEMagic)) {
+        return details::PE;
+      }
     }
     break;
   case 0x64: // x86-64 or ARM64 Windows.

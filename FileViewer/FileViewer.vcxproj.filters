@@ -71,5 +71,14 @@
     <ClInclude Include="probe\elf.h">
       <Filter>头文件\probe</Filter>
     </ClInclude>
+    <ClInclude Include="probe\includes.hpp">
+      <Filter>头文件\probe</Filter>
+    </ClInclude>
+    <ClInclude Include="probe\coff.hpp">
+      <Filter>头文件\probe</Filter>
+    </ClInclude>
+    <ClInclude Include="probe\memview.hpp">
+      <Filter>头文件\probe</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

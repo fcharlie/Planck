@@ -1,4 +1,10 @@
 /// common
+#ifndef _WINDOWS_
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN //
+#endif
+#include <windows.h>
+#endif
 #include "probe.hpp"
 
 probe::mapview::~mapview() {
@@ -57,6 +63,10 @@ std::optional<std::wstring> probe::mapview::view(std::wstring_view sv) {
   // File size.
   if (size_ <= 0) {
     return std::make_optional<std::wstring>(L"File size too small");
+  }
+  if (size_ > SIZE_MAX) {
+    return std::make_optional<std::wstring>(
+        L"File size too large, Please use x64");
   }
   FileMapHandle =
       CreateFileMappingW(FileHandle, nullptr, PAGE_READONLY, 0, 0, nullptr);
