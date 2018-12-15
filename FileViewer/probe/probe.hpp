@@ -15,7 +15,6 @@
 #include "details.hpp"
 
 namespace probe {
-typedef void *FileHandle;
 class mapview {
 public:
   mapview() = default;
