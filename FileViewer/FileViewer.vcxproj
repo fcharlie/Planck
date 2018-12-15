@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cc" />
+    <ClCompile Include="probe\binexeobj.cc" />
     <ClCompile Include="probe\elf.cc" />
     <ClCompile Include="probe\macho.cc" />
     <ClCompile Include="probe\magic.cc" />
@@ -164,6 +165,7 @@
     <ClInclude Include="probe\details.hpp" />
     <ClInclude Include="probe\elf.h" />
     <ClInclude Include="probe\includes.hpp" />
+    <ClInclude Include="probe\macho.hpp" />
     <ClInclude Include="probe\memview.hpp" />
     <ClInclude Include="probe\probe.hpp" />
     <ClInclude Include="resolve.hpp" />

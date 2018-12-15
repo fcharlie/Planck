@@ -26,13 +26,13 @@ public:
   std::size_t size() const { return size_; }
   const char *data() const { return data_; }
   unsigned char operator[](const std::size_t off) const {
-    if (off >= (std::size_t)size_) {
+    if (off >= size_) {
       return 255;
     }
     return (unsigned char)data_[off];
   }
   bool startswith(const char *prefix, size_t pl) const {
-    if (pl >= (std::size_t)size_) {
+    if (pl >= size_) {
       return false;
     }
     return memcmp(data_, prefix, pl) == 0;
@@ -41,7 +41,7 @@ public:
     return startswith(sv.data(), sv.size());
   }
   bool indexswith(std::size_t offset, std::string_view sv) const {
-    if (offset > (std::size_t)size_) {
+    if (offset > size_) {
       return false;
     }
     return memcmp(data_ + offset, sv.data(), sv.size()) == 0;
