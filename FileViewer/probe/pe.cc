@@ -41,8 +41,12 @@ PVOID PEImage::RVAToAddr(uintptr_t rva) const {
 }
 */
 
+#include "memview.hpp"
+
 // Memview
-bool PEImageLookup() {
-  //
+namespace probe {
+bool peimagelookup(memview mv) {
+  //auto h=mv.cast<llvm::COFF::header>(0);
   return false;
 }
+} // namespace probe

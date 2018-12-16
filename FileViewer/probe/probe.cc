@@ -76,23 +76,21 @@ std::optional<std::wstring> probe::mapview::view(std::wstring_view sv) {
     return std::make_optional<std::wstring>(L"CreateFileW error");
   }
   LARGE_INTEGER li;
-  if (GetFileSizeEx(FileHandle, &li)) {
-    size_ = li.QuadPart;
+  if (GetFileSizeEx(FileHandle, &li) != TRUE) {
+    return std::make_optional<std::wstring>(L"GetFileSizeEx error");
   }
   // File size.
-  if (size_ <= 0) {
+  if (li.QuadPart <= 0) {
     return std::make_optional<std::wstring>(L"File size too small");
   }
-  if (size_ > SIZE_MAX) {
-    return std::make_optional<std::wstring>(
-        L"File size too large, Please use x64");
-  }
+  size_ = mapviewsize(li.QuadPart); /// MAX 4M
   FileMapHandle =
       CreateFileMappingW(FileHandle, nullptr, PAGE_READONLY, 0, 0, nullptr);
   if (FileMapHandle == INVALID_HANDLE_VALUE) {
     return std::make_optional<std::wstring>(L"CreateFileMappingW error");
   }
-  auto addr = ::MapViewOfFile(FileMapHandle, FILE_MAP_READ, 0, 0, 0);
+
+  auto addr = ::MapViewOfFile(FileMapHandle, FILE_MAP_READ, 0, 0, size_);
   if (addr == nullptr) {
     return std::make_optional<std::wstring>(L"MapViewOfFile error");
   }
