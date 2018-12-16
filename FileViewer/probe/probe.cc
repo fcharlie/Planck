@@ -47,6 +47,25 @@ private:
 };
 #endif
 
+std::wstring FindExtension(std::wstring_view sv) {
+  auto end = sv.data() + sv.size();
+  auto it = end;
+  for (; it != sv.data(); it--) {
+    if (*it == 'L\\' || *it == L'/') {
+      break;
+    }
+  }
+  if (it == end) {
+    return L"";
+  }
+  std::wstring_view fn(it + 1, end - it - 1);
+  auto pos = fn.rfind(L'.');
+  if (pos == std::string_view::npos) {
+    return L"";
+  }
+  return std::wstring(fn.data() + pos + 1, fn.size() - pos - 1);
+}
+
 std::optional<std::wstring> probe::mapview::view(std::wstring_view sv) {
 #ifndef _M_X64
   FsDisableRedirection fdr;
@@ -79,5 +98,6 @@ std::optional<std::wstring> probe::mapview::view(std::wstring_view sv) {
   }
   data_ = reinterpret_cast<const char *>(addr);
   maped = true;
+  extension = FindExtension(sv);
   return std::nullopt;
 }

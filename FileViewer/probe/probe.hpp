@@ -53,6 +53,7 @@ private:
   HANDLE FileMapHandle{INVALID_HANDLE_VALUE};
   const char *data_{nullptr};
   std::size_t size_{0};
+  std::wstring extension;
   bool maped{false};
 };
 
