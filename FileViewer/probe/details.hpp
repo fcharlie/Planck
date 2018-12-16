@@ -73,9 +73,24 @@ enum Types {
   xls,
   xlsx,
   ppt,
-  pptx
+  pptx,
+  woff,
+  woff2,
+  ttf,
+  otf
 };
 }
+using byte_t = unsigned char;
+inline bool startswith(std::string_view sv, std::string_view sv2) {
+  return (sv.size() >= sv2.size() &&
+          memcmp(sv.data(), sv2.data(), sv2.size()) == 0);
+}
+
+template <size_t ArrayLen>
+inline bool startswithB(std::string_view sv, const byte_t (&bv)[ArrayLen]) {
+  return (sv.size() >= ArrayLen && memcmp(sv.data(), bv, ArrayLen) == 0);
+}
+
 } // namespace probe
 
 #endif

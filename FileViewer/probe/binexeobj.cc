@@ -8,10 +8,6 @@
 namespace probe {
 
 static const char ElfMagic[] = {0x7f, 'E', 'L', 'F', '\0'};
-inline bool startswith(std::string_view sv, std::string_view sv2) {
-  return (sv.size() >= sv2.size() &&
-          memcmp(sv.data(), sv2.data(), sv2.size()) == 0);
-}
 details::Types identify_binexeobj_magic(std::string_view mv) {
   if (mv.size() < 4) {
     return details::none;
