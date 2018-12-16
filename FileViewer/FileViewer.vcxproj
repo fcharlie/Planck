@@ -148,8 +148,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cc" />
+    <ClCompile Include="probe\archive.cc" />
     <ClCompile Include="probe\binexeobj.cc" />
+    <ClCompile Include="probe\docs.cc" />
     <ClCompile Include="probe\elf.cc" />
+    <ClCompile Include="probe\image.cc" />
     <ClCompile Include="probe\macho.cc" />
     <ClCompile Include="probe\magic.cc" />
     <ClCompile Include="probe\pe.cc" />
@@ -168,6 +171,7 @@
     <ClInclude Include="probe\macho.hpp" />
     <ClInclude Include="probe\memview.hpp" />
     <ClInclude Include="probe\probe.hpp" />
+    <ClInclude Include="probe\probe_fwd.hpp" />
     <ClInclude Include="resolve.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

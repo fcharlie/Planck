@@ -82,7 +82,6 @@ enum Types {
   xlsx,
   ppt,
   pptx,
-  pdf,
   //
   woff,
   woff2,

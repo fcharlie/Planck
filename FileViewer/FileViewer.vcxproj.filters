@@ -51,6 +51,15 @@
     <ClCompile Include="probe\binexeobj.cc">
       <Filter>源文件\probe</Filter>
     </ClCompile>
+    <ClCompile Include="probe\archive.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
+    <ClCompile Include="probe\docs.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
+    <ClCompile Include="probe\image.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resolve.hpp">
@@ -84,6 +93,9 @@
       <Filter>头文件\probe</Filter>
     </ClInclude>
     <ClInclude Include="probe\macho.hpp">
+      <Filter>头文件\probe</Filter>
+    </ClInclude>
+    <ClInclude Include="probe\probe_fwd.hpp">
       <Filter>头文件\probe</Filter>
     </ClInclude>
   </ItemGroup>
