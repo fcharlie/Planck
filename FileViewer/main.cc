@@ -7,10 +7,10 @@
 
 int wmain(int argc, wchar_t **argv) {
   //
+  priv::VerboseEnable();
   // auto text = u8"\x4F60\x597D";
   // auto wt = probe::convert(text);
-  priv::VerboseEnable();
-  priv::PrintNone(L"Text: %s\n", wt);
+  // priv::PrintNone(L"Text: %s\n", wt);
   if (argc < 2) {
     wprintf(L"%s usage file\n", argv[0]);
     return 1;
