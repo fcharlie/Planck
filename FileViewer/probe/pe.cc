@@ -41,7 +41,9 @@ PVOID PEImage::RVAToAddr(uintptr_t rva) const {
 }
 */
 
-#include "memview.hpp"
+#include <system_error>
+#include <string_view>
+#include "probe_fwd.hpp"
 
 // Memview
 namespace probe {
@@ -79,8 +81,10 @@ std::error_code COFFObjectFile::getRvaPtr(uint32_t Addr, uintptr_t &Res) const {
 }
 */
 
-bool peimagelookup(memview mv) {
-  //auto h=mv.cast<llvm::COFF::header>(0);
-  return false;
+std::optional<pe_minutiae_t> PortableExecutableDump(std::wstring_view sv,
+                                                    std::error_code &ec) {
+  //
+  return std::nullopt;
 }
+
 } // namespace probe
