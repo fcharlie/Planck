@@ -60,6 +60,9 @@
     <ClCompile Include="probe\image.cc">
       <Filter>源文件\probe</Filter>
     </ClCompile>
+    <ClCompile Include="probe\convertutf.cc">
+      <Filter>源文件\probe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resolve.hpp">

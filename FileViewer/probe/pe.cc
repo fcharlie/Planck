@@ -45,6 +45,40 @@ PVOID PEImage::RVAToAddr(uintptr_t rva) const {
 
 // Memview
 namespace probe {
+/*
+https://github.com/llvm-mirror/llvm/blob/master/lib/Object/COFFObjectFile.cpp#L451
+uint64_t COFFObjectFile::getImageBase() const {
+  if (PE32Header)
+    return PE32Header->ImageBase;
+  else if (PE32PlusHeader)
+    return PE32PlusHeader->ImageBase;
+  // This actually comes up in practice.
+  return 0;
+}
+// Returns the file offset for the given VA.
+std::error_code COFFObjectFile::getVaPtr(uint64_t Addr, uintptr_t &Res) const {
+  uint64_t ImageBase = getImageBase();
+  uint64_t Rva = Addr - ImageBase;
+  assert(Rva <= UINT32_MAX);
+  return getRvaPtr((uint32_t)Rva, Res);
+}
+
+// Returns the file offset for the given RVA.
+std::error_code COFFObjectFile::getRvaPtr(uint32_t Addr, uintptr_t &Res) const {
+  for (const SectionRef &S : sections()) {
+    const coff_section *Section = getCOFFSection(S);
+    uint32_t SectionStart = Section->VirtualAddress;
+    uint32_t SectionEnd = Section->VirtualAddress + Section->VirtualSize;
+    if (SectionStart <= Addr && Addr < SectionEnd) {
+      uint32_t Offset = Addr - SectionStart;
+      Res = uintptr_t(base()) + Section->PointerToRawData + Offset;
+      return std::error_code();
+    }
+  }
+  return object_error::parse_failed;
+}
+*/
+
 bool peimagelookup(memview mv) {
   //auto h=mv.cast<llvm::COFF::header>(0);
   return false;

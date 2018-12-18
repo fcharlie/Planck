@@ -150,6 +150,7 @@
     <ClCompile Include="main.cc" />
     <ClCompile Include="probe\archive.cc" />
     <ClCompile Include="probe\binexeobj.cc" />
+    <ClCompile Include="probe\convertutf.cc" />
     <ClCompile Include="probe\docs.cc" />
     <ClCompile Include="probe\elf.cc" />
     <ClCompile Include="probe\image.cc" />
