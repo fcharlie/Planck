@@ -27,6 +27,7 @@ struct pe_minutiae_t {
   pe_version_t linkver;
   pe_version_t imagever;
 };
+
 std::optional<pe_minutiae_t> PortableExecutableDump(std::wstring_view sv,
                                                     std::error_code &ec);
 std::wstring fromutf8(std::string_view text);

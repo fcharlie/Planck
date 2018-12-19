@@ -1,13 +1,49 @@
 ///////// check binary object file format
 #include <string_view>
-#include "coff.hpp"
 #include "macho.cc"
 #include "details.hpp"
 #include "includes.hpp"
 
 namespace probe {
 
-static const char ElfMagic[] = {0x7f, 'E', 'L', 'F', '\0'};
+static constexpr const char ElfMagic[] = {0x7f, 'E', 'L', 'F', '\0'};
+// The PE signature bytes that follows the DOS stub header.
+static constexpr const char PEMagic[] = {'P', 'E', '\0', '\0'};
+
+static constexpr const char BigObjMagic[] = {
+    '\xc7', '\xa1', '\xba', '\xd1', '\xee', '\xba', '\xa9', '\x4b',
+    '\xaf', '\x20', '\xfa', '\xf6', '\x6a', '\xa4', '\xdc', '\xb8',
+};
+
+static constexpr const char ClGlObjMagic[] = {
+    '\x38', '\xfe', '\xb3', '\x0c', '\xa5', '\xd9', '\xab', '\x4d',
+    '\xac', '\x9b', '\xd6', '\xb6', '\x22', '\x26', '\x53', '\xc2',
+};
+
+// The signature bytes that start a .res file.
+static constexpr const char WinResMagic[] = {
+    '\x00', '\x00', '\x00', '\x00', '\x20', '\x00', '\x00', '\x00',
+    '\xff', '\xff', '\x00', '\x00', '\xff', '\xff', '\x00', '\x00',
+};
+
+struct BigObjHeader {
+  enum : uint16_t { MinBigObjectVersion = 2 };
+
+  uint16_t Sig1; ///< Must be IMAGE_FILE_MACHINE_UNKNOWN (0).
+  uint16_t Sig2; ///< Must be 0xFFFF.
+  uint16_t Version;
+  uint16_t Machine;
+  uint32_t TimeDateStamp;
+  uint8_t UUID[16];
+  uint32_t unused1;
+  uint32_t unused2;
+  uint32_t unused3;
+  uint32_t unused4;
+  uint32_t NumberOfSections;
+  uint32_t PointerToSymbolTable;
+  uint32_t NumberOfSymbols;
+};
+
 details::Types identify_binexeobj_magic(std::string_view mv) {
   if (mv.size() < 4) {
     return details::none;
@@ -15,25 +51,21 @@ details::Types identify_binexeobj_magic(std::string_view mv) {
   switch (mv[0]) {
   case 0x00:
     if (startswith(mv, "\0\0\xFF\xFF")) {
-      size_t minsize = offsetof(llvm::COFF::BigObjHeader, UUID) +
-                       sizeof(llvm::COFF::BigObjMagic);
+      size_t minsize = offsetof(BigObjHeader, UUID) + sizeof(BigObjMagic);
       if (mv.size() < minsize) {
         return details::coff_import_library;
       }
-      const char *start = mv.data() + offsetof(llvm::COFF::BigObjHeader, UUID);
-      if (memcmp(start, llvm::COFF::BigObjMagic,
-                 sizeof(llvm::COFF::BigObjMagic)) == 0) {
+      const char *start = mv.data() + offsetof(BigObjHeader, UUID);
+      if (memcmp(start, BigObjMagic, sizeof(BigObjMagic)) == 0) {
         return details::coff_object;
       }
-      if (memcmp(start, llvm::COFF::ClGlObjMagic,
-                 sizeof(llvm::COFF::ClGlObjMagic)) == 0) {
+      if (memcmp(start, ClGlObjMagic, sizeof(ClGlObjMagic)) == 0) {
         return details::coff_cl_gl_object;
       }
       return details::coff_import_library;
     }
-    if (mv.size() >= sizeof(llvm::COFF::WinResMagic) &&
-        memcmp(mv.data(), llvm::COFF::WinResMagic,
-               sizeof(llvm::COFF::WinResMagic)) == 0) {
+    if (mv.size() >= sizeof(WinResMagic) &&
+        memcmp(mv.data(), WinResMagic, sizeof(WinResMagic)) == 0) {
       return details::windows_resource;
     }
     if (mv[1] == 0) {
@@ -166,7 +198,7 @@ details::Types identify_binexeobj_magic(std::string_view mv) {
       // read32le
       uint32_t off = llvm::support::endian::read32le(mv.data() + 0x32);
       auto sv = mv.substr(off);
-      if (startswith(sv, llvm::COFF::PEMagic)) {
+      if (startswith(sv, PEMagic)) {
         return details::pecoff_executable;
       }
     }
