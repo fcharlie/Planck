@@ -6,11 +6,15 @@
 #include <string_view>
 #include <system_error>
 #include <optional>
+#include <vector>
 
 namespace probe {
 constexpr const int einident = 16;
 struct elf_minutiae_t {
   uint8_t ident[einident];
+  std::wstring machine;
+  std::wstring rpath;             // RPATH or some
+  std::vector<std::wstring> deps; /// require so
 };
 
 struct pe_version_t {
@@ -21,11 +25,12 @@ struct pe_version_t {
 struct pe_minutiae_t {
   std::wstring machine;
   std::wstring subsystem;
-  std::wstring characteristics;
+  std::vector<std::wstring> characteristics;
   std::wstring clrmsg;
   pe_version_t osver;
   pe_version_t linkver;
   pe_version_t imagever;
+  std::vector<std::wstring> deps; /// DLL required
 };
 
 std::optional<pe_minutiae_t> PortableExecutableDump(std::wstring_view sv,

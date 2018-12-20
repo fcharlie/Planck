@@ -97,12 +97,14 @@ std::wstring Machine(uint32_t index) {
   }
   return L"UNKNOWN";
 }
-
-std::wstring Characteristics(uint32_t index) {
+// https://docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_image_file_header
+std::vector<std::wstring> Characteristics(uint32_t index,
+                                          uint32_t dllindex = 0) {
+  std::vector<std::wstring> csv;
   const key_value_t cs[] = {
       {IMAGE_FILE_RELOCS_STRIPPED, L"Relocation info stripped"},
       // Relocation info stripped from file.
-      {IMAGE_FILE_EXECUTABLE_IMAGE, L"Executable File"},
+      {IMAGE_FILE_EXECUTABLE_IMAGE, L"Executable"},
       // File is executable  (i.e. no unresolved external references).
       {IMAGE_FILE_LINE_NUMS_STRIPPED, L"PE line numbers stripped"},
       // Line nunbers stripped from file.
@@ -110,8 +112,7 @@ std::wstring Characteristics(uint32_t index) {
       // Local symbols stripped from file.
       {IMAGE_FILE_AGGRESIVE_WS_TRIM, L"Aggressively trim the working set"},
       // Aggressively trim working set
-      {IMAGE_FILE_LARGE_ADDRESS_AWARE,
-       L"The application can handle addresses larger than 2 GB."},
+      {IMAGE_FILE_LARGE_ADDRESS_AWARE, L"Large address aware"},
       // App can handle >2gb addresses
       {IMAGE_FILE_BYTES_REVERSED_LO, L"obsolete"},
       // Bytes of machine word are reversed.
@@ -119,26 +120,45 @@ std::wstring Characteristics(uint32_t index) {
       // 32 bit word machine.
       {IMAGE_FILE_DEBUG_STRIPPED, L"Debug info stripped"},
       // Debugging info stripped from file in .DBG file
-      {IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, L"Image In Removeable disk"},
+      {IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, L"Removable run from swap"},
       // If Image is on removable media, copy and run from the swap file.
-      {IMAGE_FILE_NET_RUN_FROM_SWAP, L"Image In Net"},
+      {IMAGE_FILE_NET_RUN_FROM_SWAP, L"Net run from swap"},
       // If Image is on Net, copy and run from the swap file.
-      {IMAGE_FILE_SYSTEM, L"System File"},
+      {IMAGE_FILE_SYSTEM, L"System"},
       // System File.
       {IMAGE_FILE_DLL, L"Dynamic Link Library"},
       // File is a DLL.
-      {IMAGE_FILE_UP_SYSTEM_ONLY,
-       L"The file should be run only on a uniprocessor computer."},
+      {IMAGE_FILE_UP_SYSTEM_ONLY, L"Uni-processor only"},
       // File should only be run on a UP machine
       {IMAGE_FILE_BYTES_REVERSED_HI, L"obsolete"}
       // Bytes of machine word are reversed.
   };
+
+  const key_value_t dcs[] = {
+      {IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA, L"High entropy VA"},
+      {IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, L"Dynamic base"},
+      {IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY, L"Force integrity check"},
+      {IMAGE_DLLCHARACTERISTICS_NX_COMPAT, L"NX compatible"},
+      {IMAGE_DLLCHARACTERISTICS_NO_ISOLATION, L"No isolation"},
+      {IMAGE_DLLCHARACTERISTICS_NO_SEH, L"No SEH"},
+      {IMAGE_DLLCHARACTERISTICS_NO_BIND, L"Do not bind"},
+      {IMAGE_DLLCHARACTERISTICS_APPCONTAINER, L"AppContainer"},
+      {IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, L"WDM driver"},
+      {IMAGE_DLLCHARACTERISTICS_GUARD_CF, L"Control Flow Guard"},
+      {IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE, L"Terminal server aware"}
+      //
+  };
   for (const auto &kv : cs) {
-    if (kv.index == index) {
-      return kv.value;
+    if ((kv.index & index) != 0) {
+      csv.push_back(kv.value);
     }
   }
-  return L"UNKNOWN";
+  for (const auto &kv : dcs) {
+    if ((kv.index & dllindex) != 0) {
+      csv.push_back(kv.value);
+    }
+  }
+  return csv;
 }
 
 std::wstring Subsystem(uint32_t index) {
@@ -167,8 +187,6 @@ std::wstring Subsystem(uint32_t index) {
   }
   return L"UNKNOWN";
 }
-
-
 
 std::optional<pe_minutiae_t> PortableExecutableDump(std::wstring_view sv,
                                                     std::error_code &ec) {

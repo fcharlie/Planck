@@ -9,6 +9,14 @@
 // http://hg.icculus.org/icculus/fatelf/raw-file/tip/docs/fatelf-specification.txt
 
 namespace probe {
+// Lookup rpath goto https://github.com/fcharlie/cmchrpath
+struct StringEntry {
+  std::string Value;
+  size_t Position;
+  size_t Size;
+  int IndexInSection;
+};
+
 bool elfimagelookup32(memview mv, elf_minutiae_t &em) {
   auto h = mv.cast<Elf32_Ehdr>(0);
   if (h == nullptr) {
