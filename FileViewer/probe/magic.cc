@@ -69,11 +69,80 @@ const wchar_t *typenames(Types t) {
     return L"Windows PDB debug info file";
   case epub:
     return L"EPUB document";
+  case zip:
+    return L"Zip Archive";
+  case tar:
+    return L"Tarball Archive";
+  case rar:
+    return L"Roshal Archive (rar)";
+  case gz:
+    return L"gz compressed data";
+  case bz2:
+    return L"bz2 compressed data";
+  case p7z:
+    return L"7-Zip Archive";
+  case xz:
+    return L"XZ Archive";
   case pdf:
     return L"PDF document";
+  case swf:
+    return L"Adobe Flash file format";
   case rtf:
     return L"Rich Text Format data";
-    case gz:
+  case eot:
+    return L"Embedded OpenType";
+  case ps:
+    return L"Postscript";
+  case sqlite:
+    return L"SQLite3";
+  case nes:
+    return L"application/x-nintendo-nes-rom";
+  case crx:
+    return L"Google Chrome Extension";
+  case deb:
+    return L"Debian packages";
+  case lz:
+    return L"lzip Achive";
+  case rpm:
+    return L"RPM Package Manager";
+  case cab:
+    return L"Cabinet (CAB) Microsoft Windows installation archive format";
+  case msi:
+    return L"Windows Installer packages";
+  case jpg:
+    return L"JPEG Image";
+  case jp2:
+    return L"JPEG 2000 Image";
+  case png:
+    return L"Portable Network Graphics (.png)";
+  case gif:
+    return L"Graphics Interchange Format (.gif)";
+  case webp:
+    return L"WebP Image";
+  case cr2:
+    return L"Canon 5D Mark IV CR2";
+  case tif:
+    return L"Tagged Image File Format (.tif)";
+  case bmp:
+    return L"Bitmap image file format (.bmp)";
+  case jxr:
+    return L"JPEG extended range";
+  case psd:
+    return L"Photoshop document file extension";
+  case ico:
+    return L"ICO file format (.ico)";
+  case doc:
+    return L"Microsoft Word (.doc)";
+  case docx:
+    return L"Microsoft Word (.docx)";
+  case xls:
+    return L"Microsoft Excel (.xls)";
+  case xlsx:
+    return L"Microsoft Excel (.xlsx)";
+  case ppt:
+    return L"Microsoft PowerPoint (.ppt)";
+  case pptx:
+    return L"Microsoft PowerPoint (.pptx)";
   default:
     break;
   }

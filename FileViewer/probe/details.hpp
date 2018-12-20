@@ -53,7 +53,7 @@ enum Types {
   pdf,
   swf,
   rtf,
-  eof,
+  eot,
   ps,
   sqlite,
   nes,
