@@ -93,8 +93,8 @@ struct reparse_wof_t {
 struct reparse_wcifs_t {
   ULONG Version; // Expected to be 1 by wcifs.sys
   ULONG Reserved;
-  //GUID LookupGuid;      // GUID used for lookup in wcifs!WcLookupLayer
-  //USHORT WciNameLength; // Length of the WCI subname, in bytes
+  // GUID LookupGuid;      // GUID used for lookup in wcifs!WcLookupLayer
+  // USHORT WciNameLength; // Length of the WCI subname, in bytes
   std::wstring LookupGuid;
   std::wstring WciName;
 };
@@ -119,7 +119,7 @@ struct file_links_t {
 
 std::optional<file_target_t> ResolveTarget(std::wstring_view sv);
 std::optional<file_links_t> ResolveLinks(std::wstring_view sv);
-
+std::optional<std::wstring> ResolveShortcut(std::wstring_view sv);
 } // namespace viewer
 
 #endif

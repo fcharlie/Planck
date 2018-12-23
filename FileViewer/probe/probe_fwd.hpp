@@ -16,7 +16,7 @@ enum endian_t : unsigned { None, LittleEndian, BigEndian };
 }
 struct elf_minutiae_t {
   uint8_t ident[einident];
-  bool is64bit; /// 64 Bit
+  bool is64bit{false}; /// 64 Bit
   endina::endian_t endian;
   std::wstring machine;
   std::wstring rpath;             // RPATH or some
@@ -24,8 +24,8 @@ struct elf_minutiae_t {
 };
 
 struct pe_version_t {
-  uint16_t major;
-  uint16_t minor;
+  uint16_t major{0};
+  uint16_t minor{0};
 };
 
 struct pe_minutiae_t {
