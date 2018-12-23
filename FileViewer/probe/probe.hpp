@@ -15,7 +15,7 @@
 #include "details.hpp"
 
 namespace probe {
-constexpr size_t mappedsizelimit = 4 * 1024 * 1024;
+constexpr size_t mappedsizelimit = UINT32_MAX; // 4GB
 // 4M limit 4M mapped. check is ok
 inline size_t mapviewsize(std::int64_t l) {
   return l > mappedsizelimit ? mappedsizelimit : (size_t)l;

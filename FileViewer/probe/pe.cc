@@ -209,18 +209,41 @@ std::wstring Subsystem(uint32_t index) {
   return L"UNKNOWN";
 }
 
+std::wstring fromascii(std::string_view sv) {
+  auto sz = MultiByteToWideChar(CP_ACP, 0, sv.data(), -1, nullptr, 0);
+  std::wstring output;
+  output.resize(sz - 1);
+  MultiByteToWideChar(CP_ACP, 0, sv.data(), -1, output.data(), sz - 1);
+  return output;
+}
+
+inline std::wstring DllName(memview mv, LPVOID nh, ULONG nva) {
+  auto va =
+      ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), nva, nullptr);
+  if (va == nullptr) {
+    return L"";
+  }
+  std::string name;
+  name.reserve(256);
+  auto dn = reinterpret_cast<char *>(va);
+  auto end = mv.data() + mv.size();
+  for (auto it = dn; it < end && *it != 0; it++) {
+    name.push_back(*it);
+  }
+  return fromascii(name);
+}
+
 inline std::wstring ClrMessage(memview mv, LPVOID nh, ULONG clrva) {
   auto va =
       ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), clrva, nullptr);
   auto end = mv.data() + mv.size();
-
-  if ((char *)va + sizeof(IMAGE_COR20_HEADER) > end) {
+  if (va == nullptr || (char *)va + sizeof(IMAGE_COR20_HEADER) > end) {
     return L"";
   }
   auto clrh = reinterpret_cast<PIMAGE_COR20_HEADER>(va);
   auto va2 = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(),
                           clrh->MetaData.VirtualAddress, nullptr);
-  if ((const char *)va2 + sizeof(STORAGESIGNATURE) > end) {
+  if (va2 == nullptr || (const char *)va2 + sizeof(STORAGESIGNATURE) > end) {
     return L"";
   }
   auto clrmsg = reinterpret_cast<const STORAGESIGNATURE *>(va2);
@@ -255,7 +278,26 @@ std::optional<pe_minutiae_t> PortableExecutablePlus(memview mv, LONG lfanew,
     // Exists IMAGE_COR20_HEADER
     pm.clrmsg = ClrMessage(mv, (PVOID)nh, clre->VirtualAddress);
   }
-  return std::nullopt;
+  auto import_ =
+      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
+  auto end = mv.data() + mv.size();
+  auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
+                         import_->VirtualAddress, nullptr);
+  if (va == nullptr || (const char *)va + import_->Size >= end) {
+    return std::make_optional<>(pm);
+  }
+  auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
+  char dllname[256];
+  while (imdes->Name != 0) {
+    //
+    // ASCIIZ
+    auto dnw = DllName(mv, (LPVOID)nh, imdes->Name);
+    if (!dnw.empty()) {
+      pm.deps.push_back(dnw);
+    }
+    imdes++;
+  }
+  return std::make_optional<>(pm);
 }
 
 std::optional<pe_minutiae_t> PortableExecutableDump(memview mv,
@@ -307,8 +349,27 @@ std::optional<pe_minutiae_t> PortableExecutableDump(memview mv,
   }
   auto import_ =
       &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
-
-  return std::nullopt;
+  if (import_->Size == 0) {
+    return std::make_optional<>(pm);
+  }
+  auto end = mv.data() + mv.size();
+  auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
+                         import_->VirtualAddress, nullptr);
+  if (va == nullptr || (const char *)va + import_->Size >= end) {
+    return std::make_optional<>(pm);
+  }
+  auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
+  char dllname[256];
+  while (imdes->Name != 0) {
+    //
+    // ASCIIZ
+    auto dnw = DllName(mv, (LPVOID)nh, imdes->Name);
+    if (!dnw.empty()) {
+      pm.deps.push_back(dnw);
+    }
+    imdes++;
+  }
+  return std::make_optional<>(pm);
 }
 
 } // namespace probe
