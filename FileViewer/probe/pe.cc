@@ -13,7 +13,10 @@
 #endif
 #include <windows.h>
 #endif
+#include <Dbghelp.h>
 #include "probe_fwd.hpp"
+
+#pragma comment(lib, "DbgHelp.lib")
 
 #ifndef PROCESSOR_ARCHITECTURE_ARM64
 #define PROCESSOR_ARCHITECTURE_ARM64 12
@@ -45,6 +48,24 @@
 #ifndef IMAGE_SUBSYSTEM_XBOX_CODE_CATALOG
 #define IMAGE_SUBSYSTEM_XBOX_CODE_CATALOG 17 // XBOX Code Catalog
 #endif
+
+typedef enum ReplacesGeneralNumericDefines {
+// Directory entry macro for CLR data.
+#ifndef IMAGE_DIRECTORY_ENTRY_COMHEADER
+  IMAGE_DIRECTORY_ENTRY_COMHEADER = 14,
+#endif // IMAGE_DIRECTORY_ENTRY_COMHEADER
+} ReplacesGeneralNumericDefines;
+#define STORAGE_MAGIC_SIG 0x424A5342 // BSJB
+
+#pragma pack(1)
+struct STORAGESIGNATURE {
+  ULONG Signature;     // Magic signature for physical metadata : 0x424A5342.
+  USHORT MajorVersion; // Major version, 1 (ignore on read)
+  USHORT MinorVersion; // Minor version, 0 (ignore on read)
+  ULONG ExtraData;     // offset to next structure of information
+  ULONG Length;        // Length of version string in bytes
+};
+#pragma pop()
 
 namespace probe {
 
@@ -133,7 +154,7 @@ std::vector<std::wstring> Characteristics(uint32_t index,
       {IMAGE_FILE_BYTES_REVERSED_HI, L"obsolete"}
       // Bytes of machine word are reversed.
   };
-
+  // USHORT  DllCharacteristics;
   const key_value_t dcs[] = {
       {IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA, L"High entropy VA"},
       {IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, L"Dynamic base"},
@@ -188,9 +209,105 @@ std::wstring Subsystem(uint32_t index) {
   return L"UNKNOWN";
 }
 
-std::optional<pe_minutiae_t> PortableExecutableDump(std::wstring_view sv,
+inline std::wstring ClrMessage(memview mv, LPVOID nh, ULONG clrva) {
+  auto va =
+      ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), clrva, nullptr);
+  auto end = mv.data() + mv.size();
+
+  if ((char *)va + sizeof(IMAGE_COR20_HEADER) > end) {
+    return L"";
+  }
+  auto clrh = reinterpret_cast<PIMAGE_COR20_HEADER>(va);
+  auto va2 = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(),
+                          clrh->MetaData.VirtualAddress, nullptr);
+  if ((const char *)va2 + sizeof(STORAGESIGNATURE) > end) {
+    return L"";
+  }
+  auto clrmsg = reinterpret_cast<const STORAGESIGNATURE *>(va2);
+  if ((const char *)clrmsg + clrmsg->Length > end) {
+    return L"";
+  }
+  return fromutf8(std::string_view(
+      (const char *)clrmsg + sizeof(STORAGESIGNATURE), clrmsg->Length));
+}
+
+std::optional<pe_minutiae_t> PortableExecutablePlus(memview mv, LONG lfanew,
                                                     std::error_code &ec) {
-  //
+  auto nh = mv.cast<IMAGE_NT_HEADERS64>(lfanew);
+  pe_minutiae_t pm;
+  pm.machine = Machine(nh->FileHeader.Machine);
+  pm.characteristics = Characteristics(nh->FileHeader.Characteristics,
+                                       nh->OptionalHeader.DllCharacteristics);
+  pm.subsystem = Subsystem(nh->OptionalHeader.Subsystem);
+  pm.osver = {nh->OptionalHeader.MajorOperatingSystemVersion,
+              nh->OptionalHeader.MinorOperatingSystemVersion};
+  pm.linkver = {nh->OptionalHeader.MajorLinkerVersion,
+                nh->OptionalHeader.MinorLinkerVersion};
+  pm.imagever = {nh->OptionalHeader.MajorImageVersion,
+                 nh->OptionalHeader.MinorImageVersion};
+  pm.isdll = ((nh->FileHeader.Characteristics & IMAGE_FILE_DLL) != 0);
+  auto end = mv.data() + mv.size();
+
+  // https://docs.microsoft.com/zh-cn/windows/desktop/api/winnt/ns-winnt-_image_data_directory
+  auto clre =
+      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COMHEADER]);
+  if (clre->Size == sizeof(IMAGE_COR20_HEADER)) {
+    // Exists IMAGE_COR20_HEADER
+    pm.clrmsg = ClrMessage(mv, (PVOID)nh, clre->VirtualAddress);
+  }
+  return std::nullopt;
+}
+
+std::optional<pe_minutiae_t> PortableExecutableDump(memview mv,
+                                                    std::error_code &ec) {
+  auto h = mv.cast<IMAGE_DOS_HEADER>(0);
+  if (h == nullptr) {
+    return std::nullopt;
+  }
+  // PE/PE+ lIMAGE_NT_HEADERS32 ayout
+  auto nh = mv.cast<IMAGE_NT_HEADERS32>(h->e_lfanew);
+  if (nh == nullptr) {
+    return std::nullopt;
+  }
+  switch (nh->OptionalHeader.Magic) {
+  case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+    return PortableExecutablePlus(mv, h->e_lfanew, ec);
+  case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+    break;
+  case IMAGE_ROM_OPTIONAL_HDR_MAGIC: {
+    // ROM
+  } break;
+  default:
+    return std::nullopt;
+  }
+  if (nh->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+    // PE+ format
+    return PortableExecutablePlus(mv, h->e_lfanew, ec);
+  }
+  pe_minutiae_t pm;
+  pm.machine = Machine(nh->FileHeader.Machine);
+  pm.characteristics = Characteristics(nh->FileHeader.Characteristics,
+                                       nh->OptionalHeader.DllCharacteristics);
+  pm.osver = {nh->OptionalHeader.MajorOperatingSystemVersion,
+              nh->OptionalHeader.MinorOperatingSystemVersion};
+  pm.subsystem = Subsystem(nh->OptionalHeader.Subsystem);
+  pm.linkver = {nh->OptionalHeader.MajorLinkerVersion,
+                nh->OptionalHeader.MinorLinkerVersion};
+  pm.imagever = {nh->OptionalHeader.MajorImageVersion,
+                 nh->OptionalHeader.MinorImageVersion};
+  pm.isdll = ((nh->FileHeader.Characteristics & IMAGE_FILE_DLL) != 0);
+
+  // https://docs.microsoft.com/zh-cn/windows/desktop/api/winnt/ns-winnt-_image_data_directory
+  auto clre =
+      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COMHEADER]);
+  auto end = mv.data() + mv.size();
+  if (clre->Size == sizeof(IMAGE_COR20_HEADER)) {
+    // Exists IMAGE_COR20_HEADER
+    pm.clrmsg = ClrMessage(mv, (PVOID)nh, clre->VirtualAddress);
+  }
+  auto import_ =
+      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
+
   return std::nullopt;
 }
 

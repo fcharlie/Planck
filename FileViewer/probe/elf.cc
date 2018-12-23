@@ -31,9 +31,22 @@ bool elfimagelookup(memview mv, elf_minutiae_t &em) {
     return false;
   }
   memcmp(mv.data(), em.ident, einident);
-  if (mv[SELFMAG] == ELFCLASS64) {
+  switch (mv[EI_DATA]) {
+  case 0:
+    em.endian = endina::None;
+  case 1:
+    em.endian = endina::LittleEndian;
+  case 2:
+    em.endian = endina::BigEndian;
+  default:
+    em.endian = endina::None;
+    break;
+  }
+  if (mv[SELFMAG] != ELFCLASS64) {
+    em.is64bit = false;
     return elfimagelookup32(mv, em);
   }
+  em.is64bit = true;
   auto h = mv.cast<Elf64_Ehdr>(0);
   if (h == nullptr) {
     return false;
