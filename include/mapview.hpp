@@ -164,7 +164,7 @@ public:
     return reinterpret_cast<const T *>(data_ + off);
   }
 
-  memview castmv(size_t off) {
+  memview subview(size_t off) {
     if (off >= size_) {
       return memview();
     }
