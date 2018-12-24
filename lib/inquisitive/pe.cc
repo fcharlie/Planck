@@ -359,4 +359,14 @@ std::optional<pe_minutiae_t> PortableExecutableDump(memview mv,
   return std::make_optional<>(pm);
 }
 
+std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
+                                                std::error_code &ec) {
+
+  planck::mapview mv;
+  if (!mv.mapfile(sv, sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
+    return std::nullopt;
+  }
+  return PortableExecutableDump(mv.subview(0), ec);
+}
+
 } // namespace inquisitive
