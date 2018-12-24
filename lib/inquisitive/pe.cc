@@ -245,76 +245,9 @@ inline std::wstring ClrMessage(memview mv, LPVOID nh, ULONG clrva) {
       (const char *)clrmsg + sizeof(STORAGESIGNATURE), clrmsg->Length));
 }
 
-std::optional<pe_minutiae_t> PortableExecutablePlus(memview mv, LONG lfanew,
-                                                    std::error_code &ec) {
-  auto nh = mv.cast<IMAGE_NT_HEADERS64>(lfanew);
-  pe_minutiae_t pm;
-  pm.machine = Machine(nh->FileHeader.Machine);
-  pm.characteristics = Characteristics(nh->FileHeader.Characteristics,
-                                       nh->OptionalHeader.DllCharacteristics);
-  pm.subsystem = Subsystem(nh->OptionalHeader.Subsystem);
-  pm.osver = {nh->OptionalHeader.MajorOperatingSystemVersion,
-              nh->OptionalHeader.MinorOperatingSystemVersion};
-  pm.linkver = {nh->OptionalHeader.MajorLinkerVersion,
-                nh->OptionalHeader.MinorLinkerVersion};
-  pm.imagever = {nh->OptionalHeader.MajorImageVersion,
-                 nh->OptionalHeader.MinorImageVersion};
-  pm.isdll = ((nh->FileHeader.Characteristics & IMAGE_FILE_DLL) != 0);
-  auto end = mv.data() + mv.size();
-
-  // https://docs.microsoft.com/zh-cn/windows/desktop/api/winnt/ns-winnt-_image_data_directory
-  auto clre =
-      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COMHEADER]);
-  if (clre->Size == sizeof(IMAGE_COR20_HEADER)) {
-    // Exists IMAGE_COR20_HEADER
-    pm.clrmsg = ClrMessage(mv, (PVOID)nh, clre->VirtualAddress);
-  }
-  auto import_ =
-      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
-  auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
-                         import_->VirtualAddress, nullptr);
-  if (va == nullptr || (const char *)va + import_->Size >= end) {
-    return std::make_optional<>(pm);
-  }
-  auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
-  while (imdes->Name != 0) {
-    //
-    // ASCIIZ
-    auto dnw = DllName(mv, (LPVOID)nh, imdes->Name);
-    if (!dnw.empty()) {
-      pm.deps.push_back(dnw);
-    }
-    imdes++;
-  }
-  return std::make_optional<>(pm);
-}
-
-std::optional<pe_minutiae_t> PortableExecutableDump(memview mv,
-                                                    std::error_code &ec) {
-  auto h = mv.cast<IMAGE_DOS_HEADER>(0);
-  if (h == nullptr) {
-    return std::nullopt;
-  }
-  // PE/PE+ lIMAGE_NT_HEADERS32 ayout
-  auto nh = mv.cast<IMAGE_NT_HEADERS32>(h->e_lfanew);
-  if (nh == nullptr) {
-    return std::nullopt;
-  }
-  switch (nh->OptionalHeader.Magic) {
-  case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-    return PortableExecutablePlus(mv, h->e_lfanew, ec);
-  case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-    break;
-  case IMAGE_ROM_OPTIONAL_HDR_MAGIC: {
-    // ROM
-  } break;
-  default:
-    return std::nullopt;
-  }
-  if (nh->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
-    // PE+ format
-    return PortableExecutablePlus(mv, h->e_lfanew, ec);
-  }
+template <typename NtHeaderT>
+std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
+                                         std::error_code &ec) {
   pe_minutiae_t pm;
   pm.machine = Machine(nh->FileHeader.Machine);
   pm.characteristics = Characteristics(nh->FileHeader.Characteristics,
@@ -366,7 +299,27 @@ std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
   if (!mv.mapfile(sv, sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
     return std::nullopt;
   }
-  return PortableExecutableDump(mv.subview(0), ec);
+  auto h = mv.cast<IMAGE_DOS_HEADER>(0);
+  if (h == nullptr) {
+    return std::nullopt;
+  }
+  // PE/PE+ lIMAGE_NT_HEADERS32 ayout
+  auto nh = mv.cast<IMAGE_NT_HEADERS32>(h->e_lfanew);
+  if (nh == nullptr) {
+    return std::nullopt;
+  }
+  switch (nh->OptionalHeader.Magic) {
+  case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+    return pecoff_dump(mv.subview(0), (PIMAGE_NT_HEADERS64)nh, ec);
+  case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+    return pecoff_dump(mv.subview(0), (PIMAGE_NT_HEADERS32)nh, ec);
+  case IMAGE_ROM_OPTIONAL_HDR_MAGIC: {
+    // ROM
+  } break;
+  default:
+    break;
+  }
+  return std::nullopt;
 }
 
 } // namespace inquisitive
