@@ -14,7 +14,7 @@
 #include <windows.h>
 #endif
 #include <Dbghelp.h>
-#include "probe_fwd.hpp"
+#include "inquisitive_fwd.hpp"
 
 #pragma comment(lib, "DbgHelp.lib")
 
@@ -65,7 +65,7 @@ struct STORAGESIGNATURE {
   ULONG ExtraData;     // offset to next structure of information
   ULONG Length;        // Length of version string in bytes
 };
-#pragma pop()
+#pragma pack()
 
 namespace inquisitive {
 
@@ -280,7 +280,6 @@ std::optional<pe_minutiae_t> PortableExecutablePlus(memview mv, LONG lfanew,
   }
   auto import_ =
       &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
-  auto end = mv.data() + mv.size();
   auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
                          import_->VirtualAddress, nullptr);
   if (va == nullptr || (const char *)va + import_->Size >= end) {
@@ -352,14 +351,12 @@ std::optional<pe_minutiae_t> PortableExecutableDump(memview mv,
   if (import_->Size == 0) {
     return std::make_optional<>(pm);
   }
-  auto end = mv.data() + mv.size();
   auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
                          import_->VirtualAddress, nullptr);
   if (va == nullptr || (const char *)va + import_->Size >= end) {
     return std::make_optional<>(pm);
   }
   auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
-  char dllname[256];
   while (imdes->Name != 0) {
     //
     // ASCIIZ

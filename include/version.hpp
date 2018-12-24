@@ -1,6 +1,6 @@
 ///
-#ifndef FILEVIEW_HPP
-#define FILEVIEW_HPP
+#ifndef PLANCK_HPP
+#define PLANCK_HPP
 #if defined(__has_include)
 #if __has_include(<baseversion.h>)
 #include <baseversion.h>
@@ -8,28 +8,28 @@
 #endif
 #include <string>
 
-#ifndef FILEVIEW_VERSION
-#define FILEVIEW_VERSION L"1.0"
+#ifndef PLANCK_VERSION
+#define PLANCK_VERSION L"1.0"
 #endif
 
-#ifndef FILEVIEW_HASH
-#define FILEVIEW_HASH L"none"
+#ifndef PLANCK_HASH
+#define PLANCK_HASH L"none"
 #endif
 
-#ifndef FILEVIEW_REFS
-#define FILEVIEW_REFS L"none"
+#ifndef PLANCK_REFS
+#define PLANCK_REFS L"none"
 #endif
 
-#ifndef FILEVIEW_APPNAME
-#define FILEVIEW_APPNAME L"FileViewer-1.0.0"
+#ifndef PLANCK_APPNAME
+#define PLANCK_APPNAME L"Planck-1.0.0"
 #endif
 
-namespace fileview {
+namespace planck {
 //
-inline std::wstring fileview_version() {
+inline std::wstring planck_version() {
   // todo
-  return FILEVIEW_APPNAME;
+  return PLANCK_APPNAME;
 }
-} // namespace fileview
+} // namespace PLANCK
 
 #endif

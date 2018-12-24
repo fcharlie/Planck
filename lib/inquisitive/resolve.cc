@@ -467,7 +467,8 @@ std::optional<file_links_t> ResolveLinks(std::wstring_view sv) {
 }
 
 // Shell link flags
-// Thanks: https://github.com/reactos/reactos/blob/bfcbda227f99c1b59e8ed71f5e0f59f793d496a1/sdk/include/reactos/undocshell.h#L800
+// Thanks:
+// https://github.com/reactos/reactos/blob/bfcbda227f99c1b59e8ed71f5e0f59f793d496a1/sdk/include/reactos/undocshell.h#L800
 enum : DWORD {
   SldfNone = 0x00000000,
   HasLinkTargetIDList = 0x00000001,
@@ -529,7 +530,7 @@ struct link_target_idlist_t {
   // IDLIST
 };
 
-#pragma pop()
+#pragma pack()
 
 class PbShellLink {
 public:

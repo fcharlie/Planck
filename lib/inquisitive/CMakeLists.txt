@@ -1,6 +1,6 @@
 #
 
-add_library(inquisitive STATIC
+add_library(Inquisitive STATIC
   archive.cc
   binexeobj.cc
   convertutf.cc
@@ -11,5 +11,6 @@ add_library(inquisitive STATIC
   magic.cc
   pe.cc
   inquisitive.cc
+  resolve.cc
   zip.cc
 )
