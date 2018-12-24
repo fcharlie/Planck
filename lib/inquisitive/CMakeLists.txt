@@ -8,7 +8,6 @@ add_library(Inquisitive STATIC
   elf.cc
   image.cc
   macho.cc
-  magic.cc
   pe.cc
   inquisitive.cc
   resolve.cc

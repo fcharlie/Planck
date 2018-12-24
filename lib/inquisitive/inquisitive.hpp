@@ -12,56 +12,52 @@
 #include <string_view>
 #include <optional>
 #include <vector>
+#include <system_error>
+#include <mapview.hpp>
 #include "details.hpp"
 
 namespace inquisitive {
-constexpr size_t mappedsizelimit = UINT32_MAX; // 4GB
-// 4M limit 4M mapped. check is ok
-inline size_t mapviewsize(std::int64_t l) {
-  return l > mappedsizelimit ? mappedsizelimit : (size_t)l;
+constexpr const int einident = 16;
+using planck::memview;
+namespace endina {
+enum endian_t : unsigned { None, LittleEndian, BigEndian };
 }
-class mapview {
-public:
-  mapview() = default;
-  mapview(const mapview &) = delete;
-  mapview &operator=(const mapview &) = delete;
-  ~mapview();
-  // open file and map view. so optional false is ok, true is error reason.
-  std::optional<std::wstring> view(std::wstring_view sv);
-  std::size_t size() const { return size_; }
-  const char *data() const { return data_; }
-  unsigned char operator[](const std::size_t off) const {
-    if (off >= size_) {
-      return 255;
-    }
-    return (unsigned char)data_[off];
-  }
-  bool startswith(const char *prefix, size_t pl) const {
-    if (pl >= size_) {
-      return false;
-    }
-    return memcmp(data_, prefix, pl) == 0;
-  }
-  bool startswith(std::string_view sv) const {
-    return startswith(sv.data(), sv.size());
-  }
-  bool indexswith(std::size_t offset, std::string_view sv) const {
-    if (offset > size_) {
-      return false;
-    }
-    return memcmp(data_ + offset, sv.data(), sv.size()) == 0;
-  }
-  details::Types identify();
-
-private:
-  HANDLE FileHandle{INVALID_HANDLE_VALUE};
-  HANDLE FileMapHandle{INVALID_HANDLE_VALUE};
-  const char *data_{nullptr};
-  std::size_t size_{0};
-  std::wstring extension;
-  bool maped{false};
+struct elf_minutiae_t {
+  uint8_t ident[einident];
+  bool is64bit{false}; /// 64 Bit
+  endina::endian_t endian;
+  std::wstring machine;
+  std::wstring rpath;             // RPATH or some
+  std::vector<std::wstring> deps; /// require so
 };
 
+struct pe_version_t {
+  uint16_t major{0};
+  uint16_t minor{0};
+};
+
+struct pe_minutiae_t {
+  std::wstring machine;
+  std::wstring subsystem;
+  std::wstring clrmsg;
+  std::vector<std::wstring> characteristics;
+  std::vector<std::wstring> deps; /// DLL required
+  pe_version_t osver;
+  pe_version_t linkver;
+  pe_version_t imagever;
+  bool isdll;
+};
+
+struct inquisitive_result_t {
+  details::Types type;
+  std::wstring details;
+};
+
+std::optional<pe_minutiae_t> PortableExecutableDump(planck::memview mv,
+                                                    std::error_code &ec);
+std::wstring fromutf8(std::string_view text);
+std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
+                                                std::error_code &ec);
 } // namespace inquisitive
 
 #endif

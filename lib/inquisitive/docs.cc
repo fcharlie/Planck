@@ -2,7 +2,6 @@
 #include "includes.hpp"
 #include "details.hpp"
 #include "inquisitive.hpp"
-#include "inquisitive_fwd.hpp"
 
 namespace inquisitive {
 //

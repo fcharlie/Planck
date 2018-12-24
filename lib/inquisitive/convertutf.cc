@@ -42,7 +42,7 @@
     Oct 2004: updated to use UNI_MAX_LEGAL_UTF32 in UTF-32 conversions.
     See the header file "ConvertUTF.h" for complete documentation.
 ------------------------------------------------------------------------ */
-#include "inquisitive_fwd.hpp"
+#include "inquisitive.hpp"
 
 namespace inquisitive {
 

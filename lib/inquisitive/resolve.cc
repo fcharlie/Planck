@@ -12,6 +12,8 @@
 #include <vector>
 #include <charconv>
 #include <ShlObj.h>
+#include <mapview.hpp>
+#include <shl.hpp>
 #include "console/console.hpp"
 
 std::wstring guidencode(const GUID &guid) {
@@ -466,147 +468,19 @@ std::optional<file_links_t> ResolveLinks(std::wstring_view sv) {
   return std::make_optional<file_links_t>(link);
 }
 
-// Shell link flags
-// Thanks:
-// https://github.com/reactos/reactos/blob/bfcbda227f99c1b59e8ed71f5e0f59f793d496a1/sdk/include/reactos/undocshell.h#L800
-enum : DWORD {
-  SldfNone = 0x00000000,
-  HasLinkTargetIDList = 0x00000001,
-  HasLinkInfo = 0x00000002,
-  HasName = 0x00000004,
-  HasRelativePath = 0x00000008,
-  HasWorkingDir = 0x00000010,
-  HasArguments = 0x00000020,
-  HasIconLocation = 0x00000040,
-  IsUnicode = 0x00000080,
-  ForceNoLinkInfo = 0x00000100,
-  HasExpString = 0x00000200,
-  RunInSeparateProcess = 0x00000400,
-  Unused1 = 0x00000800,
-  HasDrawinID = 0x00001000,
-  RunAsUser = 0x00002000,
-  HasExpIcon = 0x00004000,
-  NoPidlAlias = 0x00008000,
-  Unused2 = 0x00010000,
-  RunWithShimLayer = 0x00020000,
-  ForceNoLinkTrack = 0x00040000,
-  EnableTargetMetadata = 0x00080000,
-  DisableLinkPathTarcking = 0x00100000,
-  DisableKnownFolderTarcking = 0x00200000,
-  DisableKnownFolderAlia = 0x00400000,
-  AllowLinkToLink = 0x00800000,
-  UnaliasOnSave = 0x01000000,
-  PreferEnvironmentPath = 0x02000000,
-  KeepLocalIDListForUNCTarget = 0x04000000,
-  PersistVolumeIDRelative = 0x08000000,
-  SldfInvalid = 0x0ffff7ff,
-  Reserved = 0x80000000
-};
-
-#pragma pack(1)
-/*
-SHELL_LINK = SHELL_LINK_HEADER [LINKTARGET_IDLIST] [LINKINFO]
- [STRING_DATA] *EXTRA_DATA
-*/
-struct shell_link_t {
-  DWORD dwSize;
-  BYTE uuid[16];
-  DWORD linkflags;
-  DWORD fileattr;
-  FILETIME createtime;
-  FILETIME accesstime;
-  FILETIME writetime;
-  LONG filesize;
-  DWORD iconindex;
-  DWORD showcommand;
-  WORD hotkey;
-  WORD reserved1;
-  DWORD reserved2;
-  DWORD reserved3;
-};
-
-struct link_target_idlist_t {
-  WORD idlistsize;
-  // IDLIST
-};
-
-#pragma pack()
-
-class PbShellLink {
-public:
-  static constexpr auto nullfile_t = INVALID_HANDLE_VALUE;
-  static inline void Close(HANDLE hFile) {
-    if (hFile != nullfile_t) {
-      CloseHandle(hFile);
-    }
-  }
-  PbShellLink() = default;
-  PbShellLink(const PbShellLink &) = delete;
-  PbShellLink &operator=(const PbShellLink &) = delete;
-  ~PbShellLink() {
-    if (baseAddr != nullptr) {
-      UnmapViewOfFile(baseAddr);
-    }
-    Close(FileMap);
-    Close(FileHandle);
-  }
-  // https://msdn.microsoft.com/en-us/library/dd871305.aspx
-  std::optional<std::wstring> Target(std::wstring_view sv) {
-    if ((FileHandle = CreateFileW(sv.data(), GENERIC_READ,
-                                  FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
-                                  nullptr)) == nullfile_t) {
-      return std::nullopt;
-    }
-    LARGE_INTEGER li;
-    if (GetFileSizeEx(FileHandle, &li) != TRUE || li.QuadPart < 0x4E) {
-      return std::nullopt;
-    }
-    if ((FileMap = CreateFileMappingW(FileHandle, nullptr, PAGE_READONLY, 0, 0,
-                                      nullptr)) == nullfile_t) {
-      return std::nullopt;
-    }
-    baseAddr = MapViewOfFile(FileMap, FILE_MAP_READ, 0, 0, 0);
-    if (baseAddr == nullptr) {
-      return std::nullopt;
-    }
-    auto data = reinterpret_cast<UCHAR *>(baseAddr);
-    if (*(DWORD *)(data + 0x00) != 0x0000004C) {
-      // LNK file header invalid
-      return std::nullopt;
-    }
-    if (*(DWORD *)(data + 0x04) != 0x00021401 ||
-        *(DWORD *)(data + 0x08) != 0x00000000 ||
-        *(DWORD *)(data + 0x0C) != 0x000000C0 ||
-        *(DWORD *)(data + 0x10) != 0x46000000) {
-      // shell link GUID invalid
-      return std::nullopt;
-    }
-    // check for presence of shell item ID list
-    if ((*(BYTE *)(data + 0x14) & 0x01) == 0) {
-      // shell item ID list is not present
-      return std::nullopt;
-    }
-    WCHAR target[4096] = {0};
-    // convert shell item identifier list to file system path
-    // the shell item ID list starts always at offset 0x4E after the LNK
-    // file header and the WORD for the length of the item ID list
-    // see the reference "The Windows Shortcut File Format" by "Jesse Hager"
-    if (SHGetPathFromIDListEx((LPCITEMIDLIST)(data + 0x4E), target,
-                              ARRAYSIZE(target), GPFIDL_UNCPRINTER) == FALSE) {
-      return std::nullopt;
-    }
-    return std::make_optional<std::wstring>(target);
-  }
-
-private:
-  HANDLE FileHandle{nullfile_t};
-  HANDLE FileMap{nullfile_t};
-  LPVOID baseAddr{nullptr};
-};
-
 std::optional<std::wstring> ResolveShortcut(std::wstring_view sv) {
-  PbShellLink slink;
-  return slink.Target(sv);
+  planck::mapview mv;
+  if (!mv.mapfile(sv, sizeof(shl::shell_link_t) + 2)) {
+    return std::nullopt;
+  }
+  auto p = mv.cast<shl::shell_link_t>(0);
+  /// TODO check shell link.
+
+  WCHAR target[4096] = {0};
+  if (SHGetPathFromIDListEx((LPCITEMIDLIST)(mv.data() + 0x4E), target,
+                            ARRAYSIZE(target), GPFIDL_UNCPRINTER) == FALSE) {
+    return std::nullopt;
+  }
+  return std::make_optional<std::wstring>(target);
 }
 } // namespace viewer

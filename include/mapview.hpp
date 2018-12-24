@@ -41,12 +41,9 @@ private:
 #endif
 
 namespace planck {
-constexpr auto nullfile_t = INVALID_HANDLE_VALUE;
-constexpr auto sizemax_t = (std::numeric_limits<std::size_t>::max)();
-
 class memview {
 public:
-  static constexpr std::size_t npos = sizemax_t;
+  static constexpr std::size_t npos = SIZE_MAX;
   memview() = default;
   memview(const char *d, std::size_t l) : data_(d), size_(l) {}
   memview(const memview &other) {
@@ -90,6 +87,7 @@ private:
 
 class mapview {
 public:
+  static constexpr auto nullfile_t = INVALID_HANDLE_VALUE;
   static void Close(HANDLE handle) {
     if (handle != nullfile_t) {
       CloseHandle(handle);
@@ -107,7 +105,7 @@ public:
     Close(FileHandle);
   }
   bool mapfile(std::wstring_view file, std::size_t minsize = 1,
-               std::size_t maxsize = sizemax_t) {
+               std::size_t maxsize = SIZE_MAX) {
 #ifndef _M_X64
     FsDisableRedirection fdr;
 #endif
@@ -118,7 +116,8 @@ public:
       return false;
     }
     LARGE_INTEGER li;
-    if (GetFileSizeEx(FileHandle, &li) != TRUE || li.QuadPart < minsize) {
+    if (GetFileSizeEx(FileHandle, &li) != TRUE ||
+        (std::size_t)li.QuadPart < minsize) {
       return false;
     }
     if ((FileMap = CreateFileMappingW(FileHandle, nullptr, PAGE_READONLY, 0, 0,

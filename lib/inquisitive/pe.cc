@@ -4,17 +4,8 @@
 // PE32 executable (DLL) (console) Intel 80386 Mono/.Net assembly, for MS
 // Windows PE32 executable (console) Intel 80386, for MS Windows file command
 // not support check arm and arm64
-
-#include <system_error>
-#include <string_view>
-#ifndef _WINDOWS_
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN //
-#endif
-#include <windows.h>
-#endif
+#include "inquisitive.hpp"
 #include <Dbghelp.h>
-#include "inquisitive_fwd.hpp"
 
 #pragma comment(lib, "DbgHelp.lib")
 
@@ -286,7 +277,6 @@ std::optional<pe_minutiae_t> PortableExecutablePlus(memview mv, LONG lfanew,
     return std::make_optional<>(pm);
   }
   auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
-  char dllname[256];
   while (imdes->Name != 0) {
     //
     // ASCIIZ

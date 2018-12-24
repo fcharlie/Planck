@@ -3,7 +3,7 @@
 #include <string_view>
 #include "resolve.hpp"
 #include "console/console.hpp"
-#include "inquisitive_fwd.hpp"
+#include "inquisitive.hpp"
 #pragma comment(lib, "Pathcch")
 
 struct AppArgv {

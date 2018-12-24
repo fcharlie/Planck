@@ -1,7 +1,6 @@
 /// ELF details
-#include "elf.h"
-#include "memview.hpp"
-#include "inquisitive_fwd.hpp"
+#include <elf.h>
+#include "inquisitive.hpp"
 
 //  Executable and Linkable Format ELF
 // Thanks musl libc
