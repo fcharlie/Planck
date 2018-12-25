@@ -16,7 +16,7 @@ struct StringEntry {
   int IndexInSection;
 };
 
-const wchar_t *OSABI(uint8_t osabi) {
+const wchar_t *elf_osabi(uint8_t osabi) {
   switch (osabi) {
   case ELFOSABI_SYSV:
     return L"System V";
@@ -64,7 +64,7 @@ struct elf_kv_t {
   const wchar_t *value;
 };
 
-const wchar_t *ElfArchitecture(uint32_t e) {
+const wchar_t *elf_arch_name(uint32_t e) {
   const elf_kv_t kv[] = {
       {EM_M32, L"M32"},
       {EM_SPARC, L"SPARC"},
@@ -251,6 +251,22 @@ const wchar_t *ElfArchitecture(uint32_t e) {
     }
   }
   return L"No specific instruction set";
+}
+
+const wchar_t *elf_object_type(uint16_t t) {
+  switch (t) {
+  case ET_NONE:
+    return L"No file type";
+  case ET_REL:
+    return L"Relocatable file ";
+  case ET_EXEC:
+    return L"Executable file";
+  case ET_DYN:
+    return L"Shared object file";
+  case ET_CORE:
+    return L"Core file";
+  }
+  return L"UNKNOWN";
 }
 
 bool elfimagelookup32(memview mv, elf_minutiae_t &em) {

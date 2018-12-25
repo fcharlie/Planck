@@ -27,6 +27,7 @@ struct elf_minutiae_t {
   bool is64bit{false}; /// 64 Bit
   endina::endian_t endian;
   std::wstring machine;
+  std::wstring osabi;
   std::wstring rpath;             // RPATH or some
   std::vector<std::wstring> deps; /// require so
 };
