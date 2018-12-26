@@ -298,11 +298,11 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
     // ASCIIZ
     auto dnw = DllName(mv, (LPVOID)nh, imdes->Name);
     if (!dnw.empty()) {
-      pm.deps.push_back(dnw);
+      pm.depends.push_back(dnw);
     }
     imdes++;
   }
-  return std::make_optional<>(pm);
+  return std::make_optional<pe_minutiae_t>(std::move(pm));
 }
 
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,

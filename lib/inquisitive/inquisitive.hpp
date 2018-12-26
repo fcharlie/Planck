@@ -1,6 +1,6 @@
 ////
-#ifndef FILEVIEWER_INQUISTIVE_HPP
-#define FILEVIEWER_INQUISTIVE_HPP
+#ifndef FILEVIEWER_INQUISITIVE_HPP
+#define FILEVIEWER_INQUISITIVE_HPP
 #pragma once
 #ifndef _WINDOWS_
 #ifndef WIN32_LEAN_AND_MEAN
@@ -19,19 +19,19 @@
 namespace inquisitive {
 constexpr const int einident = 16;
 using planck::memview;
-namespace endina {
+namespace endian {
 enum endian_t : unsigned { None, LittleEndian, BigEndian };
 }
 struct elf_minutiae_t {
-  uint8_t ident[einident];
-  bool is64bit{false}; /// 64 Bit
-  endina::endian_t endian;
   std::wstring machine;
   std::wstring osabi;
   std::wstring etype;
-  std::wstring rpath;             // RPATH or some
-  std::wstring soname; // SONAME
-  std::vector<std::wstring> deps; /// require so
+  std::wstring rpath;                // RPATH or some
+  std::wstring rupath;               // RUPATH
+  std::wstring soname;               // SONAME
+  std::vector<std::wstring> depends; /// require so
+  bool bit64{false};                 /// 64 Bit
+  endian::endian_t endian;
 };
 
 struct pe_version_t {
@@ -44,7 +44,7 @@ struct pe_minutiae_t {
   std::wstring subsystem;
   std::wstring clrmsg;
   std::vector<std::wstring> characteristics;
-  std::vector<std::wstring> deps; /// DLL required
+  std::vector<std::wstring> depends; /// DLL required
   pe_version_t osver;
   pe_version_t linkver;
   pe_version_t imagever;

@@ -1,6 +1,7 @@
 /// ELF details
 #include <elf.h>
 #include "inquisitive.hpp"
+#include "includes.hpp"
 
 //  Executable and Linkable Format ELF
 // Thanks musl libc
@@ -8,13 +9,6 @@
 // http://hg.icculus.org/icculus/fatelf/raw-file/tip/docs/fatelf-specification.txt
 
 namespace inquisitive {
-// Lookup rpath goto https://github.com/fcharlie/cmchrpath
-struct StringEntry {
-  std::string Value;
-  size_t Position;
-  size_t Size;
-  int IndexInSection;
-};
 
 const wchar_t *elf_osabi(uint8_t osabi) {
   switch (osabi) {
@@ -64,7 +58,7 @@ struct elf_kv_t {
   const wchar_t *value;
 };
 
-const wchar_t *elf_arch_name(uint32_t e) {
+const wchar_t *elf_machine(uint32_t e) {
   const elf_kv_t kv[] = {
       {EM_M32, L"M32"},
       {EM_SPARC, L"SPARC"},
@@ -269,51 +263,209 @@ const wchar_t *elf_object_type(uint16_t t) {
   return L"UNKNOWN";
 }
 
-bool elfimagelookup32(memview mv, elf_minutiae_t &em) {
-  auto h = mv.cast<Elf32_Ehdr>(0);
-  if (h == nullptr) {
-    return false;
-  }
-  return true;
-}
-
-bool elfimagelookup(memview mv, elf_minutiae_t &em) {
-  if (mv.size() < sizeof(Elf32_Ehdr)) {
-    // NOT elf
-    return false;
-  }
-  memcmp(mv.data(), em.ident, einident);
-  switch (mv[EI_DATA]) {
-  case 0:
-    em.endian = endina::None;
-  case 1:
-    em.endian = endina::LittleEndian;
-  case 2:
-    em.endian = endina::BigEndian;
+inline endian::endian_t Endina(uint8_t t) {
+  switch (t) {
+  case ELFDATANONE:
+    return endian::None;
+  case ELFDATA2LSB:
+    return endian::LittleEndian;
+  case ELFDATA2MSB:
+    return endian::BigEndian;
   default:
-    em.endian = endina::None;
     break;
   }
-  if (mv[SELFMAG] != ELFCLASS64) {
-    em.is64bit = false;
-    return elfimagelookup32(mv, em);
+  return endian::None;
+}
+
+class elf_memview {
+public:
+  elf_memview(const char *data__, size_t size__)
+      : data_(data__), size_(size__) {
+    //
   }
-  em.is64bit = true;
-  auto h = mv.cast<Elf64_Ehdr>(0);
+  const char *data() const { return data_; }
+  size_t size() const { return size_; }
+  template <typename T> T *cast(size_t off) {
+    if (off >= size_) {
+      return nullptr;
+    }
+    return reinterpret_cast<T *>(data_ + off);
+  }
+  template <typename Integer> Integer resive(Integer i) {
+    if (!resiveable) {
+      return i;
+    }
+    return swap(i);
+  }
+  std::string stroffset(size_t off, size_t end);
+  bool inquisitive(elf_minutiae_t &em, std::error_code &ec);
+  bool inquisitive64(elf_minutiae_t &em, std::error_code &ec);
+
+private:
+  const char *data_{nullptr};
+  size_t size_{0};
+  bool resiveable{false};
+};
+std::string elf_memview::stroffset(size_t off, size_t end) {
+  std::string s;
+  for (size_t i = off; i < end; i++) {
+    if (data_[i] == 0) {
+      break;
+    }
+    s.push_back(data_[i]);
+  }
+  return s;
+}
+
+//
+bool elf_memview::inquisitive64(elf_minutiae_t &em, std::error_code &ec) {
+  auto h = cast<Elf64_Ehdr>(0);
   if (h == nullptr) {
     return false;
   }
+  em.machine = elf_machine(resive(h->e_machine));
+  em.etype = elf_object_type(resive(h->e_type));
+  auto off = resive(h->e_shoff);
+  auto sects = cast<Elf64_Shdr>(off);
+  auto shnum = resive(h->e_shnum);
+  if (shnum * sizeof(Elf64_Shdr) + off > size_) {
+    return false;
+  }
+  Elf64_Off sh_offset = 0;
+  Elf64_Xword sh_entsize = 0;
+  Elf64_Xword sh_size = 0;
+  Elf64_Word sh_link = 0;
+  for (Elf64_Word i = 0; i < shnum; i++) {
+    auto st = resive(sects[i].sh_type);
+    if (st == SHT_DYNAMIC) {
+      sh_entsize = resive(sects[i].sh_entsize);
+      sh_offset = resive(sects[i].sh_offset);
+      sh_size = resive(sects[i].sh_size);
+      sh_link = resive(sects[i].sh_link);
+      continue;
+    }
+  }
+
+  if (sh_offset == 0 || sh_entsize == 0 || sh_offset >= size_) {
+    fprintf(stderr, "invalid value \n");
+    return false;
+  }
+  auto strtab = &sects[sh_link];
+  if (sh_link >= shnum) {
+    return false;
+  }
+
+  Elf64_Off soff = resive(strtab->sh_offset);
+  Elf64_Off send = soff + resive(strtab->sh_size);
+  auto n = sh_size / sh_entsize;
+  auto dyn = cast<Elf64_Dyn>(sh_offset);
+  for (decltype(n) i = 0; i < n; i++) {
+    auto first = resive(dyn[i].d_un.d_val);
+    switch (resive(dyn[i].d_tag)) {
+    case DT_NEEDED: {
+      auto deps = stroffset(soff + first, send);
+      em.depends.push_back(fromutf8(deps));
+    } break;
+    case DT_SONAME:
+      em.soname = fromutf8(stroffset(soff + first, send));
+      break;
+    case DT_RUNPATH:
+      em.rupath = fromutf8(stroffset(soff + first, send));
+      break;
+    case DT_RPATH:
+      em.rpath = fromutf8(stroffset(soff + first, send));
+      break;
+    default:
+      break;
+    }
+  }
+
   return true;
 }
 
+bool elf_memview::inquisitive(elf_minutiae_t &em, std::error_code &ec) {
+  em.endian = Endina(static_cast<uint8_t>(data_[EI_DATA]));
+  em.osabi = elf_osabi(data_[EI_OSABI]);
+  auto msb = (em.endian == endian::BigEndian);
+  resiveable = (msb != IsBigEndianHost);
+  if (data_[EI_CLASS] == ELFCLASS64) {
+    em.bit64 = true;
+    return inquisitive64(em, ec);
+  }
+  if (data_[EI_CLASS] != ELFCLASS32) {
+    return false;
+  }
+  auto h = cast<Elf32_Ehdr>(0);
+  em.machine = elf_machine(resive(h->e_machine));
+  em.etype = elf_object_type(resive(h->e_type));
+  auto off = resive(h->e_shoff);
+  auto sects = cast<Elf64_Shdr>(off);
+  auto shnum = resive(h->e_shnum);
+  if (shnum * sizeof(Elf64_Shdr) + off > size_) {
+    return false;
+  }
+  Elf32_Off sh_offset = 0;
+  Elf32_Xword sh_entsize = 0;
+  Elf32_Xword sh_size = 0;
+  Elf32_Word sh_link = 0;
+  for (Elf32_Word i = 0; i < shnum; i++) {
+    auto st = resive(sects[i].sh_type);
+    if (st == SHT_DYNAMIC) {
+      sh_entsize = resive(sects[i].sh_entsize);
+      sh_offset = resive(sects[i].sh_offset);
+      sh_size = resive(sects[i].sh_size);
+      sh_link = resive(sects[i].sh_link);
+      continue;
+    }
+  }
+
+  if (sh_offset == 0 || sh_entsize == 0 || sh_offset >= size_) {
+    fprintf(stderr, "invalid value \n");
+    return false;
+  }
+  auto strtab = &sects[sh_link];
+  if (sh_link >= shnum) {
+    return false;
+  }
+
+  Elf32_Off soff = resive(strtab->sh_offset);
+  Elf32_Off send = soff + resive(strtab->sh_size);
+  auto n = sh_size / sh_entsize;
+  auto dyn = cast<Elf32_Dyn>(sh_offset);
+
+  for (decltype(n) i = 0; i < n; i++) {
+    auto first = resive(dyn[i].d_un.d_val);
+    switch (resive(dyn[i].d_tag)) {
+    case DT_NEEDED: {
+      auto deps = stroffset(soff + first, send);
+      em.depends.push_back(fromutf8(deps));
+    } break;
+    case DT_SONAME:
+      em.soname = fromutf8(stroffset(soff + first, send));
+      break;
+    case DT_RUNPATH:
+      em.rupath = fromutf8(stroffset(soff + first, send));
+      break;
+    case DT_RPATH:
+      em.rpath = fromutf8(stroffset(soff + first, send));
+      break;
+    default:
+      break;
+    }
+  }
+  return true;
+}
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
                                               std::error_code &ec) {
   planck::mapview mv;
   if (!mv.mapfile(sv, sizeof(Elf32_Ehdr))) {
     return std::nullopt;
   }
-  auto eh = mv.cast<Elf32_Ehdr>(0);
-
+  elf_memview emv(mv.data(), mv.size());
+  elf_minutiae_t em;
+  if (emv.inquisitive(em, ec)) {
+    return std::make_optional<elf_minutiae_t>(std::move(em));
+  }
   return std::nullopt;
 }
 } // namespace inquisitive

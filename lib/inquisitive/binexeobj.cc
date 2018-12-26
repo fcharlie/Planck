@@ -196,7 +196,7 @@ details::Types identify_binexeobj_magic(std::string_view mv) {
     }
     if (startswith(mv, "MZ") && mv.size() >= 0x3c + 4) {
       // read32le
-      uint32_t off = llvm::support::endian::read32le(mv.data() + 0x32);
+      uint32_t off = readle<uint32_t>((void *)(mv.data() + 0x32));
       auto sv = mv.substr(off);
       if (startswith(sv, PEMagic)) {
         return details::pecoff_executable;
