@@ -30,6 +30,7 @@ struct elf_minutiae_t {
   std::wstring osabi;
   std::wstring etype;
   std::wstring rpath;             // RPATH or some
+  std::wstring soname; // SONAME
   std::vector<std::wstring> deps; /// require so
 };
 
