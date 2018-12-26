@@ -69,10 +69,22 @@ struct shell_link_t {
   uint32_t reserved3;
 };
 
-struct link_target_idlist_t {
-  uint16_t idlistsize;
-  // IDLIST
+struct item_id_t {
+  uint16_t idsize;
+  //std::string data;
 };
+
+struct shl_idlsit_t {
+  uint16_t idlistsize;
+  // item_id_t
+  // IDLIST variable
+  // TerminalID zero 2byte
+};
+
+/*
+ IDList ItemIDSize (2 bytes):
+Data (variable):
+ */
 #pragma pack()
 
 } // namespace shl

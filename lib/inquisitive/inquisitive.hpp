@@ -17,6 +17,7 @@
 #include "details.hpp"
 
 namespace inquisitive {
+
 constexpr const int einident = 16;
 using planck::memview;
 namespace endian {
