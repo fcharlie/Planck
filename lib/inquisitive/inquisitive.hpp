@@ -28,6 +28,7 @@ struct elf_minutiae_t {
   endina::endian_t endian;
   std::wstring machine;
   std::wstring osabi;
+  std::wstring etype;
   std::wstring rpath;             // RPATH or some
   std::vector<std::wstring> deps; /// require so
 };

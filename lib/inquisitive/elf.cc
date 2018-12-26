@@ -88,7 +88,7 @@ const wchar_t *elf_arch_name(uint32_t e) {
       {EM_RCE, L"RCE"},
       {EM_ARM, L"ARM"},
       {EM_FAKE_ALPHA, L"EM_FAKE_ALPHA"},
-      {EM_SH, L"EM_SH"},
+      {EM_SH, L"SuperH"},
       {EM_SPARCV9, L"SPARC V9"},
       {EM_TRICORE, L"TRICORE"},
       {EM_ARC, L"ARC"},
