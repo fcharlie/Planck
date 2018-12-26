@@ -110,9 +110,9 @@ std::wstring Machine(uint32_t index) {
       {IMAGE_FILE_MACHINE_ARM64, L"ARM64 Little-Endian"},
       {IMAGE_FILE_MACHINE_CEE, L"IMAGE_FILE_MACHINE_CEE"},
       {IMAGE_FILE_MACHINE_CHPE_X86, L"Hybrid PE"},
-      {IMAGE_FILE_MACHINE_RISCV32, L"RISC-V 32-bit address space"},
-      {IMAGE_FILE_MACHINE_RISCV64, L"RISC-V 64-bit address space"},
-      {IMAGE_FILE_MACHINE_RISCV128, L"RISC-V 128-bit address space"}
+      {IMAGE_FILE_MACHINE_RISCV32, L"RISC-V 32-bit"},
+      {IMAGE_FILE_MACHINE_RISCV64, L"RISC-V 64-bit"},
+      {IMAGE_FILE_MACHINE_RISCV128, L"RISC-V 128-bit"}
       //
   };
   for (const auto &kv : machines) {
