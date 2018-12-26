@@ -121,8 +121,8 @@ struct file_links_t {
 std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
                                            windowsec_t &ec);
 std::optional<file_links_t> ResolveLinks(std::wstring_view sv, windowsec_t &ec);
-std::optional<std::wstring> ResolveShortcut(std::wstring_view sv,
-                                            windowsec_t &ec);
+std::optional<std::wstring> ResolveShellLink(std::wstring_view sv,
+                                             windowsec_t &ec);
 } // namespace inquisitive
 
 #endif
