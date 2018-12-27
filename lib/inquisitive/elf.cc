@@ -285,17 +285,17 @@ public:
   }
   const char *data() const { return data_; }
   size_t size() const { return size_; }
-  template <typename T> T *cast(size_t off) {
+  template <typename T> const T *cast(size_t off) const {
     if (off >= size_) {
       return nullptr;
     }
-    return reinterpret_cast<T *>(data_ + off);
+    return reinterpret_cast<const T *>(data_ + off);
   }
   template <typename Integer> Integer resive(Integer i) {
     if (!resiveable) {
       return i;
     }
-    return swap(i);
+    return swapbyte(i);
   }
   std::string stroffset(size_t off, size_t end);
   bool inquisitive(elf_minutiae_t &em, std::error_code &ec);
@@ -400,9 +400,9 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, std::error_code &ec) {
   em.machine = elf_machine(resive(h->e_machine));
   em.etype = elf_object_type(resive(h->e_type));
   auto off = resive(h->e_shoff);
-  auto sects = cast<Elf64_Shdr>(off);
+  auto sects = cast<Elf32_Shdr>(off);
   auto shnum = resive(h->e_shnum);
-  if (shnum * sizeof(Elf64_Shdr) + off > size_) {
+  if (shnum * sizeof(Elf32_Shdr) + off > size_) {
     return false;
   }
   Elf32_Off sh_offset = 0;

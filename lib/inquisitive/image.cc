@@ -38,7 +38,7 @@ details::Types identify_image(std::string_view mv) {
   case 0x38:
     if (startswithB(mv, psdMagic) && mv.size() > psdhlen) {
       // Version: always equal to 1.
-      auto ver = llvm::support::endian::read16be(mv.data() + 4);
+      auto ver = readbe<uint16_t>((void *)(mv.data() + 4));
       if (ver == 1) {
         return details::psd;
       }

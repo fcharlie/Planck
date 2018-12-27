@@ -34,6 +34,7 @@
 #define PLANCK_GNUC_PREREQ(maj, min, patch) 0
 #endif
 #endif
+#include <cstdint>
 
 namespace inquisitive {
 #if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
@@ -42,7 +43,7 @@ constexpr bool IsBigEndianHost = true;
 constexpr bool IsBigEndianHost = false;
 #endif
 
-inline uint16_t swap16(uint16_t value) {
+inline uint16_t swapbyte16(uint16_t value) {
 #if defined(_MSC_VER) && !defined(_DEBUG)
   // The DLL version of the runtime lacks these functions (bug!?), but in a
   // release build they're replaced with BSWAP instructions anyway.
@@ -54,7 +55,7 @@ inline uint16_t swap16(uint16_t value) {
 #endif
 }
 
-inline uint32_t swap32(uint32_t value) {
+inline uint32_t swapbyte32(uint32_t value) {
 #if defined(__llvm__) || (PLANCK_GNUC_PREREQ(4, 3, 0) && !defined(__ICC))
   return __builtin_bswap32(value);
 #elif defined(_MSC_VER) && !defined(_DEBUG)
@@ -70,44 +71,46 @@ inline uint32_t swap32(uint32_t value) {
 
 /// SwapByteOrder_64 - This function returns a byte-swapped representation of
 /// the 64-bit argument.
-inline uint64_t swap64(uint64_t value) {
+inline uint64_t swapbyte64(uint64_t value) {
 #if defined(__llvm__) || (PLANCK_GNUC_PREREQ(4, 3, 0) && !defined(__ICC))
   return __builtin_bswap64(value);
 #elif defined(_MSC_VER) && !defined(_DEBUG)
   return _byteswap_uint64(value);
 #else
-  uint64_t Hi = swap32(uint32_t(value));
-  uint32_t Lo = swap32(uint32_t(value >> 32));
+  uint64_t Hi = swapbyte32(uint32_t(value));
+  uint32_t Lo = swapbyte32(uint32_t(value >> 32));
   return (Hi << 32) | Lo;
 #endif
 }
-inline uint8_t swap(uint8_t c) { return c; }
-inline int8_t swap(int8_t c) { return c; }
-inline uint16_t swap(uint16_t value) { return swap16(value); }
-inline int16_t swap(int16_t value) {
-  return static_cast<int16_t>(swap16(value));
+inline uint8_t swapbyte(uint8_t c) { return c; }
+inline int8_t swapbyte(int8_t c) { return c; }
+inline uint16_t swapbyte(uint16_t value) { return swapbyte16(value); }
+inline int16_t swapbyte(int16_t value) {
+  return static_cast<int16_t>(swapbyte16(value));
 }
-inline uint32_t swap(uint32_t value) { return swap32(value); }
-inline int32_t swap(int32_t value) {
-  return static_cast<int32_t>(swap32(value));
+inline uint32_t swapbyte(uint32_t value) { return swapbyte32(value); }
+inline int32_t swapbyte(int32_t value) {
+  return static_cast<int32_t>(swapbyte32(value));
 }
 
 #if __LONG_MAX__ == __INT_MAX__
-inline unsigned long swap(unsigned long C) { return swap32(C); }
-inline signed long swap(signed long C) { return swap32(C); }
+inline unsigned long swapbyte(unsigned long C) { return swapbyte32(C); }
+inline signed long swapbyte(signed long C) { return swapbyte32(C); }
 #elif __LONG_MAX__ == __LONG_LONG_MAX__
-inline unsigned long swap(unsigned long C) { return swap64(C); }
-inline signed long swap(signed long C) { return swap64(C); }
+inline unsigned long swapbyte(unsigned long C) { return swapbyte64(C); }
+inline signed long swapbyte(signed long C) { return swapbyte64(C); }
 #else
 #error "Unknown long size!"
 #endif
-inline unsigned long long swap(unsigned long long C) { return swap64(C); }
-inline signed long long swap(signed long long C) { return swap64(C); }
+inline unsigned long long swapbyte(unsigned long long C) {
+  return swapbyte64(C);
+}
+inline signed long long swapbyte(signed long long C) { return swapbyte64(C); }
 
 template <typename Integer> Integer readle(void *p) {
   auto i = *reinterpret_cast<Integer *>(p);
   if (IsBigEndianHost) {
-    return swap(i);
+    return swapbyte(i);
   }
   return i;
 }
@@ -117,7 +120,7 @@ template <typename Integer> Integer readbe(void *p) {
   if (IsBigEndianHost) {
     return i;
   }
-  return swap(i);
+  return swapbyte(i);
 }
 
 } // namespace inquisitive
