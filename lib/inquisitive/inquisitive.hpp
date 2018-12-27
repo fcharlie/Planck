@@ -31,8 +31,9 @@ struct elf_minutiae_t {
   std::wstring rupath;               // RUPATH
   std::wstring soname;               // SONAME
   std::vector<std::wstring> depends; /// require so
-  bool bit64{false};                 /// 64 Bit
+  int version;
   endian::endian_t endian;
+  bool bit64{false};                 /// 64 Bit
 };
 
 struct pe_version_t {

@@ -13,7 +13,7 @@ namespace inquisitive {
 const wchar_t *elf_osabi(uint8_t osabi) {
   switch (osabi) {
   case ELFOSABI_SYSV:
-    return L"System V";
+    return L"SYSV";
   case ELFOSABI_HPUX:
     return L"HP-UX";
   case ELFOSABI_NETBSD:
@@ -386,6 +386,7 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, std::error_code &ec) {
 bool elf_memview::inquisitive(elf_minutiae_t &em, std::error_code &ec) {
   em.endian = Endina(static_cast<uint8_t>(data_[EI_DATA]));
   em.osabi = elf_osabi(data_[EI_OSABI]);
+  em.version = data_[EI_VERSION];
   auto msb = (em.endian == endian::BigEndian);
   resiveable = (msb != IsBigEndianHost);
   if (data_[EI_CLASS] == ELFCLASS64) {
