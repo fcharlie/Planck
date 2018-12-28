@@ -1,4 +1,5 @@
 ///////////////
+#include "inquisitive.hpp"
 #include "includes.hpp"
 #include "details.hpp"
 
@@ -16,7 +17,7 @@ namespace inquisitive {
 // };
 // https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_19840
 
-details::Types identify_image(std::string_view mv) {
+details::Types identify_image(memview mv) {
   constexpr const byte_t icoMagic[] = {0x00, 0x00, 0x01, 0x00};
   constexpr const byte_t jpegMagic[] = {0xFF, 0xD8, 0xFF};
   constexpr const byte_t jpeg2000Magic[] = {0x0,  0x0, 0x0, 0xC,  0x6A, 0x50,
@@ -28,15 +29,15 @@ details::Types identify_image(std::string_view mv) {
   constexpr const size_t psdhlen = 4 + 2 + 6 + 2 + 4 + 4 + 2 + 2;
   switch (mv[0]) {
   case 0x0:
-    if (startswithB(mv, icoMagic)) {
+    if (mv.startswith(icoMagic)) {
       return details::ico;
     }
-    if (startswithB(mv, jpeg2000Magic)) {
+    if (mv.startswith(jpeg2000Magic)) {
       return details::jp2;
     }
     break;
   case 0x38:
-    if (startswithB(mv, psdMagic) && mv.size() > psdhlen) {
+    if (mv.startswith(psdMagic) && mv.size() > psdhlen) {
       // Version: always equal to 1.
       auto ver = readbe<uint16_t>((void *)(mv.data() + 4));
       if (ver == 1) {
@@ -50,7 +51,7 @@ details::Types identify_image(std::string_view mv) {
     }
     break;
   case 0x47:
-    if (startswithB(mv, gifMagic)) {
+    if (mv.startswith(gifMagic)) {
       constexpr size_t gmlen = sizeof(gifMagic);
       if (mv.size() > gmlen + 3 && mv[gmlen] == '8' &&
           (mv[gmlen + 1] == '7' || mv[gmlen + 1] == '9') &&
@@ -81,17 +82,17 @@ details::Types identify_image(std::string_view mv) {
     }
     break;
   case 0x57:
-    if (startswithB(mv, webpMagic)) {
+    if (mv.startswith(webpMagic)) {
       return details::webp;
     }
     break;
   case 0x89:
-    if (startswithB(mv, pngMagic)) {
+    if (mv.startswith(pngMagic)) {
       return details::png;
     }
     break;
   case 0xFF:
-    if (startswithB(mv, jpegMagic)) {
+    if (mv.startswith(jpegMagic)) {
       return details::jpg;
     }
     break;

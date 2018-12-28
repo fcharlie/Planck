@@ -50,6 +50,25 @@ public:
     data_ = other.data_;
     size_ = other.size_;
   }
+
+  template <size_t ArrayLen> bool startswith(const uint8_t (&bv)[ArrayLen]) {
+    return (size_ >= ArrayLen && memcmp(data_, bv, ArrayLen) == 0);
+  }
+
+  bool startswith(std::string_view sv) {
+    if (sv.size() > size_) {
+      return false;
+    }
+    return (memcmp(data_, sv.data(), sv.size()) == 0);
+  }
+
+  bool startswith(const void *p, size_t n) {
+    if (n > size_) {
+      return false;
+    }
+    return (memcmp(data_, p, n) == 0);
+  }
+
   bool startswith(memview mv) {
     if (mv.size_ > size_) {
       return false;
@@ -67,6 +86,7 @@ public:
   }
   std::size_t size() const { return size_; }
   const char *data() const { return data_; }
+  std::string_view sv() { return std::string_view(data_, size_); }
   unsigned char operator[](const std::size_t off) const {
     if (off >= size_) {
       return UCHAR_MAX;

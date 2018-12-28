@@ -170,8 +170,94 @@ const wchar_t *typenames(Types t) {
 }
 } // namespace details
 
-details::Types identify_binexeobj_magic(std::string_view mv); /// binexeobj.cc
-details::Types identify_image(std::string_view mv);
+class FileView {
+public:
+  FileView() = default;
+  FileView(const FileView &) = delete;
+  FileView &operator=(const FileView &) = delete;
+  ~FileView() {
+    if (data_ != nullptr) {
+      HeapFree(GetProcessHeap(), 0, data_);
+    }
+  }
+  bool initialize(std::wstring_view sv, std::size_t maxsize) {
+    if (maxsize == 0) {
+      SetLastError(ERROR_BAD_ARGUMENTS);
+      return false;
+    }
+    data_ = reinterpret_cast<char *>(HeapAlloc(GetProcessHeap(), 0, maxsize));
+    if (data_ == nullptr) {
+      return false;
+    }
+    auto FileHandle =
+        CreateFileW(sv.data(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (FileHandle == INVALID_HANDLE_VALUE) {
+      return false;
+    }
+    LARGE_INTEGER li;
+    if (GetFileSizeEx(FileHandle, &li) != TRUE || li.QuadPart == 0) {
+      CloseHandle(FileHandle);
+      return false;
+    }
+    DWORD dwSize = 0;
+    if (ReadFile(FileHandle, data_, (DWORD)maxsize, &dwSize, nullptr) != TRUE) {
+      CloseHandle(FileHandle);
+      return false;
+    }
+    size_ = dwSize;
+    CloseHandle(FileHandle);
+    return true;
+  }
+  memview view(std::size_t pos = 0, std::size_t n = SIZE_MAX) {
+    if (pos >= size_) {
+      return memview(nullptr, 0);
+    }
+    auto begin = data_ + pos;
+    auto sn = (std::min)(n, size_ - pos);
+    return memview(data_ + pos, sn);
+  }
+
+private:
+  char *data_{nullptr};
+  size_t size_{0};
+};
+
+inline types::Types unite_binobj_types(details::Types t) {
+  switch (t) {
+  case details::pecoff_executable:
+    return types::PECOFF;
+  case details::elf:
+  case details::elf_core:
+  case details::elf_relocatable:
+  case details::elf_executable:
+  case details::elf_shared_object:
+    return types::ELF;
+  case details::macho_object:
+  case details::macho_executable:                      ///< Mach-O Executable
+  case details::macho_fixed_virtual_memory_shared_lib: ///< Mach-O Shared Lib,
+                                                       ///< FVM
+  case details::macho_core:                            ///< Mach-O Core File
+  case details::macho_preload_executable: ///< Mach-O Preloaded Executable
+  case details::macho_dynamically_linked_shared_lib: ///< Mach-O dynlinked
+                                                     ///< shared lib
+  case details::macho_dynamic_linker: ///< The Mach-O dynamic linker
+  case details::macho_bundle:         ///< Mach-O Bundle file
+  case details::macho_dynamically_linked_shared_lib_stub: ///< Mach-O Shared
+                                                          ///< lib stub
+  case details::macho_dsym_companion:   ///< Mach-O dSYM companion file
+  case details::macho_kext_bundle:      ///< Mach-O kext bundle file
+  case details::macho_universal_binary: ///< Mach-O universal binary
+    return types::MACHO;
+  default:
+    break;
+  }
+  return types::NONE;
+}
+
+details::Types identify_binexeobj_magic(memview mv); /// binexeobj.cc
+details::Types identify_image(memview mv);
+
 details::Types identity_text(memview mv) {
   switch (mv[0]) {
   case 0xEF: // UTF8 BOM 0xEF 0xBB 0xBF
@@ -232,6 +318,35 @@ details::Types identify_font(memview mv) {
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
                                                 std::error_code &ec) {
   auto extension = FindExtension(sv);
+  FileView fv;
+  if (!fv.initialize(sv, 32 * 1024)) {
+    return std::nullopt;
+  }
+  auto mv = fv.view();
+  auto xtype = identify_binexeobj_magic(mv);
+  if (xtype != details::none) {
+    inquisitive_result_t res;
+    res.basetype = xtype;
+    res.details = details::typenames(xtype);
+    res.type = unite_binobj_types(xtype);
+    return std::make_optional<inquisitive_result_t>(std::move(res));
+  }
+  xtype = identify_font(mv);
+  if (xtype != details::none) {
+    inquisitive_result_t res;
+    res.basetype = xtype;
+    res.details = details::typenames(xtype);
+    res.type = types::NONE;
+    return std::make_optional<inquisitive_result_t>(std::move(res));
+  }
+  xtype = identify_image(mv);
+  if (xtype != details::none) {
+    inquisitive_result_t res;
+    res.basetype = xtype;
+    res.details = details::typenames(xtype);
+    res.type = types::NONE;
+    return std::make_optional<inquisitive_result_t>(std::move(res));
+  }
   return std::nullopt;
 }
 } // namespace inquisitive

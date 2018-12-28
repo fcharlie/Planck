@@ -3,25 +3,26 @@
 #include "macho.cc"
 #include "details.hpp"
 #include "includes.hpp"
+#include "inquisitive.hpp"
 
 namespace inquisitive {
 
-static constexpr const char ElfMagic[] = {0x7f, 'E', 'L', 'F', '\0'};
+static constexpr const unsigned char ElfMagic[] = {0x7f, 'E', 'L', 'F', '\0'};
 // The PE signature bytes that follows the DOS stub header.
 static constexpr const char PEMagic[] = {'P', 'E', '\0', '\0'};
 
-static constexpr const char BigObjMagic[] = {
+static constexpr const unsigned char BigObjMagic[] = {
     '\xc7', '\xa1', '\xba', '\xd1', '\xee', '\xba', '\xa9', '\x4b',
     '\xaf', '\x20', '\xfa', '\xf6', '\x6a', '\xa4', '\xdc', '\xb8',
 };
 
-static constexpr const char ClGlObjMagic[] = {
+static constexpr const unsigned char ClGlObjMagic[] = {
     '\x38', '\xfe', '\xb3', '\x0c', '\xa5', '\xd9', '\xab', '\x4d',
     '\xac', '\x9b', '\xd6', '\xb6', '\x22', '\x26', '\x53', '\xc2',
 };
 
 // The signature bytes that start a .res file.
-static constexpr const char WinResMagic[] = {
+static constexpr const unsigned char WinResMagic[] = {
     '\x00', '\x00', '\x00', '\x00', '\x20', '\x00', '\x00', '\x00',
     '\xff', '\xff', '\x00', '\x00', '\xff', '\xff', '\x00', '\x00',
 };
@@ -44,13 +45,13 @@ struct BigObjHeader {
   uint32_t NumberOfSymbols;
 };
 
-details::Types identify_binexeobj_magic(std::string_view mv) {
+details::Types identify_binexeobj_magic(memview mv) {
   if (mv.size() < 4) {
     return details::none;
   }
   switch (mv[0]) {
   case 0x00:
-    if (startswith(mv, "\0\0\xFF\xFF")) {
+    if (mv.startswith("\0\0\xFF\xFF", 4)) {
       size_t minsize = offsetof(BigObjHeader, UUID) + sizeof(BigObjMagic);
       if (mv.size() < minsize) {
         return details::coff_import_library;
@@ -71,27 +72,27 @@ details::Types identify_binexeobj_magic(std::string_view mv) {
     if (mv[1] == 0) {
       return details::coff_object;
     }
-    if (startswith(mv, "\0asm")) {
+    if (mv.startswith("\0asm", 4)) {
       return details::wasm_object;
     }
     break;
   case 0xDE:
-    if (startswith(mv, "\xDE\xC0\x17\x0B")) {
+    if (mv.startswith("\xDE\xC0\x17\x0B", 4)) {
       return details::bitcode;
     }
     break;
   case 'B':
-    if (startswith(mv, "BC\xC0\xDE")) {
+    if (mv.startswith("BC\xC0\xDE", 3)) {
       return details::archive;
     }
     break;
   case '!': // .a
-    if (startswith(mv, "!<arch>\n") || startswith(mv, "!<thin>\n")) {
+    if (mv.startswith("!<arch>\n") || mv.startswith("!<thin>\n")) {
       return details::archive;
     }
     break;
   case '\177': // ELF
-    if (startswith(mv, ElfMagic) && mv.size() >= 18) {
+    if (mv.startswith(ElfMagic) && mv.size() >= 18) {
       bool Data2MSB = (mv[5] == 2);
       unsigned high = Data2MSB ? 16 : 17;
       unsigned low = Data2MSB ? 17 : 16;
@@ -113,8 +114,8 @@ details::Types identify_binexeobj_magic(std::string_view mv) {
     }
     break;
   case 0xCA:
-    if (startswith(mv, "\xCA\xFE\xBA\xBE") ||
-        startswith(mv, "\xCA\xFE\xBA\xBF")) {
+    if (mv.startswith("\xCA\xFE\xBA\xBE") ||
+        mv.startswith("\xCA\xFE\xBA\xBF")) {
       if (mv.size() >= 8 && mv[7] < 43) {
         return details::macho_universal_binary;
       }
@@ -124,8 +125,8 @@ details::Types identify_binexeobj_magic(std::string_view mv) {
   case 0xCE:
   case 0xCF: {
     uint16_t type = 0;
-    if (startswith(mv, "\xFE\xED\xFA\xCE") ||
-        startswith(mv, "\xFE\xED\xFA\xCF")) {
+    if (mv.startswith("\xFE\xED\xFA\xCE") ||
+        mv.startswith("\xFE\xED\xFA\xCF")) {
       /* Native endian */
       size_t minsize;
       if (mv[3] == char(0xCE))
@@ -134,8 +135,8 @@ details::Types identify_binexeobj_magic(std::string_view mv) {
         minsize = sizeof(mach_header_64);
       if (mv.size() >= minsize)
         type = mv[12] << 24 | mv[13] << 12 | mv[14] << 8 | mv[15];
-    } else if (startswith(mv, "\xCE\xFA\xED\xFE") ||
-               startswith(mv, "\xCF\xFA\xED\xFE")) {
+    } else if (mv.startswith("\xCE\xFA\xED\xFE") ||
+               mv.startswith("\xCF\xFA\xED\xFE")) {
       /* Reverse endian */
       size_t minsize;
       if (mv[0] == char(0xCE))
@@ -191,14 +192,14 @@ details::Types identify_binexeobj_magic(std::string_view mv) {
     }
     break;
   case 'M':
-    if (startswith(mv, "Microsoft C/C++ MSF 7.00\r\n")) {
+    if (mv.startswith("Microsoft C/C++ MSF 7.00\r\n")) {
       return details::pdb;
     }
-    if (startswith(mv, "MZ") && mv.size() >= 0x3c + 4) {
+    if (mv.startswith("MZ") && mv.size() >= 0x3c + 4) {
       // read32le
       uint32_t off = readle<uint32_t>((void *)(mv.data() + 0x32));
-      auto sv = mv.substr(off);
-      if (startswith(sv, PEMagic)) {
+      auto sv = mv.submv(off);
+      if (mv.startswith(PEMagic)) {
         return details::pecoff_executable;
       }
     }

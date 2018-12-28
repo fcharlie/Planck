@@ -33,7 +33,7 @@ struct elf_minutiae_t {
   std::vector<std::wstring> depends; /// require so
   int version;
   endian::endian_t endian;
-  bool bit64{false};                 /// 64 Bit
+  bool bit64{false}; /// 64 Bit
 };
 
 struct pe_version_t {
@@ -57,8 +57,10 @@ namespace types {
 enum Types {
   NONE,
   PECOFF, /// if return PECOFF todo dump PE details
-  ZIP,
   ELF,
+  MACHO,
+  ZIP
+
 };
 }
 
