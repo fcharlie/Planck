@@ -17,7 +17,7 @@ class FsDisableRedirection {
 public:
   typedef BOOL WINAPI fntype_Wow64DisableWow64FsRedirection(PVOID *OldValue);
   typedef BOOL WINAPI fntype_Wow64RevertWow64FsRedirection(PVOID *OldValue);
-  FsRedirection() {
+  FsDisableRedirection() {
     auto pfnWow64DisableWow64FsRedirection =
         (fntype_Wow64DisableWow64FsRedirection *)GetProcAddress(
             GetModuleHandleW(L"kernel32.dll"),
@@ -26,7 +26,7 @@ public:
       pfnWow64DisableWow64FsRedirection(&OldValue);
     }
   }
-  ~FsRedirection() {
+  ~FsDisableRedirection() {
     auto pfnWow64RevertWow64FsRedirection =
         (fntype_Wow64RevertWow64FsRedirection *)GetProcAddress(
             GetModuleHandleW(L"kernel32.dll"), "Wow64RevertWow64FsRedirection");
