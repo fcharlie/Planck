@@ -16,12 +16,12 @@
 
 namespace inquisitive {
 
-struct windowsec_t {
+struct winec_t {
   long code{S_OK};
   bool operator()() { return code == S_OK; }
   std::wstring message;
-  static windowsec_t lasterror() {
-    windowsec_t ec;
+  static winec_t last() {
+    winec_t ec;
     ec.code = GetLastError();
     LPWSTR buf = nullptr;
     auto rl = FormatMessageW(
@@ -119,10 +119,10 @@ struct file_links_t {
 };
 
 std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
-                                           windowsec_t &ec);
-std::optional<file_links_t> ResolveLinks(std::wstring_view sv, windowsec_t &ec);
+                                           winec_t &ec);
+std::optional<file_links_t> ResolveLinks(std::wstring_view sv, winec_t &ec);
 std::optional<std::wstring> ResolveShellLink(std::wstring_view sv,
-                                             windowsec_t &ec);
+                                             winec_t &ec);
 } // namespace inquisitive
 
 #endif
