@@ -16,7 +16,7 @@ namespace base {
 struct error_code {
   std::wstring message;
   long code{S_OK};
-  bool operator()() { return code == S_OK; }
+  explicit operator bool() const noexcept { return code != S_OK; }
 };
 inline error_code make_error_code(int val, std::wstring_view msg) {
   return error_code{std::wstring(msg), val};
