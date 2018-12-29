@@ -214,10 +214,11 @@ std::wstring Subsystem(uint32_t index) {
 }
 
 std::wstring fromascii(std::string_view sv) {
-  auto sz = MultiByteToWideChar(CP_ACP, 0, sv.data(), -1, nullptr, 0);
+  auto sz = MultiByteToWideChar(CP_ACP, 0, sv.data(), sv.size(), nullptr, 0);
   std::wstring output;
-  output.resize(sz - 1);
-  MultiByteToWideChar(CP_ACP, 0, sv.data(), -1, output.data(), sz - 1);
+  output.resize(sz);
+  // C++17 must output.data()
+  MultiByteToWideChar(CP_ACP, 0, sv.data(), sv.size(), output.data(), sz);
   return output;
 }
 
