@@ -20,7 +20,7 @@ namespace inquisitive {
 
 
 template <class IntegerT>
-[[nodiscard]] inline bool Integer_append_chars(const IntegerT _Raw_value,
+inline bool Integer_append_chars(const IntegerT _Raw_value,
                                                const int _Base,
                                                std::wstring &wstr) noexcept {
   using _Unsigned = std::make_unsigned_t<IntegerT>;
