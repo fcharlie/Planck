@@ -1,5 +1,5 @@
-#ifndef ERRORCODE_HPP
-#define ERRORCODE_HPP
+#ifndef PLANCK_ERRORCODE_HPP
+#define PLANCK_ERRORCODE_HPP
 #pragma once
 #ifndef _WINDOWS_
 #ifndef WIN32_LEAN_AND_MEAN
