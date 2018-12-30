@@ -18,18 +18,16 @@
 
 namespace inquisitive {
 
-template <class IntegerT>
-[[nodiscard]] inline std::wstring
-Integer_to_chars(const IntegerT _Raw_value,
-                 const int _Base) noexcept // strengthened
-{
 
+template <class IntegerT>
+[[nodiscard]] inline bool Integer_append_chars(const IntegerT _Raw_value,
+                                               const int _Base,
+                                               std::wstring &wstr) noexcept {
   using _Unsigned = std::make_unsigned_t<IntegerT>;
   _Unsigned _Value = static_cast<_Unsigned>(_Raw_value);
-  std::wstring result;
   if constexpr (std::is_signed_v<IntegerT>) {
     if (_Raw_value < 0) {
-      result.push_back('-');
+      wstr.push_back('-');
       _Value = static_cast<_Unsigned>(0 - _Value);
     }
   }
@@ -118,11 +116,19 @@ Integer_to_chars(const IntegerT _Raw_value,
     } while (_Value != 0);
     break;
   }
-
   const ptrdiff_t _Digits_written = _Buff_end - _RNext;
+  wstr.append(_RNext, _Digits_written);
+  return true;
+}
 
-  result.append(_RNext, _Digits_written);
-  return result;
+template <class IntegerT>
+[[nodiscard]] inline std::wstring
+Integer_to_chars(const IntegerT _Raw_value,
+                 const int _Base) noexcept // strengthened
+{
+  std::wstring wr;
+  Integer_append_chars(_Raw_value, _Base, wr);
+  return wr;
 }
 
 constexpr const int einident = 16;
