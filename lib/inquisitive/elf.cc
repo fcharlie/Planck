@@ -298,8 +298,8 @@ public:
     return swapbyte(i);
   }
   std::string stroffset(size_t off, size_t end);
-  bool inquisitive(elf_minutiae_t &em, std::error_code &ec);
-  bool inquisitive64(elf_minutiae_t &em, std::error_code &ec);
+  bool inquisitive(elf_minutiae_t &em, base::error_code &ec);
+  bool inquisitive64(elf_minutiae_t &em, base::error_code &ec);
 
 private:
   const char *data_{nullptr};
@@ -318,7 +318,7 @@ std::string elf_memview::stroffset(size_t off, size_t end) {
 }
 
 //
-bool elf_memview::inquisitive64(elf_minutiae_t &em, std::error_code &ec) {
+bool elf_memview::inquisitive64(elf_minutiae_t &em, base::error_code &ec) {
   auto h = cast<Elf64_Ehdr>(0);
   if (h == nullptr) {
     return false;
@@ -329,6 +329,7 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, std::error_code &ec) {
   auto sects = cast<Elf64_Shdr>(off);
   auto shnum = resive(h->e_shnum);
   if (shnum * sizeof(Elf64_Shdr) + off > size_) {
+    ec = base::make_error_code(L"ELF file size too small");
     return false;
   }
   Elf64_Off sh_offset = 0;
@@ -347,11 +348,12 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, std::error_code &ec) {
   }
 
   if (sh_offset == 0 || sh_entsize == 0 || sh_offset >= size_) {
-    fprintf(stderr, "invalid value \n");
+    ec = base::make_error_code(L"ELF file size invalid");
     return false;
   }
   auto strtab = &sects[sh_link];
   if (sh_link >= shnum) {
+    ec = base::make_error_code(L"ELF file size too small");
     return false;
   }
 
@@ -383,7 +385,7 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, std::error_code &ec) {
   return true;
 }
 
-bool elf_memview::inquisitive(elf_minutiae_t &em, std::error_code &ec) {
+bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
   em.endian = Endina(static_cast<uint8_t>(data_[EI_DATA]));
   em.osabi = elf_osabi(data_[EI_OSABI]);
   em.version = data_[EI_VERSION];
@@ -394,6 +396,9 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, std::error_code &ec) {
     return inquisitive64(em, ec);
   }
   if (data_[EI_CLASS] != ELFCLASS32) {
+    std::wstring msg(L"ELF EI_CLASS ERROR: ");
+    base::Integer_append_chars(data_[EI_CLASS], 10, msg);
+    ec = base::make_error_code(msg);
     return false;
   }
   auto h = cast<Elf32_Ehdr>(0);
@@ -403,6 +408,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, std::error_code &ec) {
   auto sects = cast<Elf32_Shdr>(off);
   auto shnum = resive(h->e_shnum);
   if (shnum * sizeof(Elf32_Shdr) + off > size_) {
+    ec = base::make_error_code(L"ELF file size too small");
     return false;
   }
   Elf32_Off sh_offset = 0;
@@ -421,7 +427,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, std::error_code &ec) {
   }
 
   if (sh_offset == 0 || sh_entsize == 0 || sh_offset >= size_) {
-    fprintf(stderr, "invalid value \n");
+    ec = base::make_error_code(L"ELF file size invalid");
     return false;
   }
   auto strtab = &sects[sh_link];
@@ -457,9 +463,10 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, std::error_code &ec) {
   return true;
 }
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
-                                              std::error_code &ec) {
+                                              base::error_code &ec) {
   planck::mapview mv;
   if (!mv.mapfile(sv, sizeof(Elf32_Ehdr))) {
+    ec = base::make_error_code(L"ELF file unable mapview");
     return std::nullopt;
   }
   elf_memview emv(mv.data(), mv.size());

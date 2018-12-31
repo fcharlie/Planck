@@ -15,6 +15,7 @@
 #include <system_error>
 #include <mapview.hpp>
 #include <charconv.hpp>
+#include <errorcode.hpp>
 #include "details.hpp"
 
 namespace inquisitive {
@@ -74,11 +75,11 @@ struct inquisitive_result_t {
 
 std::wstring fromutf8(std::string_view text);
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
-                                                std::error_code &ec);
+                                                base::error_code &ec);
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
-                                                std::error_code &ec);
+                                                base::error_code &ec);
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
-                                              std::error_code &ec);
+                                              base::error_code &ec);
 } // namespace inquisitive
 
 #endif

@@ -69,16 +69,21 @@ struct shell_link_t {
   uint32_t reserved3;
 };
 
-struct item_id_t {
-  uint16_t idsize;
-  //std::string data;
+enum link_info_flags {
+  VolumeIDAndLocalBasePath = 0x00000001,
+  CommonNetworkRelativeLinkAndPathSuffix = 0x00000002
 };
 
-struct shl_idlsit_t {
-  uint16_t idlistsize;
-  // item_id_t
-  // IDLIST variable
-  // TerminalID zero 2byte
+struct link_info_t {
+  uint32_t cbSize;
+  uint32_t cbHeaderSize;
+  uint32_t dwFlags;
+  uint32_t cbVolumeIDOffset;
+  uint32_t cbLocalBasePathOffset;
+  uint32_t cbCommonNetworkRelativeLinkOffset;
+  uint32_t cbCommonPathSuffixOffset;
+  uint32_t cbLocalBasePathOffsetUnicode;
+  uint32_t cbCommonPathSuffixOffsetUnicode;
 };
 
 /*

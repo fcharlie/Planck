@@ -214,11 +214,12 @@ std::wstring Subsystem(uint32_t index) {
 }
 
 std::wstring fromascii(std::string_view sv) {
-  auto sz = MultiByteToWideChar(CP_ACP, 0, sv.data(), sv.size(), nullptr, 0);
+  auto sz =
+      MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), nullptr, 0);
   std::wstring output;
   output.resize(sz);
   // C++17 must output.data()
-  MultiByteToWideChar(CP_ACP, 0, sv.data(), sv.size(), output.data(), sz);
+  MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), output.data(), sz);
   return output;
 }
 
@@ -261,7 +262,7 @@ inline std::wstring ClrMessage(memview mv, LPVOID nh, ULONG clrva) {
 
 template <typename NtHeaderT>
 std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
-                                         std::error_code &ec) {
+                                         base::error_code &ec) {
   pe_minutiae_t pm;
   pm.machine = Machine(nh->FileHeader.Machine);
   pm.characteristics = Characteristics(nh->FileHeader.Characteristics,
@@ -307,19 +308,22 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
 }
 
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
-                                                std::error_code &ec) {
+                                                base::error_code &ec) {
 
   planck::mapview mv;
   if (!mv.mapfile(sv, sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
+    ec = base::make_error_code(L"PE file unable mapview");
     return std::nullopt;
   }
   auto h = mv.cast<IMAGE_DOS_HEADER>(0);
   if (h == nullptr) {
+    ec = base::make_error_code(L"PE file size tool small");
     return std::nullopt;
   }
   // PE/PE+ lIMAGE_NT_HEADERS32 ayout
   auto nh = mv.cast<IMAGE_NT_HEADERS32>(h->e_lfanew);
   if (nh == nullptr) {
+    ec = base::make_error_code(L"PE file size tool small");
     return std::nullopt;
   }
   switch (nh->OptionalHeader.Magic) {
