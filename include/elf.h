@@ -111,6 +111,18 @@ typedef struct {
 #define ELFOSABI_TRU64 10
 #define ELFOSABI_MODESTO 11
 #define ELFOSABI_OPENBSD 12
+#define ELFOSABI_OPENVMS 13 // Open VMS
+#define ELFOSABI_NSK 14     // Hewlett-Packard Non-Stop Kernel
+#define ELFOSABI_AROS 15    // Amiga Research OS
+#define ELFOSABI_FENIXOS 16
+// The FenixOS highly scalable multi-core OS   64-255 Architecture-specific
+// value range
+#define ELFOSABI_AMDGPU_HSA 64
+// AMDGPU OS for HSA compatible compute kernels.
+#define ELFOSABI_AMDGPU_PAL 65
+// AMDGPU OS for AMD PAL compatible graphics shaders and compute kernels.
+#define ELFOSABI_AMDGPU_MESA3D 66
+// AMDGPU OS for Mesa3D compatible graphics shaders and compute kernels.
 #define ELFOSABI_ARM 97
 #define ELFOSABI_STANDALONE 255
 
@@ -147,6 +159,7 @@ typedef struct {
 #define EM_PPC 20
 #define EM_PPC64 21
 #define EM_S390 22
+#define EM_SPU 23 // Sony/Toshiba/IBM SPU
 
 #define EM_V800 36
 #define EM_FR20 37
@@ -176,7 +189,8 @@ typedef struct {
 #define EM_TINYJ 61
 #define EM_X86_64 62
 #define EM_PDSP 63
-
+#define EM_PDP10 64 // Digital Equipment Corp. PDP-10
+#define EM_PDP11 65 // Digital Equipment Corp. PDP-11
 #define EM_FX66 66
 #define EM_ST9PLUS 67
 #define EM_ST7 68
@@ -307,6 +321,9 @@ typedef struct {
 #define EM_MOXIE 223
 #define EM_AMDGPU 224
 #define EM_RISCV 243
+#define EM_LANAI 244   // Lanai processor
+#define EM_CEVA 245    // CEVA Processor Architecture Family
+#define EM_CEVA_X2 246 // CEVA X2 Processor Family
 #define EM_BPF 247
 #define EM_NUM 248
 
