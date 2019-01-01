@@ -1,6 +1,6 @@
 //////////
-#ifndef PRIVEXEC_CONSOLE_ADAPTER_HPP
-#define PRIVEXEC_CONSOLE_ADAPTER_HPP
+#ifndef PLANCK_CONSOLE_ADAPTER_HPP
+#define PLANCK_CONSOLE_ADAPTER_HPP
 #ifndef _WINDOWS_
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN //
@@ -10,7 +10,7 @@
 
 #include <functional>
 
-namespace priv {
+namespace planck {
 using ssize_t = SSIZE_T;
 namespace fc {
 enum Color : WORD {
@@ -135,7 +135,8 @@ private:
   HANDLE hConsole{nullptr};
   FILE *out{stdout};
 };
+
 } // namespace details
-} // namespace priv
+} // namespace planck
 
 #endif

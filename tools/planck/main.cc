@@ -29,7 +29,7 @@ template <typename... Args> bool IsSameArg(std::wstring_view sv, Args... args) {
 
 void Usage() {
   constexpr const auto kUsage = LR"(FileView)";
-  priv::PrintNone(L"%s", kUsage);
+  planck::PrintNone(L"%s", kUsage);
 }
 
 bool ParseArgv(int argc, wchar_t **argv, AppArgv &av) {
@@ -41,7 +41,7 @@ bool ParseArgv(int argc, wchar_t **argv, AppArgv &av) {
     }
     if (IsSameArg(arg, L"-V", L"--verbose")) {
       av.verbose = true;
-      priv::VerboseEnable();
+      planck::VerboseEnable();
       continue;
     }
     if (IsSameArg(arg, L"-v", L"--version")) {
@@ -68,7 +68,7 @@ std::optional<std::wstring> FileTarget(std::wstring_view sv, bool verbose) {
 int wmain(int argc, wchar_t **argv) {
 
   //
-  priv::VerboseEnable();
+  planck::VerboseEnable();
   // auto text = u8"\x4F60\x597D";
   // auto wt = probe::convert(text);
   // priv::PrintNone(L"Text: %s\n", wt);

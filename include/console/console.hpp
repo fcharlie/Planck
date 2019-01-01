@@ -1,12 +1,46 @@
 ///
-#ifndef PRIVEXEC_CONSOLE_HPP
-#define PRIVEXEC_CONSOLE_HPP
+#ifndef PLANCK_CONSOLE_HPP
+#define PLANCK_CONSOLE_HPP
 #include "adapter.hpp"
+#include <string_view>
 
-namespace priv {
+namespace planck {
 // ChangePrintMode todo
 inline bool ChangePrintMode(bool isstderr) {
   return details::adapter::instance().changeout(isstderr);
+}
+
+// check we use wide console output
+inline bool UseWideConsole() {
+  HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+  if (hOut == INVALID_HANDLE_VALUE || hOut == nullptr) {
+    return false;
+  }
+  if (GetConsoleOutputCP() == 65001) {
+    return false;
+  }
+  return true;
+}
+
+std::wstring fromutf8(std::string_view sv) {
+  auto sz =
+      MultiByteToWideChar(CP_UTF8, 0, sv.data(), (int)sv.size(), nullptr, 0);
+  std::wstring output;
+  output.resize(sz);
+  // C++17 string::data() has non const function
+  MultiByteToWideChar(CP_UTF8, 0, sv.data(), (int)sv.size(), output.data(), sz);
+  return output;
+}
+
+inline DWORD WriteWide(std::string_view msg) {
+  auto w = fromutf8(msg);
+  auto hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+  if (hOut == INVALID_HANDLE_VALUE || hOut == nullptr) {
+    return 0;
+  }
+  DWORD dwWrite = 0;
+  WriteConsoleW(hOut, w.data(), (DWORD)w.size(), &dwWrite, nullptr);
+  return dwWrite;
 }
 
 inline bool VerboseEnable() {
@@ -92,6 +126,6 @@ template <typename... Args> ssize_t fatal(const wchar_t *format, Args... args) {
                                                    buffer.data(), size);
 }
 
-} // namespace priv
+} // namespace planck
 #include "adapter.ipp"
 #endif

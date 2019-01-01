@@ -1,6 +1,6 @@
 ////
-#ifndef PRIVEXEC_CONSOLE_ADAPTER_IPP
-#define PRIVEXEC_CONSOLE_ADAPTER_IPP
+#ifndef PLANCK_CONSOLE_ADAPTER_IPP
+#define PLANCK_CONSOLE_ADAPTER_IPP
 #include <charconv>
 #include "adapter.hpp"
 
@@ -8,8 +8,9 @@
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #endif
 
-namespace priv::details {
+namespace planck::details {
 // Enable VT
+
 inline bool enablevtmode() {
   HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
   if (hOut == INVALID_HANDLE_VALUE) {
@@ -196,6 +197,6 @@ inline ssize_t adapter::writetty(int color, const wchar_t *data, size_t len) {
   return l;
 }
 
-} // namespace priv::details
+} // namespace planck::details
 
 #endif
