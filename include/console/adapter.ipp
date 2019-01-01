@@ -29,27 +29,32 @@ inline bool enablevtmode() {
   return true;
 }
 
-inline adapter::adapter() {
-  hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-  if (hConsole == INVALID_HANDLE_VALUE) {
+/// Like reopen
+bool adapter::changeout(bool isstderr) {
+  out = isstderr ? stderr : stdout;
+  hConsole = GetStdHandle(isstderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
+  if (hConsole == INVALID_HANDLE_VALUE || hConsole == nullptr) {
     at = AdapterFile;
-    return;
+    return false;
   }
   if (GetFileType(hConsole) == FILE_TYPE_DISK) {
     at = AdapterFile;
-    return;
+    return true;
   }
-  if (GetFileType(hConsole) == FILE_TYPE_CHAR) {
-    at = AdapterConsole;
-    DWORD mode;
-    if (GetConsoleMode(hConsole, &mode) == TRUE &&
-        (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0) {
-      at = AdapterConsoleTTY;
-    }
-    return;
+  if (GetFileType(hConsole) != FILE_TYPE_CHAR) {
+    at = AdapterTTY;
+    return true;
   }
-  at = AdapterTTY;
+  at = AdapterConsole;
+  DWORD mode;
+  if (GetConsoleMode(hConsole, &mode) == TRUE &&
+      (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0) {
+    at = AdapterConsoleTTY;
+  }
+  return true;
 }
+
+inline adapter::adapter() { changeout(false); }
 
 inline std::string wchar2utf8(const wchar_t *buf, size_t len) {
 

@@ -16,7 +16,7 @@ inline bool UseWideConsole() {
   if (hOut == INVALID_HANDLE_VALUE || hOut == nullptr) {
     return false;
   }
-  if (GetConsoleOutputCP() == 65001) {
+  if (GetFileType(hOut) == FILE_TYPE_CHAR && GetConsoleOutputCP() == 65001) {
     return false;
   }
   return true;

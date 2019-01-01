@@ -113,10 +113,7 @@ public:
     }
     return -1;
   }
-  bool changeout(bool isstderr) {
-    out = isstderr ? stderr : stdout;
-    return out == stderr;
-  }
+  bool changeout(bool isstderr);
   bool changelevel(adapterlevel_t al_) {
     al = al_;
     return al;
