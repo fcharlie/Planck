@@ -37,32 +37,6 @@ inline bool epub(const byte_t *buf, size_t size) {
          buf[56] == 0x69 && buf[57] == 0x70;
 }
 
-types::Type identify_archive(memview mv) {
-  if (mv.startswith(rpmMagic)) {
-    return types::rpm;
-  }
-  if (mv.startswith(rarMagic)) {
-    return types::rar;
-  }
-  if (mv.startswith(pdfMagic)) {
-    return types::pdf;
-  }
-  if (mv.startswith(swfMagic1) || mv.startswith(swfMagic2)) {
-    return types::swf;
-  }
-  if (mv.startswith(rtfMagic)) {
-    return types::rtf;
-  }
-  if (mv.startswith(msiMagic)) {
-    return types::msi;
-  }
-  // if(mv.startswith(vmdMagic)){
-  //   return types::none;
-  // }
-
-  return types::none;
-}
-
 /*
 https://github.com/mcmilk/7-Zip-zstd/blob/master/CPP/7zip/Archive/7z/7zHeader.h
 const UInt32 k_Copy = 0;
@@ -95,15 +69,47 @@ const UInt32 k_LZ5   = 0x4F71105;
 const UInt32 k_LIZARD= 0x4F71106;
 */
 
-// check 7z method.
-std::optional<std::string_view> n7zmethod(memview sv) {
-  //
-  return std::nullopt;
+status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
+  if (!mv.startswith(n7zMagic)) {
+    /// File not 7z type
+    return None;
+  }
+  return None;
 }
 
 status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
-  //
-  return None;
+  if (mv.startswith(rpmMagic)) {
+    ir.Assign(L"RPM Package Manager", types::rpm);
+    return Found;
+  }
+  if (mv.startswith(rarMagic)) {
+
+    ir.Assign(L"Roshal Archive (rar)", types::rar);
+    return Found;
+  }
+  if (mv.startswith(pdfMagic)) {
+    ir.Assign(L"Portable Document Format (PDF)", types::pdf);
+    return Found;
+  }
+  if (mv.startswith(swfMagic1) || mv.startswith(swfMagic2)) {
+    ir.Assign(L"Adobe Flash file format", types::swf);
+    return Found;
+  }
+  if (mv.startswith(rtfMagic)) {
+    ir.Assign(L"Rich Text Format data", types::rtf);
+    return Found;
+  }
+  if (mv.startswith(msiMagic)) {
+    ir.Assign(L"Windows Installer packages", types::msi);
+    return Found;
+  }
+  if (epub((const byte_t *)mv.data(), mv.size())) {
+    ir.Assign(L"EPUB document", types::epub);
+    return Found;
+  }
+  /**/
+
+  return inquisitive_7zinternal(mv, ir);
 }
 // https://rarlab.com/technote.htm rar
 } // namespace inquisitive

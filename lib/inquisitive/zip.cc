@@ -8,8 +8,8 @@
 
 namespace inquisitive {
 ///
-types::Type identify_zip_family(memview mv) {
+status_t inquisitive_zip_family(memview mv, inquisitive_result_t &ir) {
   // PK
-  return types::none;
+  return None;
 }
 } // namespace inquisitive

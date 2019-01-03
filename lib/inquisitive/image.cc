@@ -16,7 +16,7 @@ namespace inquisitive {
 // };
 // https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_19840
 
-types::Type identify_image(memview mv) {
+status_t inquisitive_images(memview mv, inquisitive_result_t &ir) {
   constexpr const byte_t icoMagic[] = {0x00, 0x00, 0x01, 0x00};
   constexpr const byte_t jpegMagic[] = {0xFF, 0xD8, 0xFF};
   constexpr const byte_t jpeg2000Magic[] = {0x0,  0x0, 0x0, 0xC,  0x6A, 0x50,
@@ -29,10 +29,13 @@ types::Type identify_image(memview mv) {
   switch (mv[0]) {
   case 0x0:
     if (mv.startswith(icoMagic)) {
-      return types::ico;
+      ir.Assign(L"ICO file format (.ico)", types::ico);
+      return Found;
     }
     if (mv.startswith(jpeg2000Magic)) {
-      return types::jp2;
+
+      ir.Assign(L"JPEG 2000 Image", types::jp2);
+      return Found;
     }
     break;
   case 0x38:
@@ -40,13 +43,15 @@ types::Type identify_image(memview mv) {
       // Version: always equal to 1.
       auto ver = planck::readbe<uint16_t>((void *)(mv.data() + 4));
       if (ver == 1) {
-        return types::psd;
+        ir.Assign(L"Photoshop document file extension", types::psd);
+        return Found;
       }
     }
     break;
   case 0x42:
     if (mv.size() > 2 && mv[1] == 0x4D) {
-      return types::bmp;
+      ir.Assign(L"Bitmap image file format (.bmp)", types::bmp);
+      return Found;
     }
     break;
   case 0x47:
@@ -55,54 +60,64 @@ types::Type identify_image(memview mv) {
       if (mv.size() > gmlen + 3 && mv[gmlen] == '8' &&
           (mv[gmlen + 1] == '7' || mv[gmlen + 1] == '9') &&
           mv[gmlen + 2] == 'a') {
-        return types::gif;
+
+        ir.Assign(L"Graphics Interchange Format (.gif)", types::gif);
+        return Found;
       }
     }
     break;
   case 0x49:
     if (mv.size() > 9 && mv[1] == 0x49 && mv[2] == 0x2A && mv[3] == 0x0 &&
         mv[8] == 0x43 && mv[9] == 0x52) {
-      return types::cr2;
+      ir.Assign(L"Canon 5D Mark IV CR2", types::cr2);
+      return Found;
     }
     if (mv.size() > 3 && mv[1] == 0x49 && mv[2] == 0x2A && mv[3] == 0x0) {
-      return types::tif;
+      ir.Assign(L"Tagged Image File Format (.tif)", types::tif);
+      return Found;
     }
     if (mv.size() > 2 && mv[1] == 0x49 && mv[2] == 0xBC) {
-      return types::jxr;
+
+      ir.Assign(L"JPEG extended range", types::jxr);
+      return Found;
     }
     break;
   case 0x4D:
     if (mv.size() > 9 && mv[0] == 0x4D && mv[1] == 0x4D && mv[2] == 0x0 &&
         mv[3] == 0x2A && mv[8] == 0x43 && mv[9] == 0x52) {
-      return types::cr2;
+
+      ir.Assign(L"Canon 5D Mark IV CR2", types::cr2);
+      return Found;
     }
     if (mv.size() > 3 && mv[1] == 0x4D && mv[2] == 0x0 && mv[3] == 0x2A) {
-      return types::tif;
+      ir.Assign(L"Tagged Image File Format (.tif)", types::tif);
+      return Found;
+      return Found;
     }
     break;
   case 0x57:
     if (mv.startswith(webpMagic)) {
-      return types::webp;
+
+      ir.Assign(L"WebP Image", types::webp);
+      return Found;
     }
     break;
   case 0x89:
     if (mv.startswith(pngMagic)) {
-      return types::png;
+
+      ir.Assign(L"Portable Network Graphics (.png)", types::png);
+      return Found;
     }
     break;
   case 0xFF:
     if (mv.startswith(jpegMagic)) {
-      return types::jpg;
+      ir.Assign(L"JPEG Image", types::jpg);
+      return Found;
     }
     break;
   default:
     break;
   }
-  return types::none;
-}
-
-status_t inquisitive_images(memview mv, inquisitive_result_t &ir) {
-  //
   return None;
 }
 
