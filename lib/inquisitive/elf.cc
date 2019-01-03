@@ -1,7 +1,7 @@
 /// ELF details
 #include <elf.h>
+#include <endian.hpp>
 #include "inquisitive.hpp"
-#include "includes.hpp"
 
 //  Executable and Linkable Format ELF
 // Thanks musl libc
@@ -308,7 +308,7 @@ public:
     if (!resiveable) {
       return i;
     }
-    return swapbyte(i);
+    return bswap(i);
   }
   std::string stroffset(size_t off, size_t end);
   bool inquisitive(elf_minutiae_t &em, base::error_code &ec);

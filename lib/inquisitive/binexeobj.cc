@@ -1,8 +1,8 @@
 ///////// check binary object file format
 #include <string_view>
-#include "macho.cc"
+#include <endian.hpp>
+#include "macho.hpp"
 #include "details.hpp"
-#include "includes.hpp"
 #include "inquisitive.hpp"
 
 namespace inquisitive {
@@ -197,7 +197,7 @@ details::Types identify_binexeobj_magic(memview mv) {
     }
     if (mv.startswith("MZ") && mv.size() >= 0x3c + 4) {
       // read32le
-      uint32_t off = readle<uint32_t>((void *)(mv.data() + 0x32));
+      uint32_t off = readle<uint32_t>(mv.data() + 0x32);
       auto sv = mv.submv(off);
       if (mv.startswith(PEMagic)) {
         return details::pecoff_executable;
