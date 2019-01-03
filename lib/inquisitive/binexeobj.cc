@@ -2,7 +2,6 @@
 #include <string_view>
 #include <endian.hpp>
 #include "macho.hpp"
-#include "details.hpp"
 #include "inquisitive.hpp"
 
 namespace inquisitive {
@@ -45,50 +44,50 @@ struct BigObjHeader {
   uint32_t NumberOfSymbols;
 };
 
-details::Types identify_binexeobj_magic(memview mv) {
+types::Type identify_binexeobj_magic(memview mv) {
   if (mv.size() < 4) {
-    return details::none;
+    return types::none;
   }
   switch (mv[0]) {
   case 0x00:
     if (mv.startswith("\0\0\xFF\xFF", 4)) {
       size_t minsize = offsetof(BigObjHeader, UUID) + sizeof(BigObjMagic);
       if (mv.size() < minsize) {
-        return details::coff_import_library;
+        return types::coff_import_library;
       }
       const char *start = mv.data() + offsetof(BigObjHeader, UUID);
       if (memcmp(start, BigObjMagic, sizeof(BigObjMagic)) == 0) {
-        return details::coff_object;
+        return types::coff_object;
       }
       if (memcmp(start, ClGlObjMagic, sizeof(ClGlObjMagic)) == 0) {
-        return details::coff_cl_gl_object;
+        return types::coff_cl_gl_object;
       }
-      return details::coff_import_library;
+      return types::coff_import_library;
     }
     if (mv.size() >= sizeof(WinResMagic) &&
         memcmp(mv.data(), WinResMagic, sizeof(WinResMagic)) == 0) {
-      return details::windows_resource;
+      return types::windows_resource;
     }
     if (mv[1] == 0) {
-      return details::coff_object;
+      return types::coff_object;
     }
     if (mv.startswith("\0asm", 4)) {
-      return details::wasm_object;
+      return types::wasm_object;
     }
     break;
   case 0xDE:
     if (mv.startswith("\xDE\xC0\x17\x0B", 4)) {
-      return details::bitcode;
+      return types::bitcode;
     }
     break;
   case 'B':
     if (mv.startswith("BC\xC0\xDE", 3)) {
-      return details::archive;
+      return types::archive;
     }
     break;
   case '!': // .a
     if (mv.startswith("!<arch>\n") || mv.startswith("!<thin>\n")) {
-      return details::archive;
+      return types::archive;
     }
     break;
   case '\177': // ELF
@@ -99,25 +98,25 @@ details::Types identify_binexeobj_magic(memview mv) {
       if (mv[high] == 0) {
         switch (mv[low]) {
         default:
-          return details::elf;
+          return types::elf;
         case 1:
-          return details::elf_relocatable;
+          return types::elf_relocatable;
         case 2:
-          return details::elf_executable;
+          return types::elf_executable;
         case 3:
-          return details::elf_shared_object;
+          return types::elf_shared_object;
         case 4:
-          return details::elf_core;
+          return types::elf_core;
         }
       }
-      return details::elf;
+      return types::elf;
     }
     break;
   case 0xCA:
     if (mv.startswith("\xCA\xFE\xBA\xBE") ||
         mv.startswith("\xCA\xFE\xBA\xBF")) {
       if (mv.size() >= 8 && mv[7] < 43) {
-        return details::macho_universal_binary;
+        return types::macho_universal_binary;
       }
     }
     break;
@@ -150,27 +149,27 @@ details::Types identify_binexeobj_magic(memview mv) {
     default:
       break;
     case 1:
-      return details::macho_object;
+      return types::macho_object;
     case 2:
-      return details::macho_executable;
+      return types::macho_executable;
     case 3:
-      return details::macho_fixed_virtual_memory_shared_lib;
+      return types::macho_fixed_virtual_memory_shared_lib;
     case 4:
-      return details::macho_core;
+      return types::macho_core;
     case 5:
-      return details::macho_preload_executable;
+      return types::macho_preload_executable;
     case 6:
-      return details::macho_dynamically_linked_shared_lib;
+      return types::macho_dynamically_linked_shared_lib;
     case 7:
-      return details::macho_dynamic_linker;
+      return types::macho_dynamic_linker;
     case 8:
-      return details::macho_bundle;
+      return types::macho_bundle;
     case 9:
-      return details::macho_dynamically_linked_shared_lib_stub;
+      return types::macho_dynamically_linked_shared_lib_stub;
     case 10:
-      return details::macho_dsym_companion;
+      return types::macho_dsym_companion;
     case 11:
-      return details::macho_kext_bundle;
+      return types::macho_kext_bundle;
     }
     break;
   }
@@ -182,36 +181,36 @@ details::Types identify_binexeobj_magic(memview mv) {
   case 0x4c: // 80386 Windows
   case 0xc4: // ARMNT Windows
     if (mv[1] == 0x01) {
-      return details::coff_object;
+      return types::coff_object;
     }
     [[fallthrough]];
   case 0x90: // PA-RISC Windows
   case 0x68: // mc68K Windows
     if (mv[1] == 0x02) {
-      return details::coff_object;
+      return types::coff_object;
     }
     break;
   case 'M':
     if (mv.startswith("Microsoft C/C++ MSF 7.00\r\n")) {
-      return details::pdb;
+      return types::pdb;
     }
     if (mv.startswith("MZ") && mv.size() >= 0x3c + 4) {
       // read32le
       uint32_t off = planck::readle<uint32_t>(mv.data() + 0x32);
       auto sv = mv.submv(off);
       if (mv.startswith(PEMagic)) {
-        return details::pecoff_executable;
+        return types::pecoff_executable;
       }
     }
     break;
   case 0x64: // x86-64 or ARM64 Windows.
     if (mv[1] == char(0x86) || mv[1] == char(0xaa)) {
-      return details::coff_object;
+      return types::coff_object;
     }
     break;
   default:
     break;
   }
-  return details::none;
+  return types::none;
 }
 } // namespace inquisitive

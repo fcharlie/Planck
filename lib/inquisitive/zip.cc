@@ -4,12 +4,12 @@
 // appx....
 //#include "zlib.h"
 #include <string_view>
-#include "details.hpp"
+#include "inquisitive.hpp"
 
 namespace inquisitive {
 ///
-details::Types identify_zip_family(std::string_view mv) {
+types::Type identify_zip_family(memview mv) {
   // PK
-  return details::none;
+  return types::none;
 }
 } // namespace inquisitive

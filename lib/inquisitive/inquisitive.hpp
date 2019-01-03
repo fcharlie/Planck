@@ -16,12 +16,12 @@
 #include <mapview.hpp>
 #include <charconv.hpp>
 #include <errorcode.hpp>
-#include "details.hpp"
+#include "types.hpp"
 
 namespace inquisitive {
 
-
 constexpr const int einident = 16;
+using byte_t = unsigned char;
 using planck::memview;
 namespace endian {
 enum endian_t : unsigned { None, LittleEndian, BigEndian };
@@ -56,26 +56,45 @@ struct pe_minutiae_t {
   bool isdll;
 };
 
-namespace types {
-enum Types {
-  NONE,
-  PECOFF, /// if return PECOFF todo dump PE details
-  ELF,
-  MACHO,
-  ZIP
-
+struct inquisitive_attribute_t {
+  std::wstring name;
+  std::wstring value;
+  inquisitive_attribute_t() = default;
+  inquisitive_attribute_t(std::wstring_view n, std::wstring_view v)
+      : name(n), value(v) {
+    //
+  }
 };
-}
 
 struct inquisitive_result_t {
-  details::Types basetype;
-  types::Types type;
-  std::wstring details;
+  std::wstring name;
+  std::vector<inquisitive_attribute_t> attrs;
+  types::Type type{types::none};
+  types::TypeEx typeex{types::NONE};
+  inquisitive_result_t() = default;
+  inquisitive_result_t(std::wstring_view dv, types::Type t0 = types::none,
+                       types::TypeEx t1 = types::NONE) {
+    Assign(dv, t0, t1);
+  }
+  inquisitive_result_t &Assign(std::wstring_view dv,
+                               types::Type t0 = types::none,
+                               types::TypeEx t1 = types::NONE) {
+    name.assign(dv);
+    type = t0;
+    typeex = t1;
+    return *this;
+  }
+  inquisitive_result_t &Add(std::wstring_view name, std::wstring_view value) {
+    attrs.emplace_back(name, value);
+    return *this;
+  }
 };
 
 std::wstring fromutf8(std::string_view text);
+
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
                                                 base::error_code &ec);
+                                                
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
                                                 base::error_code &ec);
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,

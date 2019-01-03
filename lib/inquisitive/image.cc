@@ -1,7 +1,6 @@
 ///////////////
 #include <endian.hpp>
 #include "inquisitive.hpp"
-#include "details.hpp"
 
 namespace inquisitive {
 
@@ -17,7 +16,7 @@ namespace inquisitive {
 // };
 // https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_19840
 
-details::Types identify_image(memview mv) {
+types::Type identify_image(memview mv) {
   constexpr const byte_t icoMagic[] = {0x00, 0x00, 0x01, 0x00};
   constexpr const byte_t jpegMagic[] = {0xFF, 0xD8, 0xFF};
   constexpr const byte_t jpeg2000Magic[] = {0x0,  0x0, 0x0, 0xC,  0x6A, 0x50,
@@ -30,10 +29,10 @@ details::Types identify_image(memview mv) {
   switch (mv[0]) {
   case 0x0:
     if (mv.startswith(icoMagic)) {
-      return details::ico;
+      return types::ico;
     }
     if (mv.startswith(jpeg2000Magic)) {
-      return details::jp2;
+      return types::jp2;
     }
     break;
   case 0x38:
@@ -41,13 +40,13 @@ details::Types identify_image(memview mv) {
       // Version: always equal to 1.
       auto ver = planck::readbe<uint16_t>((void *)(mv.data() + 4));
       if (ver == 1) {
-        return details::psd;
+        return types::psd;
       }
     }
     break;
   case 0x42:
     if (mv.size() > 2 && mv[1] == 0x4D) {
-      return details::bmp;
+      return types::bmp;
     }
     break;
   case 0x47:
@@ -56,49 +55,49 @@ details::Types identify_image(memview mv) {
       if (mv.size() > gmlen + 3 && mv[gmlen] == '8' &&
           (mv[gmlen + 1] == '7' || mv[gmlen + 1] == '9') &&
           mv[gmlen + 2] == 'a') {
-        return details::gif;
+        return types::gif;
       }
     }
     break;
   case 0x49:
     if (mv.size() > 9 && mv[1] == 0x49 && mv[2] == 0x2A && mv[3] == 0x0 &&
         mv[8] == 0x43 && mv[9] == 0x52) {
-      return details::cr2;
+      return types::cr2;
     }
     if (mv.size() > 3 && mv[1] == 0x49 && mv[2] == 0x2A && mv[3] == 0x0) {
-      return details::tif;
+      return types::tif;
     }
     if (mv.size() > 2 && mv[1] == 0x49 && mv[2] == 0xBC) {
-      return details::jxr;
+      return types::jxr;
     }
     break;
   case 0x4D:
     if (mv.size() > 9 && mv[0] == 0x4D && mv[1] == 0x4D && mv[2] == 0x0 &&
         mv[3] == 0x2A && mv[8] == 0x43 && mv[9] == 0x52) {
-      return details::cr2;
+      return types::cr2;
     }
     if (mv.size() > 3 && mv[1] == 0x4D && mv[2] == 0x0 && mv[3] == 0x2A) {
-      return details::tif;
+      return types::tif;
     }
     break;
   case 0x57:
     if (mv.startswith(webpMagic)) {
-      return details::webp;
+      return types::webp;
     }
     break;
   case 0x89:
     if (mv.startswith(pngMagic)) {
-      return details::png;
+      return types::png;
     }
     break;
   case 0xFF:
     if (mv.startswith(jpegMagic)) {
-      return details::jpg;
+      return types::jpg;
     }
     break;
   default:
     break;
   }
-  return details::none;
+  return types::none;
 }
 } // namespace inquisitive

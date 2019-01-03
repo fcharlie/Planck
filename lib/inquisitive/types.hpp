@@ -1,13 +1,11 @@
-//////
-#ifndef INQUISTIVE_DETAILS_HPP
-#define INQUISTIVE_DETAILS_HPP
-#pragma once
-#include <string_view>
-#include <cstring>
+///////////
+#ifndef INQUISITIVE_INDEXS_HPP
+#define INQUISITIVE_INDEXS_HPP
 
 namespace inquisitive {
-namespace details {
-enum Types {
+//
+namespace types {
+enum Type {
   none,
   /// TEXT
   ascii,
@@ -89,18 +87,15 @@ enum Types {
   ttf,
   otf
 };
-}
-using byte_t = unsigned char;
-inline bool startswith(std::string_view sv, std::string_view sv2) {
-  return (sv.size() >= sv2.size() &&
-          memcmp(sv.data(), sv2.data(), sv2.size()) == 0);
-}
 
-template <size_t ArrayLen>
-inline bool startswithB(std::string_view sv, const byte_t (&bv)[ArrayLen]) {
-  return (sv.size() >= ArrayLen && memcmp(sv.data(), bv, ArrayLen) == 0);
-}
-
+enum TypeEx {
+  NONE,
+  PECOFF, /// if return PECOFF todo dump PE details
+  ELF,
+  MACHO,
+  ZIP
+};
+} // namespace types
 } // namespace inquisitive
 
 #endif

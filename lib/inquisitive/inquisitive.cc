@@ -21,9 +21,9 @@ std::wstring FindExtension(std::wstring_view sv) {
 }
 
 namespace inquisitive {
-namespace details {
+namespace types {
 
-const wchar_t *typenames(Types t) {
+const wchar_t *typenames(Type t) {
   switch (t) {
   case none:
     break;
@@ -168,7 +168,7 @@ const wchar_t *typenames(Types t) {
   }
   return L"ASCII Text";
 }
-} // namespace details
+} // namespace types
 
 class FileView {
 public:
@@ -223,31 +223,31 @@ private:
   size_t size_{0};
 };
 
-inline types::Types unite_binobj_types(details::Types t) {
+inline types::TypeEx unite_binobj_types(types::Type t) {
   switch (t) {
-  case details::pecoff_executable:
+  case types::pecoff_executable:
     return types::PECOFF;
-  case details::elf:
-  case details::elf_core:
-  case details::elf_relocatable:
-  case details::elf_executable:
-  case details::elf_shared_object:
+  case types::elf:
+  case types::elf_core:
+  case types::elf_relocatable:
+  case types::elf_executable:
+  case types::elf_shared_object:
     return types::ELF;
-  case details::macho_object:
-  case details::macho_executable:                      ///< Mach-O Executable
-  case details::macho_fixed_virtual_memory_shared_lib: ///< Mach-O Shared Lib,
-                                                       ///< FVM
-  case details::macho_core:                            ///< Mach-O Core File
-  case details::macho_preload_executable: ///< Mach-O Preloaded Executable
-  case details::macho_dynamically_linked_shared_lib: ///< Mach-O dynlinked
-                                                     ///< shared lib
-  case details::macho_dynamic_linker: ///< The Mach-O dynamic linker
-  case details::macho_bundle:         ///< Mach-O Bundle file
-  case details::macho_dynamically_linked_shared_lib_stub: ///< Mach-O Shared
-                                                          ///< lib stub
-  case details::macho_dsym_companion:   ///< Mach-O dSYM companion file
-  case details::macho_kext_bundle:      ///< Mach-O kext bundle file
-  case details::macho_universal_binary: ///< Mach-O universal binary
+  case types::macho_object:
+  case types::macho_executable:                      ///< Mach-O Executable
+  case types::macho_fixed_virtual_memory_shared_lib: ///< Mach-O Shared Lib,
+                                                     ///< FVM
+  case types::macho_core:                            ///< Mach-O Core File
+  case types::macho_preload_executable: ///< Mach-O Preloaded Executable
+  case types::macho_dynamically_linked_shared_lib: ///< Mach-O dynlinked
+                                                   ///< shared lib
+  case types::macho_dynamic_linker: ///< The Mach-O dynamic linker
+  case types::macho_bundle:         ///< Mach-O Bundle file
+  case types::macho_dynamically_linked_shared_lib_stub: ///< Mach-O Shared
+                                                        ///< lib stub
+  case types::macho_dsym_companion:   ///< Mach-O dSYM companion file
+  case types::macho_kext_bundle:      ///< Mach-O kext bundle file
+  case types::macho_universal_binary: ///< Mach-O universal binary
     return types::MACHO;
   default:
     break;
@@ -255,45 +255,45 @@ inline types::Types unite_binobj_types(details::Types t) {
   return types::NONE;
 }
 
-details::Types identify_binexeobj_magic(memview mv); /// binexeobj.cc
-details::Types identify_image(memview mv);
+types::Type identify_binexeobj_magic(memview mv); /// binexeobj.cc
+types::Type identify_image(memview mv);
 
-details::Types identity_text(memview mv) {
+types::Type identity_text(memview mv) {
   switch (mv[0]) {
   case 0xEF: // UTF8 BOM 0xEF 0xBB 0xBF
     if (mv.size() >= 3 && mv[1] == 0xBB && mv[2] == 0xBF) {
-      return details::utf8bom;
+      return types::utf8bom;
     }
     break;
   case 0xFF: // UTF16LE 0xFF 0xFE
     if (mv.size() >= 2 && mv[1] == 0xFE) {
-      return details::utf16le;
+      return types::utf16le;
     }
     break;
   case 0xFE: // UTF16BE 0xFE 0xFF
     if (mv.size() >= 2 && mv[1] == 0xFF) {
-      return details::utf16be;
+      return types::utf16be;
     }
     break;
   default:
     break;
   }
   /// TODO use chardet
-  return details::ascii;
+  return types::ascii;
 }
 
-details::Types identify_font(memview mv) {
+types::Type identify_font(memview mv) {
   switch (mv[0]) {
   case 0x00:
     if (mv.size() > 4 && mv[1] == 0x01 && mv[2] == 0x00 && mv[3] == 0x00 &&
         mv[4] == 0x00) {
-      return details::ttf;
+      return types::ttf;
     }
     break;
   case 0x4F:
     if (mv.size() > 4 && mv[1] == 0x54 && mv[2] == 0x54 && mv[3] == 0x4F &&
         mv[4] == 0x00) {
-      return details::otf;
+      return types::otf;
     }
     break;
   case 0x77:
@@ -302,17 +302,17 @@ details::Types identify_font(memview mv) {
     }
     if (mv[1] == 0x4F && mv[2] == 0x46 && mv[3] == 0x46 && mv[4] == 0x00 &&
         mv[5] == 0x01 && mv[6] == 0x00 && mv[7] == 0x00) {
-      return details::woff;
+      return types::woff;
     }
     if (mv[1] == 0x4F && mv[2] == 0x46 && mv[3] == 0x32 && mv[4] == 0x00 &&
         mv[5] == 0x01 && mv[6] == 0x00 && mv[7] == 0x00) {
-      return details::woff2;
+      return types::woff2;
     }
     break;
   default:
     break;
   }
-  return details::none;
+  return types::none;
 }
 
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
@@ -325,27 +325,20 @@ std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
   }
   auto mv = fv.view();
   auto xtype = identify_binexeobj_magic(mv);
-  if (xtype != details::none) {
-    inquisitive_result_t res;
-    res.basetype = xtype;
-    res.details = details::typenames(xtype);
-    res.type = unite_binobj_types(xtype);
+  if (xtype != types::none) {
+    inquisitive_result_t res(types::typenames(xtype), xtype,
+                             unite_binobj_types(xtype));
     return std::make_optional<inquisitive_result_t>(std::move(res));
   }
   xtype = identify_font(mv);
-  if (xtype != details::none) {
-    inquisitive_result_t res;
-    res.basetype = xtype;
-    res.details = details::typenames(xtype);
-    res.type = types::NONE;
+  if (xtype != types::none) {
+    inquisitive_result_t res(types::typenames(xtype), xtype);
     return std::make_optional<inquisitive_result_t>(std::move(res));
   }
+
   xtype = identify_image(mv);
-  if (xtype != details::none) {
-    inquisitive_result_t res;
-    res.basetype = xtype;
-    res.details = details::typenames(xtype);
-    res.type = types::NONE;
+  if (xtype != types::none) {
+    inquisitive_result_t res(types::typenames(xtype), xtype);
     return std::make_optional<inquisitive_result_t>(std::move(res));
   }
   return std::nullopt;

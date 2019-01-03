@@ -2,7 +2,7 @@
 // BZ 7z Rar!
 #include <string_view>
 #include <optional>
-#include "details.hpp"
+#include "inquisitive.hpp"
 
 namespace inquisitive {
 constexpr const unsigned n7zSignatureSize = 6;
@@ -17,18 +17,10 @@ constexpr const byte_t swfMagic2[] = {0x46, 0x57, 0x53};
 constexpr const byte_t rtfMagic[] = {0x7B, 0x5C, 0x72, 0x74, 0x66};
 constexpr const byte_t msiMagic[] = {0x53, 0x5A, 0x44, 0x44, 0x88,
                                      0xF0, 0x27, 0x33, 0x41};
-constexpr const byte_t vmdMagic[] = {'K', 'D', 'M', 'V'};
+// constexpr const byte_t vmdMagic[] = {'K', 'D', 'M', 'V'};
 constexpr const byte_t rpmMagic[] = {0xED, 0xAB, 0xEE, 0xDB}; // size>96
 constexpr const byte_t comMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
                                      0xA1, 0xB1, 0x1A, 0xE1};
-//
-details::Types identify_archive(std::string_view mv) {
-  //
-  if (startswithB(mv, rpmMagic)) {
-    return details::rpm;
-  }
-  return details::none;
-}
 
 // EPUB file
 inline bool epub(const byte_t *buf, size_t size) {
@@ -43,6 +35,32 @@ inline bool epub(const byte_t *buf, size_t size) {
          buf[50] == 0x65 && buf[51] == 0x70 && buf[52] == 0x75 &&
          buf[53] == 0x62 && buf[54] == 0x2B && buf[55] == 0x7A &&
          buf[56] == 0x69 && buf[57] == 0x70;
+}
+
+types::Type identify_archive(memview mv) {
+  if (mv.startswith(rpmMagic)) {
+    return types::rpm;
+  }
+  if (mv.startswith(rarMagic)) {
+    return types::rar;
+  }
+  if (mv.startswith(pdfMagic)) {
+    return types::pdf;
+  }
+  if (mv.startswith(swfMagic1) || mv.startswith(swfMagic2)) {
+    return types::swf;
+  }
+  if (mv.startswith(rtfMagic)) {
+    return types::rtf;
+  }
+  if (mv.startswith(msiMagic)) {
+    return types::msi;
+  }
+  // if(mv.startswith(vmdMagic)){
+  //   return types::none;
+  // }
+
+  return types::none;
 }
 
 /*
@@ -78,7 +96,7 @@ const UInt32 k_LIZARD= 0x4F71106;
 */
 
 // check 7z method.
-std::optional<std::string_view> n7zmethod(std::string_view sv) {
+std::optional<std::string_view> n7zmethod(memview sv) {
   //
   return std::nullopt;
 }
