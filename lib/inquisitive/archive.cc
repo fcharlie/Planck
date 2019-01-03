@@ -101,5 +101,9 @@ std::optional<std::string_view> n7zmethod(memview sv) {
   return std::nullopt;
 }
 
+status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
+  //
+  return None;
+}
 // https://rarlab.com/technote.htm rar
 } // namespace inquisitive

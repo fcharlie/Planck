@@ -100,4 +100,10 @@ types::Type identify_image(memview mv) {
   }
   return types::none;
 }
+
+status_t inquisitive_images(memview mv, inquisitive_result_t &ir) {
+  //
+  return None;
+}
+
 } // namespace inquisitive

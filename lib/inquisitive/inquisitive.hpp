@@ -19,9 +19,8 @@
 #include "types.hpp"
 
 namespace inquisitive {
-
-constexpr const int einident = 16;
 using byte_t = unsigned char;
+constexpr const int einident = 16;
 using planck::memview;
 namespace endian {
 enum endian_t : unsigned { None, LittleEndian, BigEndian };
@@ -92,9 +91,22 @@ struct inquisitive_result_t {
 
 std::wstring fromutf8(std::string_view text);
 
+typedef enum inquisitive_status_e : int {
+  None = 0,
+  Found, ///
+  Break
+} status_t;
+
+// ---> todo resolve 
+status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_images(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_docs(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_archives(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_fonts(memview mv, inquisitive_result_t &ir);
+
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
                                                 base::error_code &ec);
-                                                
+
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
                                                 base::error_code &ec);
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,

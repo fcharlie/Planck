@@ -12,4 +12,9 @@ types::Type identify_docs(memview mv) {
   //
   return types::none;
 }
+
+status_t inquisitive_docs(memview mv, inquisitive_result_t &ir) {
+  //
+  return None;
+}
 } // namespace inquisitive
