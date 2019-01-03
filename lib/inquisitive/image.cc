@@ -1,4 +1,5 @@
 ///////////////
+#include <endian.hpp>
 #include "inquisitive.hpp"
 #include "details.hpp"
 
@@ -38,7 +39,7 @@ details::Types identify_image(memview mv) {
   case 0x38:
     if (mv.startswith(psdMagic) && mv.size() > psdhlen) {
       // Version: always equal to 1.
-      auto ver = readbe<uint16_t>((void *)(mv.data() + 4));
+      auto ver = planck::readbe<uint16_t>((void *)(mv.data() + 4));
       if (ver == 1) {
         return details::psd;
       }

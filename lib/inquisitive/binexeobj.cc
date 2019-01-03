@@ -197,7 +197,7 @@ details::Types identify_binexeobj_magic(memview mv) {
     }
     if (mv.startswith("MZ") && mv.size() >= 0x3c + 4) {
       // read32le
-      uint32_t off = readle<uint32_t>(mv.data() + 0x32);
+      uint32_t off = planck::readle<uint32_t>(mv.data() + 0x32);
       auto sv = mv.submv(off);
       if (mv.startswith(PEMagic)) {
         return details::pecoff_executable;

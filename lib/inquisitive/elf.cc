@@ -308,7 +308,7 @@ public:
     if (!resiveable) {
       return i;
     }
-    return bswap(i);
+    return planck::bswap(i);
   }
   std::string stroffset(size_t off, size_t end);
   bool inquisitive(elf_minutiae_t &em, base::error_code &ec);
@@ -403,7 +403,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
   em.osabi = elf_osabi(data_[EI_OSABI]);
   em.version = data_[EI_VERSION];
   auto msb = (em.endian == endian::BigEndian);
-  resiveable = (msb != IsBigEndianHost);
+  resiveable = (msb != planck::IsBigEndianHost);
   if (data_[EI_CLASS] == ELFCLASS64) {
     em.bit64 = true;
     return inquisitive64(em, ec);
