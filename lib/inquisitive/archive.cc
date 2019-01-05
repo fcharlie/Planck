@@ -166,6 +166,103 @@ status_t inquisitive_pdfinternal(memview mv, inquisitive_result_t &ir) {
   return None;
 }
 
+// WIM
+// https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-7/dd799284(v=ws.10)
+enum wim_compression_type : uint32_t {
+  WimReserved = 0x00000001,
+  WimCompression = 0x00000002,
+  WimReadOnly = 0x00000004,
+  WimSpanned = 0x00000008,
+  WimResourceOnly = 0x00000010,
+  WimMetadataOnly = 0x00000020,
+  WimWriteInProgress = 0x00000040,
+  WimReparsePointFix = 0x00000080,
+  WimCompressReserved = 0x00010000,
+  WimCompressionXpress = 0x00020000,
+  WimCompressionLXZ = 0x00040000,
+  WimCompressionLZMS = 0x00080000,
+  WimCompressionXPRESS2 = 0x00200000
+};
+// DISK SIZE 208
+// VERSION 0x10d00
+// VERSION SOLID 0xe00
+#define WIM_HEADER_DISK_SIZE 208
+#pragma pack(1)
+struct reshdr_disk_short {
+  union {
+    uint64_t flags; /* one byte is a combination of RESHDR_FLAG_XXX */
+    uint64_t size;  /* the 7 low-bytes are used to store the size */
+  };
+  uint64_t offset;
+  uint64_t original_size;
+};
+
+struct wim_header_t {
+  uint8_t magic[8]; // "MSWIM\0\0"
+  uint32_t cbSize;
+  uint32_t dwVersion;
+  uint32_t dwFlags;
+  uint32_t dwCompressionSize;
+  GUID gWIMGuid;
+  uint16_t usPartNumber;
+  uint16_t usTotalParts;
+  uint32_t dwImageCount;
+  uint16_t rhOffsetTable;
+  reshdr_disk_short rhXmlData;
+  reshdr_disk_short rhBootMetadata;
+  uint32_t dwBootIndex;
+  reshdr_disk_short rhIntegrity;
+  uint8_t bUnused[60];
+};
+#pragma pack()
+// https://www.microsoft.com/en-us/download/details.aspx?id=13096
+status_t inquisitive_wiminternal(memview mv, inquisitive_result_t &ir) {
+  constexpr const byte_t wimMagic[] = {'M', 'S',  'W',  'I',
+                                       'M', 0x00, 0x00, 0x00};
+  if (!mv.startswith(wimMagic)) {
+    return None;
+  }
+  auto hd = mv.cast<wim_header_t>(0);
+
+  constexpr const size_t hdsize = sizeof(wim_header_t);
+  if (hd == nullptr || planck::resolvele(hd->cbSize) < hdsize) {
+    return None;
+  }
+  wchar_t buf[128];
+  _snwprintf_s(buf, 128, L"Windows Imaging Format, version %d,",
+               planck::resolvele(hd->dwVersion));
+  ir.Assign(buf, types::wim);
+  auto flag = planck::resolvele(hd->dwFlags);
+  if ((flag & WimReadOnly) != 0) {
+    ir.name.append(L" ReadOnly,");
+  }
+  if ((flag & WimCompression) != 0) {
+    ir.name.append(L" Compression:");
+    if ((flag & WimCompressionXpress) != 0) {
+      ir.name.append(L" XPRESS");
+    }
+    if ((flag & WimCompressionLXZ) != 0) {
+
+      ir.name.append(L" LXZ");
+    }
+    if ((flag & WimCompressionLZMS) != 0) {
+      ir.name.append(L" LZMS");
+    }
+    if ((flag & WimCompressionXPRESS2) != 0) {
+      ir.name.append(L" XPRESSv2");
+    }
+    ir.name.push_back(',');
+  }
+  ir.Add(L"Imagecount",
+         base::Integer_to_chars(planck::resolvele(hd->dwImageCount), 10));
+  ir.Add(L"TotalParts",
+         base::Integer_to_chars(planck::resolvele(hd->usTotalParts), 10));
+  ir.Add(L"PartNumber",
+         base::Integer_to_chars(planck::resolvele(hd->usPartNumber), 10));
+
+  return Found;
+}
+
 // https://github.com/h2non/filetype/blob/master/matchers/archive.go
 constexpr const byte_t swfMagic1[] = {0x43, 0x57, 0x53};
 constexpr const byte_t swfMagic2[] = {0x46, 0x57, 0x53};
@@ -207,6 +304,9 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
     return Found;
   }
   if (inquisitive_pdfinternal(mv, ir) == Found) {
+    return Found;
+  }
+  if (inquisitive_wiminternal(mv, ir) == Found) {
     return Found;
   }
 

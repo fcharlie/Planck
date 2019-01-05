@@ -64,6 +64,7 @@ enum Type {
   msi,
   dmg,
   xar,
+  wim,
   //
   jpg,
   jp2,
