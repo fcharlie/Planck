@@ -55,6 +55,13 @@ struct pe_minutiae_t {
   bool isdll;
 };
 
+struct macho_minutiae_t {
+  std::wstring machine;
+  std::wstring mtype; /// Mach-O type
+  bool isfat{false};
+  bool is64abi{false};
+};
+
 struct inquisitive_attribute_t {
   std::wstring name;
   std::wstring value;
@@ -115,6 +122,8 @@ std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
                                                 base::error_code &ec);
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
                                               base::error_code &ec);
+std::optional<macho_minutiae_t> inquisitive_macho(std::wstring_view sv,
+                                                  base::error_code &ec);
 } // namespace inquisitive
 
 #endif

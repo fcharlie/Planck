@@ -5,9 +5,35 @@
 #include "inquisitive.hpp"
 
 namespace inquisitive {
-constexpr const unsigned n7zSignatureSize = 6;
-constexpr const byte_t n7zMagic[n7zSignatureSize] = {'7',  'z',  0xBC,
-                                                     0xAF, 0x27, 0x1C};
+// 7z details:
+// https://github.com/mcmilk/7-Zip-zstd/blob/master/CPP/7zip/Archive/7z/7zHeader.h
+constexpr const unsigned k7zSignatureSize = 6;
+struct p7z_header_t {
+  byte_t signature[k7zSignatureSize];
+  byte_t major; /// 7z major version default is 0
+  byte_t minor;
+  /// lookup 7z file
+};
+
+status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
+  constexpr const byte_t k7zSignature[k7zSignatureSize] = {'7',  'z',  0xBC,
+                                                           0xAF, 0x27, 0x1C};
+  constexpr const byte_t k7zFinishSignature[k7zSignatureSize] = {
+      '7', 'z', 0xBC, 0xAF, 0x27, 0x1C + 1};
+  auto hd = mv.cast<p7z_header_t>(0);
+  if (hd == nullptr) {
+    return None;
+  }
+  if (memcmp(hd->signature, k7zSignature, k7zSignatureSize) != 0) {
+    return None;
+  }
+  wchar_t buf[64];
+  _snwprintf_s(buf, 64, L"7-zip archive data, version %d.%d", (int)hd->major,
+               (int)hd->minor);
+  ir.Assign(buf, types::p7z);
+  return Found;
+}
+
 constexpr const byte_t rarMagic[] = {0x52, 0x61, 0x72,
                                      0x21, 0x14, 0x7}; // sv[6]==0x0 or 0x1
 // https://github.com/h2non/filetype/blob/master/matchers/archive.go
@@ -21,6 +47,7 @@ constexpr const byte_t msiMagic[] = {0x53, 0x5A, 0x44, 0x44, 0x88,
 constexpr const byte_t rpmMagic[] = {0xED, 0xAB, 0xEE, 0xDB}; // size>96
 constexpr const byte_t comMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
                                      0xA1, 0xB1, 0x1A, 0xE1};
+constexpr const byte_t cabMagic[] = {'M', 'S', 'C', 'F', 0, 0, 0, 0};
 
 // EPUB file
 inline bool epub(const byte_t *buf, size_t size) {
@@ -37,47 +64,10 @@ inline bool epub(const byte_t *buf, size_t size) {
          buf[56] == 0x69 && buf[57] == 0x70;
 }
 
-/*
-https://github.com/mcmilk/7-Zip-zstd/blob/master/CPP/7zip/Archive/7z/7zHeader.h
-const UInt32 k_Copy = 0;
-const UInt32 k_Delta = 3;
-
-const UInt32 k_LZMA2 = 0x21;
-
-const UInt32 k_SWAP2 = 0x20302;
-const UInt32 k_SWAP4 = 0x20304;
-
-const UInt32 k_LZMA  = 0x30101;
-const UInt32 k_PPMD  = 0x30401;
-
-const UInt32 k_Deflate = 0x40108;
-const UInt32 k_BZip2   = 0x40202;
-
-const UInt32 k_BCJ   = 0x3030103;
-const UInt32 k_BCJ2  = 0x303011B;
-const UInt32 k_PPC   = 0x3030205;
-const UInt32 k_IA64  = 0x3030401;
-const UInt32 k_ARM   = 0x3030501;
-const UInt32 k_ARMT  = 0x3030701;
-const UInt32 k_SPARC = 0x3030805;
-
-const UInt32 k_LZHAM = 0x4F71001;
-const UInt32 k_ZSTD  = 0x4F71101;
-const UInt32 k_BROTLI= 0x4F71102;
-const UInt32 k_LZ4   = 0x4F71104;
-const UInt32 k_LZ5   = 0x4F71105;
-const UInt32 k_LIZARD= 0x4F71106;
-*/
-
-status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
-  if (!mv.startswith(n7zMagic)) {
-    /// File not 7z type
-    return None;
-  }
-  return None;
-}
-
 status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
+  if (inquisitive_7zinternal(mv, ir) == Found) {
+    return Found;
+  }
   if (mv.startswith(rpmMagic)) {
     ir.Assign(L"RPM Package Manager", types::rpm);
     return Found;

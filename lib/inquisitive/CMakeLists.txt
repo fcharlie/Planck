@@ -6,10 +6,13 @@ add_library(Inquisitive STATIC
   convertutf.cc
   docs.cc
   elf.cc
+  font.cc
   image.cc
-  macho.cc
-  pe.cc
   inquisitive.cc
+  macho.cc
+  media.cc
+  pe.cc
   resolve.cc
+  text.cc
   zip.cc
 )
