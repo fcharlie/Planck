@@ -35,10 +35,24 @@ status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
 }
 
 // RAR archive
+// https://www.rarlab.com/technote.htm
 status_t inquisitive_rarinternal(memview mv, inquisitive_result_t &ir) {
+  /*RAR 5.0 signature consists of 8 bytes: 0x52 0x61 0x72 0x21 0x1A 0x07 0x01
+   * 0x00. You need to search for this signature in supposed archive from
+   * beginning and up to maximum SFX module size. Just for comparison this is
+   * RAR 4.x 7 byte length signature: 0x52 0x61 0x72 0x21 0x1A 0x07 0x00.*/
   constexpr const byte_t rarSignature[] = {0x52, 0x61, 0x72, 0x21,
-                                           0x1A, 0x7}; // sv[6]==0x0 or 0x1
-  ir.Assign(L"Roshal Archive (rar)", types::rar);
+                                           0x1A, 0x07, 0x01, 0x00};
+  constexpr const byte_t rar4Signature[] = {0x52, 0x61, 0x72, 0x21,
+                                            0x1A, 0x07, 0x00};
+  if (mv.startswith(rarSignature)) {
+    ir.Assign(L"Roshal Archive (rar), version 5", types::rar);
+    return Found;
+  }
+  if (mv.startswith(rar4Signature)) {
+    ir.Assign(L"Roshal Archive (rar), version 4", types::rar);
+    return Found;
+  }
   return None;
 }
 
@@ -74,6 +88,10 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
   if (inquisitive_7zinternal(mv, ir) == Found) {
     return Found;
   }
+  if (inquisitive_rarinternal(mv, ir) == Found) {
+    return Found;
+  }
+  
   if (mv.startswith(rpmMagic)) {
     ir.Assign(L"RPM Package Manager", types::rpm);
     return Found;
@@ -99,9 +117,7 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
     ir.Assign(L"EPUB document", types::epub);
     return Found;
   }
-  /**/
-
-  return inquisitive_7zinternal(mv, ir);
+  return None;
 }
 // https://rarlab.com/technote.htm rar
 } // namespace inquisitive
