@@ -203,7 +203,7 @@ struct wim_header_t {
   uint32_t dwVersion;
   uint32_t dwFlags;
   uint32_t dwCompressionSize;
-  GUID gWIMGuid;
+  uint8_t gWIMGuid[16];
   uint16_t usPartNumber;
   uint16_t usTotalParts;
   uint32_t dwImageCount;
