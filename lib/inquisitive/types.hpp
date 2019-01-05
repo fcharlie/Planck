@@ -62,6 +62,8 @@ enum Type {
   rpm,
   cab,
   msi,
+  dmg,
+  xar,
   //
   jpg,
   jp2,

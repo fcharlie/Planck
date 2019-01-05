@@ -2,18 +2,20 @@
 // BZ 7z Rar!
 #include <string_view>
 #include <optional>
+#include <endian.hpp>
 #include "inquisitive.hpp"
 
 namespace inquisitive {
 // 7z details:
 // https://github.com/mcmilk/7-Zip-zstd/blob/master/CPP/7zip/Archive/7z/7zHeader.h
 constexpr const unsigned k7zSignatureSize = 6;
+#pragma pack(1)
 struct p7z_header_t {
   byte_t signature[k7zSignatureSize];
   byte_t major; /// 7z major version default is 0
   byte_t minor;
-  /// lookup 7z file
 };
+#pragma pack()
 
 status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
   constexpr const byte_t k7zSignature[k7zSignatureSize] = {'7',  'z',  0xBC,
@@ -56,6 +58,93 @@ status_t inquisitive_rarinternal(memview mv, inquisitive_result_t &ir) {
   return None;
 }
 
+///
+#pragma pack(1)
+struct xar_header {
+  uint32_t magic; // xar!
+  uint16_t size;  // BE
+  uint16_t version;
+  uint64_t toc_length_compressed;
+  uint64_t toc_length_uncompressed;
+  uint32_t cksum_alg;
+  /* A nul-terminated, zero-padded to multiple of 4, message digest name
+   * appears here if cksum_alg is 3 which must not be empty ("") or "none".
+   */
+};
+#pragma pack()
+
+status_t inquisitive_xarinternal(memview mv, inquisitive_result_t &ir) {
+  // https://github.com/mackyle/xar/wiki/xarformat
+  constexpr const byte_t xarSignature[] = {'x', 'a', 'r', '!'};
+  if (!mv.startswith(xarSignature)) {
+    return None;
+  }
+  auto xhd = mv.cast<xar_header>(0);
+  if (xhd == nullptr || planck::resolvebe(xhd->size) < 28) {
+    return None;
+  }
+  auto ver = planck::resolvebe(xhd->version);
+  wchar_t buf[64];
+  _snwprintf_s(buf, 64, L"eXtensible ARchive format, version %d", (int)ver);
+  ir.Assign(buf, types::xar);
+  return Found;
+}
+
+// OS X .dmg
+// https://en.wikipedia.org/wiki/Apple_Disk_Image
+#pragma pack(1)
+struct uuid_t {
+  uint8_t uuid[16];
+};
+struct apple_disk_image_header {
+  uint8_t Signature[4];
+  uint32_t Version;
+  uint32_t HeaderSize;
+  uint32_t Flags;
+  uint64_t RunningDataForkOffset;
+  uint64_t DataForkOffset;
+  uint64_t DataForkLength;
+  uint64_t RsrcForkOffset;
+  uint64_t RsrcForkLength;
+  uint32_t SegmentNumber;
+  uint32_t SegmentCount;
+  uuid_t SegmentID;
+  uint32_t DataChecksumType;
+  uint32_t DataChecksumSize;
+  uint32_t DataChecksum[32];
+  uint64_t XMLOffset;
+  uint64_t XMLLength;
+  uint8_t Reserved1[120];
+  uint32_t ChecksumType;
+  uint32_t ChecksumSize;
+  uint32_t Checksum[32];
+  uint32_t ImageVariant;
+  uint64_t SectorCount;
+  uint32_t reserved2;
+  uint32_t reserved3;
+  uint32_t reserved4;
+};
+#pragma pack()
+
+status_t inquisitive_dmginternal(memview mv, inquisitive_result_t &ir) {
+  constexpr const byte_t dmgSignature[] = {'k', 'o', 'l', 'y'};
+  if (!mv.startswith(dmgSignature)) {
+    return None;
+  }
+  auto hd = mv.cast<apple_disk_image_header>(0);
+  constexpr auto hsize = sizeof(apple_disk_image_header);
+  if (hd == nullptr || planck::resolvebe(hd->HeaderSize) != hsize) {
+    return None;
+  }
+  auto ver = planck::resolvebe(hd->Version);
+  wchar_t buf[64];
+  _snwprintf_s(buf, 64, L"Apple Disk Image, version %d", (int)ver);
+  ir.Assign(buf, types::dmg);
+  return None;
+}
+
+// PDF file format
+
 // https://github.com/h2non/filetype/blob/master/matchers/archive.go
 constexpr const byte_t pdfMagic[] = {0x25, 0x50, 0x44, 0x46};
 constexpr const byte_t swfMagic1[] = {0x43, 0x57, 0x53};
@@ -91,7 +180,13 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
   if (inquisitive_rarinternal(mv, ir) == Found) {
     return Found;
   }
-  
+  if (inquisitive_xarinternal(mv, ir) == Found) {
+    return Found;
+  }
+  if (inquisitive_dmginternal(mv, ir) == Found) {
+    return Found;
+  }
+
   if (mv.startswith(rpmMagic)) {
     ir.Assign(L"RPM Package Manager", types::rpm);
     return Found;
