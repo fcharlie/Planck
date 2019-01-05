@@ -140,13 +140,33 @@ status_t inquisitive_dmginternal(memview mv, inquisitive_result_t &ir) {
   wchar_t buf[64];
   _snwprintf_s(buf, 64, L"Apple Disk Image, version %d", (int)ver);
   ir.Assign(buf, types::dmg);
-  return None;
+  return Found;
 }
 
 // PDF file format
 
+status_t inquisitive_pdfinternal(memview mv, inquisitive_result_t &ir) {
+  // https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf
+  // %PDF-1.7
+  constexpr const byte_t pdfMagic[] = {0x25, 0x50, 0x44, 0x46, '-'};
+  if (!mv.startswith(pdfMagic) || mv.size() < 8) {
+    return None;
+  }
+  auto ch = reinterpret_cast<const char *>(memchr(mv.data(), '\n', mv.size()));
+  if (ch == nullptr) {
+    // Forged PDF file
+    return None;
+  }
+
+  std::wstring buf(L"Portable Document Format (PDF), version ");
+  for (auto it = mv.data() + 5; it < ch; it++) {
+    buf.push_back(*it); /// PDF Use ASCII string
+  }
+  ir.Assign(buf, types::pdf);
+  return None;
+}
+
 // https://github.com/h2non/filetype/blob/master/matchers/archive.go
-constexpr const byte_t pdfMagic[] = {0x25, 0x50, 0x44, 0x46};
 constexpr const byte_t swfMagic1[] = {0x43, 0x57, 0x53};
 constexpr const byte_t swfMagic2[] = {0x46, 0x57, 0x53};
 constexpr const byte_t rtfMagic[] = {0x7B, 0x5C, 0x72, 0x74, 0x66};
@@ -186,16 +206,15 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
   if (inquisitive_dmginternal(mv, ir) == Found) {
     return Found;
   }
+  if (inquisitive_pdfinternal(mv, ir) == Found) {
+    return Found;
+  }
 
   if (mv.startswith(rpmMagic)) {
     ir.Assign(L"RPM Package Manager", types::rpm);
     return Found;
   }
 
-  if (mv.startswith(pdfMagic)) {
-    ir.Assign(L"Portable Document Format (PDF)", types::pdf);
-    return Found;
-  }
   if (mv.startswith(swfMagic1) || mv.startswith(swfMagic2)) {
     ir.Assign(L"Adobe Flash file format", types::swf);
     return Found;
