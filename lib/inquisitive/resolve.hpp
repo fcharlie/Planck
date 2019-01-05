@@ -13,30 +13,9 @@
 #include <optional>
 #include <vector>
 #include <variant>
+#include <errorcode.hpp>
 
 namespace inquisitive {
-
-struct winec_t {
-  long code{S_OK};
-  bool operator()() { return code == S_OK; }
-  std::wstring message;
-  static winec_t last() {
-    winec_t ec;
-    ec.code = GetLastError();
-    LPWSTR buf = nullptr;
-    auto rl = FormatMessageW(
-        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr,
-        ec.code, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), (LPWSTR)&buf, 0,
-        nullptr);
-    if (rl == 0) {
-      ec.message = L"unknown error";
-      return ec;
-    }
-    ec.message.assign(buf, rl);
-    LocalFree(buf);
-    return ec;
-  }
-};
 
 enum file_type_t : unsigned long {
   HardLink, /// If no reparse point, file always hardlink
@@ -119,10 +98,11 @@ struct file_links_t {
 };
 
 std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
-                                           winec_t &ec);
-std::optional<file_links_t> ResolveLinks(std::wstring_view sv, winec_t &ec);
+                                           base::error_code &ec);
+std::optional<file_links_t> ResolveLinks(std::wstring_view sv,
+                                         base::error_code &ec);
 std::optional<std::wstring> ResolveShellLink(std::wstring_view sv,
-                                             winec_t &ec);
+                                             base::error_code &ec);
 } // namespace inquisitive
 
 #endif

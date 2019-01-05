@@ -34,8 +34,14 @@ status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
   return Found;
 }
 
-constexpr const byte_t rarMagic[] = {0x52, 0x61, 0x72,
-                                     0x21, 0x14, 0x7}; // sv[6]==0x0 or 0x1
+// RAR archive
+status_t inquisitive_rarinternal(memview mv, inquisitive_result_t &ir) {
+  constexpr const byte_t rarSignature[] = {0x52, 0x61, 0x72, 0x21,
+                                           0x1A, 0x7}; // sv[6]==0x0 or 0x1
+  ir.Assign(L"Roshal Archive (rar)", types::rar);
+  return None;
+}
+
 // https://github.com/h2non/filetype/blob/master/matchers/archive.go
 constexpr const byte_t pdfMagic[] = {0x25, 0x50, 0x44, 0x46};
 constexpr const byte_t swfMagic1[] = {0x43, 0x57, 0x53};
@@ -72,11 +78,7 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
     ir.Assign(L"RPM Package Manager", types::rpm);
     return Found;
   }
-  if (mv.startswith(rarMagic)) {
 
-    ir.Assign(L"Roshal Archive (rar)", types::rar);
-    return Found;
-  }
   if (mv.startswith(pdfMagic)) {
     ir.Assign(L"Portable Document Format (PDF)", types::pdf);
     return Found;

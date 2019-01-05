@@ -76,7 +76,7 @@ int wmain(int argc, wchar_t **argv) {
     wprintf(L"%s usage file\n", argv[0]);
     return 1;
   }
-  inquisitive::winec_t ec;
+  base::error_code ec;
   auto hlink = inquisitive::ResolveTarget(argv[1], ec);
   auto link = inquisitive::ResolveLinks(argv[1], ec);
   if (link) {

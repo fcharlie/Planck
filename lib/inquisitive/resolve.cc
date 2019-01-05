@@ -80,7 +80,8 @@ bool PathCanonicalizeEx(std::wstring_view sv, std::wstring &path) {
   return true;
 }
 
-std::optional<file_target_t> ResolveTarget(std::wstring_view sv, winec_t &ec) {
+std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
+                                           base::error_code &ec) {
 #ifndef _M_X64
   FsRedirection fsr;
 #endif
@@ -89,7 +90,7 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv, winec_t &ec) {
       nullptr, OPEN_EXISTING,
       FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
   if (FileHandle == INVALID_HANDLE_VALUE) {
-    ec = winec_t::last();
+    ec = base::make_system_error_code();
     return std::nullopt;
   }
   BYTE mxbuf[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = {0};
@@ -254,13 +255,14 @@ inline bool HardLinkEqual(std::wstring_view lh, std::wstring_view rh) {
 }
 
 // File hardlinks.
-std::optional<file_links_t> ResolveLinks(std::wstring_view sv, winec_t &ec) {
+std::optional<file_links_t> ResolveLinks(std::wstring_view sv,
+                                         base::error_code &ec) {
 #ifndef _M_X64
   FsRedirection fsr;
 #endif
   std::wstring self;
   if (!PathCanonicalizeEx(sv, self)) {
-    ec = winec_t::last();
+    ec = base::make_system_error_code();
     return std::nullopt;
   }
   auto FileHandle = CreateFileW(self.data(),           // file to open
@@ -290,7 +292,7 @@ std::optional<file_links_t> ResolveLinks(std::wstring_view sv, winec_t &ec) {
   DWORD dwlen = PATHCCH_MAX_CCH;
   auto hFind = FindFirstFileNameW(self.c_str(), 0, &dwlen, linkPath.get());
   if (hFind == INVALID_HANDLE_VALUE) {
-    ec = winec_t::last();
+    ec = base::make_system_error_code();
     return std::nullopt;
   }
   file_links_t link;
@@ -310,7 +312,7 @@ std::optional<file_links_t> ResolveLinks(std::wstring_view sv, winec_t &ec) {
 }
 
 std::optional<std::wstring> ResolveShellLink(std::wstring_view sv,
-                                             winec_t &ec) {
+                                             base::error_code &ec) {
   if (sv.size() < 4 || sv.size() > MAX_PATH ||
       sv.compare(sv.size() - 4, 4, L".lnk") != 0) {
     return std::nullopt;
