@@ -6,7 +6,7 @@
 
 namespace inquisitive {
 
-static constexpr const unsigned char ElfMagic[] = {0x7f, 'E', 'L', 'F', '\0'};
+static constexpr const unsigned char ElfMagic[] = {0x7f, 'E', 'L', 'F'};
 // The PE signature bytes that follows the DOS stub header.
 static constexpr const char PEMagic[] = {'P', 'E', '\0', '\0'};
 
@@ -248,9 +248,9 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
     }
     if (mv.startswith("MZ") && mv.size() >= 0x3c + 4) {
       // read32le
-      uint32_t off = planck::readle<uint32_t>(mv.data() + 0x32);
+      uint32_t off = planck::readle<uint32_t>(mv.data() + 0x3c);
       auto sv = mv.submv(off);
-      if (mv.startswith(PEMagic)) {
+      if (sv.startswith(PEMagic)) {
         ir.Assign(L"PECOFF executable file", types::pecoff_executable,
                   types::PECOFF);
         return Found;

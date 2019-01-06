@@ -96,6 +96,7 @@ std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
   };
   for (auto h : handles) {
     if (h(mv, ir) == Found) {
+      wprintf(L"DEBUG: %s\n", ir.name.c_str());
       return std::make_optional<inquisitive_result_t>(std::move(ir));
     }
   }

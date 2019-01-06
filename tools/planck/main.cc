@@ -66,12 +66,7 @@ std::optional<std::wstring> FileTarget(std::wstring_view sv, bool verbose) {
 }
 
 int wmain(int argc, wchar_t **argv) {
-
-  //
   planck::VerboseEnable();
-  // auto text = u8"\x4F60\x597D";
-  // auto wt = probe::convert(text);
-  // priv::PrintNone(L"Text: %s\n", wt);
   if (argc < 2) {
     wprintf(L"%s usage file\n", argv[0]);
     return 1;
@@ -84,6 +79,14 @@ int wmain(int argc, wchar_t **argv) {
     for (const auto &l : link->links) {
       wprintf(L"    %s\n", l.data());
     }
+  }
+  auto ir = inquisitive::inquisitive(argv[1], ec);
+  if (ec) {
+    planck::error(L"Error %s\n", ec.message);
+    return 0;
+  }
+  if (ir) {
+    planck::PrintNone(L"Details: %s\n", ir->name);
   }
   return 0;
 }

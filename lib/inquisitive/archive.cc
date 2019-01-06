@@ -155,7 +155,7 @@ status_t inquisitive_pdfinternal(memview mv, inquisitive_result_t &ir) {
   std::wstring buf(L"Portable Document Format (PDF), version ");
   for (size_t i = 5; i < mv.size(); i++) {
     auto ch = mv[i];
-    if (ch == '\n') {
+    if (ch == '\n' || ch == '\r') {
       newline = true;
       break;
     }
