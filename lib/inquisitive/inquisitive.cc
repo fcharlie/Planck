@@ -87,16 +87,14 @@ std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
   inquisitive_result_t ir;
   const inquisitive_handle_t handles[] = {
       // handles
-      inquisitive_binobj,     inquisitive_fonts,
-      inquisitive_zip_family, inquisitive_docs,
-      inquisitive_images,     inquisitive_archives,
-      inquisitive_media,      inquisitive_text,
+      inquisitive_binobj, inquisitive_fonts,     inquisitive_zip_family,
+      inquisitive_docs,   inquisitive_images,    inquisitive_archives,
+      inquisitive_media,  inquisitive_gitbinary, inquisitive_text,
       inquisitive_chardet
       //
   };
   for (auto h : handles) {
     if (h(mv, ir) == Found) {
-      wprintf(L"DEBUG: %s\n", ir.name.c_str());
       return std::make_optional<inquisitive_result_t>(std::move(ir));
     }
   }

@@ -143,6 +143,8 @@ status_t inquisitive_docs(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_images(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_archives(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_media(memview mv, inquisitive_result_t &ir);
+// EX
+status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir);
 /////////// ---
 status_t inquisitive_text(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_chardet(memview mv, inquisitive_result_t &ir);

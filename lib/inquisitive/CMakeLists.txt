@@ -7,6 +7,7 @@ add_library(Inquisitive STATIC
   docs.cc
   elf.cc
   font.cc
+  git.cc
   image.cc
   inquisitive.cc
   macho.cc

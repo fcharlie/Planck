@@ -107,7 +107,11 @@ enum Type {
   avi,
   wmv,
   mpeg,
-  flv
+  flv,
+  // support git 
+  gitpack,
+  gitpkindex,
+  gitmidx
 };
 
 enum TypeEx {
