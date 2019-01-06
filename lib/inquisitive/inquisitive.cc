@@ -85,21 +85,20 @@ std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
   }
   auto mv = fv.view();
   inquisitive_result_t ir;
-  if (inquisitive_binobj(mv, ir) == Found) {
-    return std::make_optional<inquisitive_result_t>(std::move(ir));
+  const inquisitive_handle_t handles[] = {
+      // handles
+      inquisitive_binobj,     inquisitive_fonts,
+      inquisitive_zip_family, inquisitive_docs,
+      inquisitive_images,     inquisitive_archives,
+      inquisitive_media,      inquisitive_text,
+      inquisitive_chardet
+      //
+  };
+  for (auto h : handles) {
+    if (h(mv, ir) == Found) {
+      return std::make_optional<inquisitive_result_t>(std::move(ir));
+    }
   }
-  if (inquisitive_fonts(mv, ir) == Found) {
-    return std::make_optional<inquisitive_result_t>(std::move(ir));
-  }
-
-  if (inquisitive_images(mv, ir) == Found) {
-    return std::make_optional<inquisitive_result_t>(std::move(ir));
-  }
-
-  if (inquisitive_archives(mv, ir) == Found) {
-    return std::make_optional<inquisitive_result_t>(std::move(ir));
-  }
-
   return std::nullopt;
 }
 

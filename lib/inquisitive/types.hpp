@@ -40,7 +40,7 @@ enum Type {
   windows_resource,    ///< Windows compiled resource file (.res)
   wasm_object,         ///< WebAssembly Object file
   pdb,                 ///< Windows PDB debug info file
-  ///
+  /// archive
   epub,
   zip,
   tar,
@@ -66,7 +66,7 @@ enum Type {
   xar,
   wim,
   z,
-  //
+  // image
   jpg,
   jp2,
   png,
@@ -78,18 +78,36 @@ enum Type {
   jxr,
   psd,
   ico,
-  //
+  // docs
   doc,
   docx,
   xls,
   xlsx,
   ppt,
   pptx,
-  //
+  // font
   woff,
   woff2,
   ttf,
-  otf
+  otf,
+  // Media
+  midi,
+  mp3,
+  m4a,
+  ogg,
+  flac,
+  wav,
+  amr,
+  aac,
+  mp4,
+  m4v,
+  mkv,
+  webm,
+  mov,
+  avi,
+  wmv,
+  mpeg,
+  flv
 };
 
 enum TypeEx {

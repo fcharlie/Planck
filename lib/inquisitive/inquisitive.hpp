@@ -135,14 +135,16 @@ typedef enum inquisitive_status_e : int {
 } status_t;
 
 // ---> todo resolve
+typedef status_t (*inquisitive_handle_t)(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir);
-status_t inquisitive_images(memview mv, inquisitive_result_t &ir);
-status_t inquisitive_docs(memview mv, inquisitive_result_t &ir);
-status_t inquisitive_archives(memview mv, inquisitive_result_t &ir);
-status_t inquisitive_zip_family(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_fonts(memview mv, inquisitive_result_t &ir);
-status_t inquisitive_text(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_zip_family(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_docs(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_images(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_archives(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_media(memview mv, inquisitive_result_t &ir);
+/////////// ---
+status_t inquisitive_text(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_chardet(memview mv, inquisitive_result_t &ir);
 
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
