@@ -64,6 +64,18 @@ configure_file(
   ${CMAKE_BINARY_DIR}/include/baseversion.h
 )
 
+# include(ExternalProject)
+# set(PLANCK_CLEANROOT "${CMAKE_BINARY_DIR}/cleanroot")
+# ExternalProject_Add(zlib
+#   URL https://github.com/madler/zlib/archive/v1.2.11.tar.gz
+#   URL_HASH SHA256=629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff
+#   CMAKE_ARGS
+#     -DCMAKE_INSTALL_PREFIX:PATH=${PLANCK_CLEANROOT}
+#     -DCMAKE_BUILD_TYPE:STRING=Release
+#   BUILD_COMMAND ninja all
+#   INSTALL_COMMAND ninja install
+# )
+
 add_definitions(
   -D_UNICODE=1
   -DUNICODE=1

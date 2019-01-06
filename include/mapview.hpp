@@ -75,8 +75,15 @@ public:
     }
     return (memcmp(data_, mv.data_, mv.size_) == 0);
   }
+
+  template <size_t ArrayLen>
+  bool indexswith(std::size_t offset, const uint8_t (&bv)[ArrayLen]) {
+    return (size_ >= ArrayLen + offset &&
+            memcmp(data_ + offset, bv, ArrayLen) == 0);
+  }
+  
   bool indexswith(std::size_t offset, std::string_view sv) const {
-    if (offset > size_) {
+    if (offset + sv.size() > size_) {
       return false;
     }
     return memcmp(data_ + offset, sv.data(), sv.size()) == 0;
