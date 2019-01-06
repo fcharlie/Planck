@@ -144,7 +144,6 @@ status_t inquisitive_dmginternal(memview mv, inquisitive_result_t &ir) {
 }
 
 // PDF file format
-
 status_t inquisitive_pdfinternal(memview mv, inquisitive_result_t &ir) {
   // https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf
   // %PDF-1.7
@@ -152,18 +151,21 @@ status_t inquisitive_pdfinternal(memview mv, inquisitive_result_t &ir) {
   if (!mv.startswith(pdfMagic) || mv.size() < 8) {
     return None;
   }
-  auto ch = reinterpret_cast<const char *>(memchr(mv.data(), '\n', mv.size()));
-  if (ch == nullptr) {
-    // Forged PDF file
+  bool newline = false;
+  std::wstring buf(L"Portable Document Format (PDF), version ");
+  for (size_t i = 5; i < mv.size(); i++) {
+    auto ch = mv[i];
+    if (ch == '\n') {
+      newline = true;
+      break;
+    }
+    buf.push_back(ch); /// PDF Use ASCII string
+  }
+  if (!newline) {
     return None;
   }
-
-  std::wstring buf(L"Portable Document Format (PDF), version ");
-  for (auto it = mv.data() + 5; it < ch; it++) {
-    buf.push_back(*it); /// PDF Use ASCII string
-  }
   ir.Assign(buf, types::pdf);
-  return None;
+  return Found;
 }
 
 // WIM
@@ -263,17 +265,63 @@ status_t inquisitive_wiminternal(memview mv, inquisitive_result_t &ir) {
   return Found;
 }
 
+// cab Microsoft Cabinet Format
+// https://docs.microsoft.com/en-us/previous-versions//bb267310(v=vs.85)
+
+struct cabinet_header_t {
+  uint8_t signature[4]; // M','S','C','F'
+  uint32_t reserved1;   //// 00000
+  uint32_t cbCabinet;
+  uint32_t reserved2;
+  uint32_t coffFiles;   /* offset of the first CFFILE entry */
+  uint32_t reserved3;   /* reserved */
+  uint8_t versionMinor; /* cabinet file format version, minor */
+  uint8_t versionMajor; /* cabinet file format version, major */
+  uint16_t cFolders;    /* number of CFFOLDER entries in this */
+                        /*    cabinet */
+  uint16_t cFiles;      /* number of CFFILE entries in this cabinet */
+  uint16_t flags;       /* cabinet file option indicators */
+  uint16_t setID;       /* must be the same for all cabinets in a */
+                        /*    set */
+  uint16_t iCabinet;    /* number of this cabinet file in a set */
+  uint16_t cbCFHeader;  /* (optional) size of per-cabinet reserved */
+                        /*    area */
+  uint8_t cbCFFolder;   /* (optional) size of per-folder reserved */
+                        /*    area */
+  uint8_t cbCFData;     /* (optional) size of per-datablock reserved */
+                        /*    area */
+  // uint8_t  abReserve[];      /* (optional) per-cabinet reserved area */
+  // uint8_t  szCabinetPrev[];  /* (optional) name of previous cabinet file */
+  // uint8_t  szDiskPrev[];     /* (optional) name of previous disk */
+  // uint8_t  szCabinetNext[];  /* (optional) name of next cabinet file */
+  // uint8_t  szDiskNext[];     /* (optional) name of next disk */
+};
+
+status_t inquisitive_cabinetinternal(memview mv, inquisitive_result_t &ir) {
+  constexpr const byte_t cabMagic[] = {'M', 'S', 'C', 'F', 0, 0, 0, 0};
+  if (!mv.startswith(cabMagic)) {
+    return None;
+  }
+  auto hd = mv.cast<cabinet_header_t>(0);
+  if (hd == nullptr) {
+    return None;
+  }
+  wchar_t buf[64];
+  _snwprintf_s(buf, 64, L"Microsoft Cabinet data(cab), version %d.%d",
+               (int)hd->versionMajor, (int)hd->versionMinor);
+  ir.Assign(buf, types::cab);
+  return Found;
+}
+
 // https://github.com/h2non/filetype/blob/master/matchers/archive.go
 constexpr const byte_t swfMagic1[] = {0x43, 0x57, 0x53};
 constexpr const byte_t swfMagic2[] = {0x46, 0x57, 0x53};
-constexpr const byte_t rtfMagic[] = {0x7B, 0x5C, 0x72, 0x74, 0x66};
 constexpr const byte_t msiMagic[] = {0x53, 0x5A, 0x44, 0x44, 0x88,
                                      0xF0, 0x27, 0x33, 0x41};
 // constexpr const byte_t vmdMagic[] = {'K', 'D', 'M', 'V'};
 constexpr const byte_t rpmMagic[] = {0xED, 0xAB, 0xEE, 0xDB}; // size>96
 constexpr const byte_t comMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
                                      0xA1, 0xB1, 0x1A, 0xE1};
-constexpr const byte_t cabMagic[] = {'M', 'S', 'C', 'F', 0, 0, 0, 0};
 
 // EPUB file
 inline bool epub(const byte_t *buf, size_t size) {
@@ -309,6 +357,9 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
   if (inquisitive_wiminternal(mv, ir) == Found) {
     return Found;
   }
+  if (inquisitive_cabinetinternal(mv, ir) == Found) {
+    return Found;
+  }
 
   if (mv.startswith(rpmMagic)) {
     ir.Assign(L"RPM Package Manager", types::rpm);
@@ -317,10 +368,6 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
 
   if (mv.startswith(swfMagic1) || mv.startswith(swfMagic2)) {
     ir.Assign(L"Adobe Flash file format", types::swf);
-    return Found;
-  }
-  if (mv.startswith(rtfMagic)) {
-    ir.Assign(L"Rich Text Format data", types::rtf);
     return Found;
   }
   if (mv.startswith(msiMagic)) {
@@ -333,5 +380,4 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
   }
   return None;
 }
-// https://rarlab.com/technote.htm rar
 } // namespace inquisitive
