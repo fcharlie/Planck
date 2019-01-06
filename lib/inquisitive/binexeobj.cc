@@ -26,6 +26,10 @@ static constexpr const unsigned char WinResMagic[] = {
     '\xff', '\xff', '\x00', '\x00', '\xff', '\xff', '\x00', '\x00',
 };
 
+static constexpr const byte_t debMagic[] = {
+    0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A, 0x64, 0x65, 0x62,
+    0x69, 0x61, 0x6E, 0x2D, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79};
+
 struct BigObjHeader {
   enum : uint16_t { MinBigObjectVersion = 2 };
 
@@ -97,7 +101,9 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
     }
     break;
   case '!': // .a
-    if (mv.startswith("!<arch>\n") || mv.startswith("!<thin>\n")) {
+    if (mv.startswith("!<arch>\n") && !mv.startswith(debMagic) ||
+        mv.startswith("!<thin>\n")) {
+      // Skip DEB package
       ir.Assign(L"ar style archive file", types::archive);
       return Found;
     }

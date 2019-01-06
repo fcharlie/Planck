@@ -313,18 +313,109 @@ status_t inquisitive_cabinetinternal(memview mv, inquisitive_result_t &ir) {
   return Found;
 }
 
-// https://github.com/h2non/filetype/blob/master/matchers/archive.go
-constexpr const byte_t swfMagic1[] = {0x43, 0x57, 0x53};
-constexpr const byte_t swfMagic2[] = {0x46, 0x57, 0x53};
-constexpr const byte_t msiMagic[] = {0x53, 0x5A, 0x44, 0x44, 0x88,
-                                     0xF0, 0x27, 0x33, 0x41};
-// constexpr const byte_t vmdMagic[] = {'K', 'D', 'M', 'V'};
-constexpr const byte_t rpmMagic[] = {0xED, 0xAB, 0xEE, 0xDB}; // size>96
-constexpr const byte_t comMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
-                                     0xA1, 0xB1, 0x1A, 0xE1};
+// TAR
+// https://github.com/libarchive/libarchive/blob/master/libarchive/archive_read_support_format_tar.c#L54
+
+#pragma pack(1)
+struct ustar_header_t {
+  char name[100];
+  char mode[8];
+  char uid[8];
+  char gid[8];
+  char size[12];
+  char mtime[12];
+  char checksum[8];
+  char typeflag;
+  char linkname[100]; /* "old format" header ends here */
+  char magic[6];      /* For POSIX: "ustar\0" */
+  char version[2];    /* For POSIX: "00" */
+  char uname[32];
+  char gname[32];
+  char rdevmajor[8];
+  char rdevminor[8];
+  char prefix[155];
+};
+
+/*
+ * Structure of GNU tar header
+ */
+struct gnu_sparse_t {
+  char offset[12];
+  char numbytes[12];
+};
+
+struct gnutar_header_t {
+  char name[100];
+  char mode[8];
+  char uid[8];
+  char gid[8];
+  char size[12];
+  char mtime[12];
+  char checksum[8];
+  char typeflag;
+  char linkname[100];
+  char magic[8]; /* "ustar  \0" (note blank/blank/null at end) */
+  char uname[32];
+  char gname[32];
+  char rdevmajor[8];
+  char rdevminor[8];
+  char atime[12];
+  char ctime[12];
+  char offset[12];
+  char longnames[4];
+  char unused;
+  gnu_sparse_t sparse[4];
+  char isextended;
+  char realsize[12];
+  /*
+   * Old GNU format doesn't use POSIX 'prefix' field; they use
+   * the 'L' (longname) entry instead.
+   */
+};
+#pragma pack()
+
+status_t inquisitive_tarinternal(memview mv, inquisitive_result_t &ir) {
+  auto hd = mv.cast<ustar_header_t>(0);
+  if (hd == nullptr) {
+    return None;
+  }
+  constexpr const byte_t ustarMagic[] = {'u', 's', 't', 'a', 'r', 0};
+  constexpr const byte_t gnutarMagic[] = {'u', 's', 't', 'a', 'r', ' ', ' ', 0};
+  if (memcmp(hd->magic, ustarMagic, ArrayLength(ustarMagic)) == 0) {
+    ir.Assign(L"Tarball (ustar) archive data", types::tar);
+    return Found;
+  }
+  if (memcmp(hd->magic, gnutarMagic, ArrayLength(gnutarMagic)) == 0 &&
+      mv.size() > sizeof(gnutar_header_t)) {
+    ir.Assign(L"Tarball (gnutar) archive data", types::tar);
+    return Found;
+  }
+  return None;
+}
+
+struct sqlite_header_t {
+  uint8_t sigver[16];
+  uint16_t pagesize;
+  uint16_t version;
+};
+
+status_t inquisitive_sqliteinternal(memview mv, inquisitive_result_t &ir) {
+  constexpr const byte_t sqliteMagic[] = {'S', 'Q', 'L', 'i', 't', 'e', ' ',
+                                          'f', 'o', 'r', 'm', 'a', 't'};
+  if (!mv.startswith(sqliteMagic)) {
+    return None;
+  }
+  auto hd = mv.cast<sqlite_header_t>(0);
+  if (hd == nullptr || hd->sigver[15] != 0) {
+    return None;
+  }
+  ir.Assign(L"SQLite DB, format ", types::sqlite);
+  ir.name.push_back(hd->sigver[14]);
+  return Found;
+}
 
 // EPUB file
-inline bool epub(const byte_t *buf, size_t size) {
+inline bool IsEPUB(const byte_t *buf, size_t size) {
   return size > 57 && buf[0] == 0x50 && buf[1] == 0x4B && buf[2] == 0x3 &&
          buf[3] == 0x4 && buf[30] == 0x6D && buf[31] == 0x69 &&
          buf[32] == 0x6D && buf[33] == 0x65 && buf[34] == 0x74 &&
@@ -336,6 +427,92 @@ inline bool epub(const byte_t *buf, size_t size) {
          buf[50] == 0x65 && buf[51] == 0x70 && buf[52] == 0x75 &&
          buf[53] == 0x62 && buf[54] == 0x2B && buf[55] == 0x7A &&
          buf[56] == 0x69 && buf[57] == 0x70;
+}
+
+bool IsSwf(const byte_t *buf, size_t size) {
+  return (size > 2 && (buf[0] == 0x43 || buf[0] == 0x46) && buf[1] == 0x57 &&
+          buf[2] == 0x53);
+}
+
+/// Magic only
+status_t inquisitive_archivesinternal(memview mv, inquisitive_result_t &ir) {
+  // MSI
+  constexpr const byte_t msiMagic[] = {0x53, 0x5A, 0x44, 0x44, 0x88,
+                                       0xF0, 0x27, 0x33, 0x41};
+  if (mv.startswith(msiMagic)) {
+    ir.Assign(L"Windows Installer packages", types::msi);
+    return Found;
+  }
+  // DEB
+  constexpr const byte_t debMagic[] = {
+      0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A, 0x64, 0x65, 0x62,
+      0x69, 0x61, 0x6E, 0x2D, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79};
+  if (mv.startswith(debMagic)) {
+    ir.Assign(L"Debian packages", types::deb);
+    return Found;
+  }
+  // RPM
+  constexpr const byte_t rpmMagic[] = {0xED, 0xAB, 0xEE, 0xDB}; // size>96
+  if (mv.startswith(rpmMagic) && mv.size() > 96) {
+    ir.Assign(L"RPM Package Manager", types::rpm);
+    return Found;
+  }
+  constexpr const byte_t crxMagic[] = {0x43, 0x72, 0x32, 0x34};
+  if (mv.startswith(crxMagic)) {
+    ir.Assign(L"Chrome Extension", types::crx);
+    return Found;
+  }
+  // XZ
+  constexpr const byte_t xzMagic[] = {0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00};
+  if (mv.startswith(xzMagic)) {
+    ir.Assign(L"XZ archive data", types::xz);
+    return Found;
+  }
+  // GZ
+  constexpr const byte_t gzMagic[] = {0x1F, 0x8B, 0x8};
+  if (mv.startswith(gzMagic)) {
+    ir.Assign(L"GZ archive data", types::gz);
+    return Found;
+  }
+  // BZ2
+  // https://github.com/dsnet/compress/blob/master/doc/bzip2-format.pdf
+  constexpr const byte_t bz2Magic[] = {0x42, 0x5A, 0x68};
+  if (mv.startswith(bz2Magic)) {
+    ir.Assign(L"BZ2 archive data", types::bz2);
+    return Found;
+  }
+
+  // NES
+  constexpr const byte_t nesMagic[] = {0x41, 0x45, 0x53, 0x1A};
+  if (mv.startswith(nesMagic)) {
+    ir.Assign(L"Nintendo NES ROM", types::nes);
+    return Found;
+  }
+
+  // AR
+  // constexpr const byte_t arMagic[]={0x21,0x3c,0x61,0x72,0x63,0x68,0x3E};
+  constexpr const byte_t zMagic[] = {0x1F, 0xA0, 0x1F, 0x9D};
+  if (mv.startswith(zMagic)) {
+    ir.Assign(L"X compressed archive data", types::z);
+    return Found;
+  }
+
+  constexpr const byte_t lzMagic[] = {0x4C, 0x5A, 0x49, 0x50};
+  if (mv.startswith(lzMagic)) {
+    ir.Assign(L"LZ archive data", types::lz);
+    return Found;
+  }
+  // SWF
+  if (IsSwf(mv.udata(), mv.size())) {
+    ir.Assign(L"Adobe Flash file format", types::swf);
+    return Found;
+  }
+  // EPUB
+  if (IsEPUB(mv.udata(), mv.size())) {
+    ir.Assign(L"EPUB document", types::epub);
+    return Found;
+  }
+  return None;
 }
 
 status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
@@ -360,24 +537,12 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir) {
   if (inquisitive_cabinetinternal(mv, ir) == Found) {
     return Found;
   }
-
-  if (mv.startswith(rpmMagic)) {
-    ir.Assign(L"RPM Package Manager", types::rpm);
+  if (inquisitive_tarinternal(mv, ir) == Found) {
     return Found;
   }
-
-  if (mv.startswith(swfMagic1) || mv.startswith(swfMagic2)) {
-    ir.Assign(L"Adobe Flash file format", types::swf);
+  if (inquisitive_sqliteinternal(mv, ir) == Found) {
     return Found;
   }
-  if (mv.startswith(msiMagic)) {
-    ir.Assign(L"Windows Installer packages", types::msi);
-    return Found;
-  }
-  if (epub((const byte_t *)mv.data(), mv.size())) {
-    ir.Assign(L"EPUB document", types::epub);
-    return Found;
-  }
-  return None;
+  return inquisitive_archivesinternal(mv, ir);
 }
 } // namespace inquisitive

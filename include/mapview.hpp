@@ -86,6 +86,9 @@ public:
   }
   std::size_t size() const { return size_; }
   const char *data() const { return data_; }
+  const uint8_t *udata() const {
+    return reinterpret_cast<const uint8_t *>(data_);
+  }
   std::string_view sv() { return std::string_view(data_, size_); }
   unsigned char operator[](const std::size_t off) const {
     if (off >= size_) {

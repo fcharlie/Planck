@@ -3,7 +3,7 @@
 
 namespace inquisitive {
 
-bool IsEot(memview mv) {
+inline bool IsEot(memview mv) {
   return mv.size() > 35 && mv[34] == 0x4C && mv[35] == 0x50 &&
          ((mv[8] == 0x02 && mv[9] == 0x00 && mv[10] == 0x01) ||
           (mv[8] == 0x01 && mv[9] == 0x00 && mv[10] == 0x00) ||

@@ -11,6 +11,7 @@ add_library(Inquisitive STATIC
   inquisitive.cc
   macho.cc
   media.cc
+  mime.cc
   pe.cc
   resolve.cc
   text.cc

@@ -65,6 +65,7 @@ enum Type {
   dmg,
   xar,
   wim,
+  z,
   //
   jpg,
   jp2,
