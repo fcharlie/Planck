@@ -439,6 +439,8 @@ status_t inquisitive_archivesinternal(memview mv, inquisitive_result_t &ir) {
   // MSI
   constexpr const byte_t msiMagic[] = {0x53, 0x5A, 0x44, 0x44, 0x88,
                                        0xF0, 0x27, 0x33, 0x41};
+  // D0 CF 11 E0 A1 B1 1A E1 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3E
+  // 00 03 00 FE FF 09 00 06
   if (mv.startswith(msiMagic)) {
     ir.Assign(L"Windows Installer packages", types::msi);
     return Found;

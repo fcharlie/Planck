@@ -1,5 +1,6 @@
 //////////////
 #include "inquisitive.hpp"
+#include "docs.hpp"
 
 namespace inquisitive {
 
@@ -19,18 +20,33 @@ status_t inquisitive_rtfinternal(memview mv, inquisitive_result_t &ir) {
     }
     /// version is alpha number
     ir.name.push_back(ch);
+    return Found;
   }
   return None;
 }
 
-//
-constexpr byte_t msdocMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
-                                 0xA1, 0xB1, 0x1A, 0xE1};
 // http://www.openoffice.org/sc/compdocfileformat.pdf
 // https://interoperability.blob.core.windows.net/files/MS-PPT/[MS-PPT].pdf
 
 status_t inquisitive_docs(memview mv, inquisitive_result_t &ir) {
-  //
+  constexpr const byte_t msofficeMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
+                                            0xA1, 0xB1, 0x1A, 0xE1};
+  constexpr const byte_t pptMagic[] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1,
+                                       0x1A, 0xE1, 0x00, 0x00, 0x00, 0x00};
+  constexpr const byte_t wordMagic[] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1,
+                                        0xB1, 0x1A, 0xE1, 0x00};
+  constexpr const byte_t xlsMagic[] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1,
+                                       0xB1, 0x1A, 0xE1, 0x00};
+  if (inquisitive_rtfinternal(mv, ir) == Found) {
+    return Found;
+  }
+  constexpr const auto olesize = sizeof(oleheader_t);
+  if (mv.startswith(msofficeMagic) || mv.size() < 512) {
+    return None;
+  }
+  auto oh = mv.cast<oleheader_t>(0);
+  // PowerPoint Document
+
   return None;
 }
 } // namespace inquisitive
