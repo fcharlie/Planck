@@ -7,7 +7,7 @@
 #include <charconv>
 #include <ShlObj.h>
 #include <mapview.hpp>
-#include <shl.hpp>
+#include "shl.hpp"
 #include "comutils.hpp"
 #include "reparsepoint.hpp"
 

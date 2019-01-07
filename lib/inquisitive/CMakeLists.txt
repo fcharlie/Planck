@@ -15,6 +15,7 @@ add_library(Inquisitive STATIC
   mime.cc
   pe.cc
   resolve.cc
+  shl.cc
   text.cc
   zip.cc
 )
