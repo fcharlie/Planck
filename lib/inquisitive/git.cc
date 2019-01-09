@@ -17,6 +17,14 @@ struct git_index_header_t {
   uint32_t fanout[256];
 };
 
+struct git_index3_header_t {
+  uint8_t signature[4]; // 0xFF, 0x74, 0x4F, 0x63
+  uint32_t version;
+  uint32_t hslength;
+  uint32_t packobjects;
+  uint32_t objectformats; // 2
+};
+
 struct git_midx_header_t {
   uint8_t siganture[4]; // M I D X
   uint8_t version;
@@ -49,10 +57,25 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
       return None;
     }
     wchar_t buf[128];
-    _snwprintf_s(buf, ArrayLength(buf),
-                 L"Git pack indexs file, version %d, total objects %d",
-                 planck::resolvebe(hd->version),
-                 planck::resolvebe(hd->fanout[255]));
+    auto ver = planck::resolvebe(hd->version);
+    switch (ver) {
+    case 2:
+      _snwprintf_s(buf, ArrayLength(buf),
+                   L"Git pack indexs file, version %d, total objects %d", ver,
+                   planck::resolvebe(hd->fanout[255]));
+      break;
+    case 3: {
+      auto hd3 = mv.cast<git_index3_header_t>(0);
+      _snwprintf_s(buf, ArrayLength(buf),
+                   L"Git pack indexs file, version %d, total objects %d", ver,
+                   planck::resolvebe(hd3->packobjects));
+    } break;
+    default:
+      _snwprintf_s(buf, ArrayLength(buf), L"Git pack indexs file, version %d",
+                   ver);
+      break;
+    };
+
     ir.Assign(buf, types::gitpkindex);
     return Found;
   }
