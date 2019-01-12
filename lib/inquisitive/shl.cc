@@ -237,7 +237,6 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
     return None;
   }
   auto flag = shm.linkflags();
-  constexpr const auto slsize = sizeof(shl::shell_link_t);
   size_t offset = sizeof(shl::shell_link_t);
   if ((flag & shl::HasLinkTargetIDList) != 0) {
     if (shm.size() <= offset + 2) {
@@ -288,7 +287,9 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
       {shl::HasRelativePath, L"RelativePath"},
       {shl::HasWorkingDir, L"WorkingDir"},
       {shl::HasArguments, L"Arguments"},
-      {shl::HasIconLocation, L"IconLocation"}};
+      {shl::HasIconLocation, L"IconLocation"}
+      /// --->
+  };
 
   for (const auto &i : sdv) {
     std::wstring sd;
