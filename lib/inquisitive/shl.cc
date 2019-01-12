@@ -280,44 +280,27 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
     }
     offset += planck::resolvele(li->cbSize);
   }
+  static shl::link_value_flags_t sdv[] = {
+      {shl::HasName, L"Name"},
+      {shl::HasRelativePath, L"RelativePath"},
+      {shl::HasWorkingDir, L"WorkingDir"},
+      {shl::HasArguments, L"Arguments"},
+      {shl::HasIconLocation, L"IconLocation"}};
 
-  std::wstring sd;
-  size_t sdlen = 0;
-  if ((flag & shl::HasName) != 0) {
+  for (const auto &i : sdv) {
+    std::wstring sd;
+    size_t sdlen = 0;
+    if ((flag & i.v) == 0) {
+      continue;
+    }
     if (!shm.stringdata(offset, sd, sdlen)) {
       return Found;
     }
     offset += sdlen;
-    ir.Add(L"Name", sd);
+    ir.Add(i.n, sd);
   }
-  if ((flag & shl::HasRelativePath) != 0) {
-    if (!shm.stringdata(offset, sd, sdlen)) {
-      return Found;
-    }
-    offset += sdlen;
-    ir.Add(L"RelativePath", sd);
-  }
-  if ((flag & shl::HasWorkingDir) != 0) {
-    if (!shm.stringdata(offset, sd, sdlen)) {
-      return Found;
-    }
-    offset += sdlen;
-    ir.Add(L"WorkingDir", sd);
-  }
-  if ((flag & shl::HasArguments) != 0) {
-    if (!shm.stringdata(offset, sd, sdlen)) {
-      return Found;
-    }
-    offset += sdlen;
-    ir.Add(L"Arguments", sd);
-  }
-  if ((flag & shl::HasIconLocation) != 0) {
-    if (!shm.stringdata(offset, sd, sdlen)) {
-      return Found;
-    }
-    offset += sdlen;
-    ir.Add(L"IconLocation", sd);
-  }
+  ///////// ExtralData
+
   if ((flag & shl::EnableTargetMetadata) != 0) {
     //// such edge
   }
