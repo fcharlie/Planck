@@ -87,6 +87,9 @@ int wmain(int argc, wchar_t **argv) {
   }
   if (ir) {
     planck::PrintNone(L"Details: %s\n", ir->name);
+    for (const auto &v : ir->attrs) {
+      planck::PrintNone(L"%s: %s\n", v.name, v.value);
+    }
   }
   return 0;
 }

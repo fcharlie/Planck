@@ -299,7 +299,7 @@ public:
   const char *data() const { return data_; }
   size_t size() const { return size_; }
   template <typename T> const T *cast(size_t off) const {
-    if (off >= size_) {
+    if (off + sizeof(T) >= size_) {
       return nullptr;
     }
     return reinterpret_cast<const T *>(data_ + off);

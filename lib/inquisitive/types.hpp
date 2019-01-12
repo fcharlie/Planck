@@ -108,10 +108,11 @@ enum Type {
   wmv,
   mpeg,
   flv,
-  // support git 
+  // support git
   gitpack,
   gitpkindex,
-  gitmidx
+  gitmidx,
+  shelllink // Windows shelllink
 };
 
 enum TypeEx {

@@ -101,8 +101,6 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
                                            base::error_code &ec);
 std::optional<file_links_t> ResolveLinks(std::wstring_view sv,
                                          base::error_code &ec);
-std::optional<std::wstring> ResolveShellLink(std::wstring_view sv,
-                                             base::error_code &ec);
 } // namespace inquisitive
 
 #endif

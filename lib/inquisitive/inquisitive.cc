@@ -89,8 +89,8 @@ std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
       // handles
       inquisitive_binobj, inquisitive_fonts,     inquisitive_zip_family,
       inquisitive_docs,   inquisitive_images,    inquisitive_archives,
-      inquisitive_media,  inquisitive_gitbinary, inquisitive_text,
-      inquisitive_chardet
+      inquisitive_media,  inquisitive_gitbinary, inquisitive_shlink,
+      inquisitive_text,   inquisitive_chardet
       //
   };
   for (auto h : handles) {

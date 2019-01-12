@@ -112,6 +112,12 @@ struct inquisitive_result_t {
                        types::TypeEx t1 = types::NONE) {
     Assign(dv, t0, t1);
   }
+  void Clear() {
+    name.clear();
+    attrs.clear();
+    type = types::none;
+    typeex = types::NONE;
+  }
   inquisitive_result_t &Assign(std::wstring_view dv,
                                types::Type t0 = types::none,
                                types::TypeEx t1 = types::NONE) {
@@ -145,6 +151,7 @@ status_t inquisitive_archives(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_media(memview mv, inquisitive_result_t &ir);
 // EX
 status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir);
+status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir);
 /////////// ---
 status_t inquisitive_text(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_chardet(memview mv, inquisitive_result_t &ir);

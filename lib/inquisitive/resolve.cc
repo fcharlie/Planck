@@ -7,7 +7,6 @@
 #include <charconv>
 #include <ShlObj.h>
 #include <mapview.hpp>
-#include "shl.hpp"
 #include "comutils.hpp"
 #include "reparsepoint.hpp"
 
@@ -311,34 +310,4 @@ std::optional<file_links_t> ResolveLinks(std::wstring_view sv,
   return std::make_optional<file_links_t>(link);
 }
 
-std::optional<std::wstring> ResolveShellLink(std::wstring_view sv,
-                                             base::error_code &ec) {
-  if (sv.size() < 4 || sv.size() > MAX_PATH ||
-      sv.compare(sv.size() - 4, 4, L".lnk") != 0) {
-    return std::nullopt;
-  }
-  comptr<IShellLinkW> link;
-
-  if ((CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
-                        IID_IShellLink, (void **)&link)) != S_OK) {
-    return std::nullopt;
-  }
-  comptr<IPersistFile> pf;
-  if (link->QueryInterface(IID_IPersistFile, (void **)&pf) != S_OK) {
-    return std::nullopt;
-  }
-  if (pf->Load(sv.data(), STGM_READ) != S_OK) {
-    return std::nullopt;
-  }
-  if (link->Resolve(nullptr, 0) != S_OK) {
-    return std::nullopt;
-  }
-  WCHAR szPath[MAX_PATH];
-  WIN32_FIND_DATA wfd;
-  if (link->GetPath(szPath, MAX_PATH, (WIN32_FIND_DATA *)&wfd,
-                    SLGP_SHORTPATH) == S_OK) {
-    return std::make_optional<std::wstring>(szPath);
-  }
-  return std::nullopt;
-}
 } // namespace inquisitive

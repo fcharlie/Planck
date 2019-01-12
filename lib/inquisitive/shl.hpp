@@ -1,6 +1,6 @@
 ////////////////
-#ifndef FILEVIEW_SHELLLINK_H
-#define FILEVIEW_SHELLLINK_H
+#ifndef INQUISITIVE_SHELLLINK_HPP
+#define INQUISITIVE_SHELLLINK_HPP
 #include <cstdint>
 
 namespace shl {
@@ -69,22 +69,51 @@ struct shell_link_t {
   uint32_t reserved3;
 };
 
-enum link_info_flags {
+enum link_info_flags : uint32_t {
   VolumeIDAndLocalBasePath = 0x00000001,
   CommonNetworkRelativeLinkAndPathSuffix = 0x00000002
 };
 
-struct link_info_t {
+struct shl_link_inofa_t {
+  /* Size of the link info data */
   uint32_t cbSize;
+  /* Size of this structure (ANSI: = 0x0000001C) */
   uint32_t cbHeaderSize;
+  /* Specifies which fields are present/populated (SLI_*) */
   uint32_t dwFlags;
+  /* Offset of the VolumeID field (SHELL_LINK_INFO_VOLUME_ID) */
   uint32_t cbVolumeIDOffset;
+  /* Offset of the LocalBasePath field (ANSI, NULL-terminated string) */
   uint32_t cbLocalBasePathOffset;
+  /* Offset of the CommonNetworkRelativeLink field (SHELL_LINK_INFO_CNR_LINK) */
   uint32_t cbCommonNetworkRelativeLinkOffset;
+  /* Offset of the CommonPathSuffix field (ANSI, NULL-terminated string) */
   uint32_t cbCommonPathSuffixOffset;
-  uint32_t cbLocalBasePathOffsetUnicode;
-  uint32_t cbCommonPathSuffixOffsetUnicode;
 };
+
+struct shl_link_info_t {
+  /* Size of the link info data */
+  uint32_t cbSize;
+  /* Size of this structure (Unicode: >= 0x00000024) */
+  uint32_t cbHeaderSize;
+  /* Specifies which fields are present/populated (SLI_*) */
+  uint32_t dwFlags;
+  /* Offset of the VolumeID field (SHELL_LINK_INFO_VOLUME_ID) */
+  uint32_t cbVolumeIDOffset;
+  /* Offset of the LocalBasePath field (ANSI, NULL-terminated string) */
+  uint32_t cbLocalBasePathOffset;
+  /* Offset of the CommonNetworkRelativeLink field (SHELL_LINK_INFO_CNR_LINK) */
+  uint32_t cbCommonNetworkRelativeLinkOffset;
+  /* Offset of the CommonPathSuffix field (ANSI, NULL-terminated string) */
+  uint32_t cbCommonPathSuffixOffset;
+  /* Offset of the LocalBasePathUnicode field (Unicode, NULL-terminated string)
+   */
+  uint32_t cbLocalBasePathUnicodeOffset;
+  /* Offset of the CommonPathSuffixUnicode field (Unicode, NULL-terminated
+   * string) */
+  uint32_t cbCommonPathSuffixUnicodeOffset;
+};
+
 
 /*
  IDList ItemIDSize (2 bytes):
