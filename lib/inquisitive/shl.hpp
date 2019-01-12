@@ -114,6 +114,27 @@ struct shl_link_info_t {
   uint32_t cbCommonPathSuffixUnicodeOffset;
 };
 
+// BlockSize (4 bytes): A 32-bit, unsigned integer that specifies the size of
+// the KnownFolderDataBlock structure. This value MUST be 0x0000001C.
+
+// BlockSignature (4 bytes): A 32-bit, unsigned integer that specifies the
+// signature of the KnownFolderDataBlock extra data section. This value MUST be
+// 0xA000000B.
+
+// KnownFolderID (16 bytes): A value in GUID packet representation ([MS-DTYP]
+// section 2.3.4.2) that specifies the folder GUID ID.
+
+// Offset (4 bytes): A 32-bit, unsigned integer that specifies the location of
+// the ItemID of the first child segment of the IDList specified by
+// KnownFolderID. This value is the offset, in bytes, into the link target
+// IDList.
+
+struct knwonfolder_t {
+  uint32_t blocksize; // LE 0x0000001C
+  uint32_t blocksignature;
+  uint8_t knownfolderid[16];
+  uint32_t offset;
+};
 
 /*
  IDList ItemIDSize (2 bytes):

@@ -275,44 +275,53 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
         return Found;
       }
       ir.Add(L"Target", su);
-      return Found;
+    } else if ((liflag & shl::CommonNetworkRelativeLinkAndPathSuffix) != 0) {
+      //// NetworkRelative
     }
-    return Found;
+    offset += planck::resolvele(li->cbSize);
   }
 
+  std::wstring sd;
+  size_t sdlen = 0;
   if ((flag & shl::HasName) != 0) {
-    std::wstring sd;
-    size_t sdlen = 0;
-    if (shm.stringdata(offset, sd, sdlen)) {
-      offset += sdlen;
-      ir.Add(L"Name", sd);
+    if (!shm.stringdata(offset, sd, sdlen)) {
+      return Found;
     }
-    if ((flag & shl::HasRelativePath) != 0) {
-      if (shm.stringdata(offset, sd, sdlen)) {
-        offset += sdlen;
-        ir.Add(L"RelativePath", sd);
-      }
-    }
-    if ((flag & shl::HasWorkingDir) != 0) {
-      if (shm.stringdata(offset, sd, sdlen)) {
-        offset += sdlen;
-        ir.Add(L"WorkingDir", sd);
-      }
-    }
-    if ((flag & shl::HasArguments) != 0) {
-      if (shm.stringdata(offset, sd, sdlen)) {
-        offset += sdlen;
-        ir.Add(L"Arguments", sd);
-      }
-    }
-    if ((flag & shl::HasIconLocation) != 0) {
-      if (shm.stringdata(offset, sd, sdlen)) {
-        offset += sdlen;
-        ir.Add(L"IconLocation", sd);
-      }
-    }
-    return Found;
+    offset += sdlen;
+    ir.Add(L"Name", sd);
   }
+  if ((flag & shl::HasRelativePath) != 0) {
+    if (!shm.stringdata(offset, sd, sdlen)) {
+      return Found;
+    }
+    offset += sdlen;
+    ir.Add(L"RelativePath", sd);
+  }
+  if ((flag & shl::HasWorkingDir) != 0) {
+    if (!shm.stringdata(offset, sd, sdlen)) {
+      return Found;
+    }
+    offset += sdlen;
+    ir.Add(L"WorkingDir", sd);
+  }
+  if ((flag & shl::HasArguments) != 0) {
+    if (!shm.stringdata(offset, sd, sdlen)) {
+      return Found;
+    }
+    offset += sdlen;
+    ir.Add(L"Arguments", sd);
+  }
+  if ((flag & shl::HasIconLocation) != 0) {
+    if (!shm.stringdata(offset, sd, sdlen)) {
+      return Found;
+    }
+    offset += sdlen;
+    ir.Add(L"IconLocation", sd);
+  }
+  if ((flag & shl::EnableTargetMetadata) != 0) {
+    //// such edge
+  }
+
   return Found;
 }
 } // namespace inquisitive
