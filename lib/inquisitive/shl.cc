@@ -254,8 +254,9 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
   ir.Assign(L"Windows Shortcut", types::shelllink);
   ir.Add(L"Attribute", shl::DumpFlags(flag));
 
+  // LinkINFO https://msdn.microsoft.com/en-us/library/dd871404.aspx
   if ((flag & shl::HasLinkInfo) != 0) {
-    auto li = shm.cast<shl::shl_link_info_t>(offset);
+    auto li = shm.cast<shl::shl_link_infow_t>(offset);
     if (li == nullptr) {
       return Found;
     }
@@ -271,6 +272,7 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
         isunicode = true;
         pos = offset + planck::resolvele(li->cbLocalBasePathUnicodeOffset);
       }
+
       if (!shm.stringvalue(pos, isunicode, su)) {
         return Found;
       }
@@ -280,7 +282,8 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
     }
     offset += planck::resolvele(li->cbSize);
   }
-  static shl::link_value_flags_t sdv[] = {
+  // StringData https://msdn.microsoft.com/en-us/library/dd871306.aspx
+  static const shl::link_value_flags_t sdv[] = {
       {shl::HasName, L"Name"},
       {shl::HasRelativePath, L"RelativePath"},
       {shl::HasWorkingDir, L"WorkingDir"},
@@ -299,8 +302,8 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
     offset += sdlen;
     ir.Add(i.n, sd);
   }
-  ///////// ExtralData
 
+  // ExtraData https://msdn.microsoft.com/en-us/library/dd891345.aspx
   if ((flag & shl::EnableTargetMetadata) != 0) {
     //// such edge
   }

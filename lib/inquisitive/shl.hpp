@@ -74,7 +74,7 @@ enum link_info_flags : uint32_t {
   CommonNetworkRelativeLinkAndPathSuffix = 0x00000002
 };
 
-struct shl_link_inofa_t {
+struct shl_link_info_t {
   /* Size of the link info data */
   uint32_t cbSize;
   /* Size of this structure (ANSI: = 0x0000001C) */
@@ -91,7 +91,7 @@ struct shl_link_inofa_t {
   uint32_t cbCommonPathSuffixOffset;
 };
 
-struct shl_link_info_t {
+struct shl_link_infow_t {
   /* Size of the link info data */
   uint32_t cbSize;
   /* Size of this structure (Unicode: >= 0x00000024) */
@@ -128,6 +128,36 @@ struct shl_link_info_t {
 // the ItemID of the first child segment of the IDList specified by
 // KnownFolderID. This value is the offset, in bytes, into the link target
 // IDList.
+
+struct shl_cnr_link_t {
+  /* Size of the CommonNetworkRelativeLink field (>= 0x00000014) */
+  uint32_t cbSize;
+  /* Specifies which fields are present/populated (SLI_CNR_*) */
+  uint32_t dwFlags;
+  /* Offset of the NetName field (ANSI, NULL–terminated string) */
+  uint32_t cbNetNameOffset;
+  /* Offset of the DeviceName field (ANSI, NULL–terminated string) */
+  uint32_t cbDeviceNameOffset;
+  /* Type of the network provider (WNNC_NET_* defined in winnetwk.h) */
+  uint32_t dwNetworkProviderType;
+};
+
+struct shl_cnr_linkw_t {
+  /* Size of the CommonNetworkRelativeLink field (>= 0x00000014) */
+  uint32_t cbSize;
+  /* Specifies which fields are present/populated (SLI_CNR_*) */
+  uint32_t dwFlags;
+  /* Offset of the NetName field (ANSI, NULL–terminated string) */
+  uint32_t cbNetNameOffset;
+  /* Offset of the DeviceName field (ANSI, NULL–terminated string) */
+  uint32_t cbDeviceNameOffset;
+  /* Type of the network provider (WNNC_NET_* defined in winnetwk.h) */
+  uint32_t dwNetworkProviderType;
+  /* Offset of the NetNameUnicode field (Unicode, NULL–terminated string) */
+  uint32_t cbNetNameUnicodeOffset;
+  /* Offset of the DeviceNameUnicode field (Unicode, NULL–terminated string) */
+  uint32_t cbDeviceNameUnicodeOffset;
+};
 
 struct knwonfolder_t {
   uint32_t blocksize; // LE 0x0000001C

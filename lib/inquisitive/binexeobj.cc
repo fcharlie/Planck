@@ -251,7 +251,7 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
       uint32_t off = planck::readle<uint32_t>(mv.data() + 0x3c);
       auto sv = mv.submv(off);
       if (sv.startswith(PEMagic)) {
-        ir.Assign(L"PECOFF executable file", types::pecoff_executable,
+        ir.Assign(L"PE executable file", types::pecoff_executable,
                   types::PECOFF);
         return Found;
       }
