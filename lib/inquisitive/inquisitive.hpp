@@ -102,9 +102,15 @@ struct inquisitive_attribute_t {
   }
 };
 
+struct inquisitive_mattribute_t {
+  std::wstring name;
+  std::vector<std::wstring> values;
+};
+
 struct inquisitive_result_t {
   std::wstring name;
   std::vector<inquisitive_attribute_t> attrs;
+  std::vector<inquisitive_mattribute_t> mattrs;
   types::Type type{types::none};
   types::TypeEx typeex{types::NONE};
   inquisitive_result_t() = default;
@@ -128,6 +134,14 @@ struct inquisitive_result_t {
   }
   inquisitive_result_t &Add(std::wstring_view name, std::wstring_view value) {
     attrs.emplace_back(name, value);
+    return *this;
+  }
+  inquisitive_result_t &Add(std::wstring_view name,
+                            const std::vector<std::wstring> &values) {
+    inquisitive_mattribute_t ma;
+    ma.name = name;
+    ma.values.assign(values.begin(), values.end());
+    mattrs.push_back(std::move(ma));
     return *this;
   }
 };

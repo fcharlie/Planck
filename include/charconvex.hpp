@@ -215,7 +215,7 @@ _Digit_from_char(const char _Ch) noexcept { // strengthened
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
       255};
-  static_assert(_STD size(_Digit_from_byte) == 256);
+  static_assert(std::size(_Digit_from_byte) == 256);
 
   return _Digit_from_byte[static_cast<unsigned char>(_Ch)];
 }
