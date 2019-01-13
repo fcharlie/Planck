@@ -236,25 +236,29 @@ status_t inquisitive_wiminternal(memview mv, inquisitive_result_t &ir) {
 
   auto flag = planck::resolvele(hd->dwFlags);
   if ((flag & WimReadOnly) != 0) {
-    name.append(L" ReadOnly,");
-  }
-  if ((flag & WimCompression) != 0) {
-    name.append(L" Compression:");
-    if ((flag & WimCompressionXpress) != 0) {
-      name.append(L" XPRESS");
-    }
-    if ((flag & WimCompressionLXZ) != 0) {
-      name.append(L" LXZ");
-    }
-    if ((flag & WimCompressionLZMS) != 0) {
-      name.append(L" LZMS");
-    }
-    if ((flag & WimCompressionXPRESS2) != 0) {
-      name.append(L" XPRESSv2");
-    }
-    name.push_back(',');
+    name.append(L" ReadOnly");
   }
   ir.assign(std::move(name), types::wim);
+  if ((flag & WimCompression) != 0) {
+    std::wstring compression;
+    if ((flag & WimCompressionXpress) != 0) {
+      compression.append(L"XPRESS ");
+    }
+    if ((flag & WimCompressionLXZ) != 0) {
+      compression.append(L"LXZ ");
+    }
+    if ((flag & WimCompressionLZMS) != 0) {
+      compression.append(L"LZMS");
+    }
+    if ((flag & WimCompressionXPRESS2) != 0) {
+      compression.append(L"XPRESSv2 ");
+    }
+    if (!compression.empty()) {
+      compression.pop_back();
+    }
+    ir.add(L"Compression", std::move(compression));
+  }
+
   ir.add(L"Imagecount",
          base::Integer_to_chars(planck::resolvele(hd->dwImageCount), 10));
   ir.add(L"TotalParts",

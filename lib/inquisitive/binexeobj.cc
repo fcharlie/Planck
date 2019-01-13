@@ -258,7 +258,7 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
     }
     break;
   case 0x64: // x86-64 or ARM64 Windows.
-    if (mv[1] == char(0x86) || mv[1] == char(0xaa)) {
+    if (mv[1] == 0x86 || mv[1] == 0xaa) {
       ir.assign(L"COFF object", types::coff_object);
       return Found;
     }
