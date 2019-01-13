@@ -12,14 +12,16 @@ status_t inquisitive_rtfinternal(memview mv, inquisitive_result_t &ir) {
   if (!mv.startswith(rtfMagic) || mv.size() < 6) {
     return None;
   }
-  ir.Assign(L"Rich Text Format data, version ", types::rtf);
+  std::wstring name(L"Rich Text Format data, version ");
+
   for (size_t i = 5; i < mv.size(); i++) {
     auto ch = mv[i];
     if (ch == '\\' || ch == '\n') {
       break;
     }
     /// version is alpha number
-    ir.name.push_back(ch);
+    name.push_back(ch);
+    ir.assign(name, types::rtf);
     return Found;
   }
   return None;

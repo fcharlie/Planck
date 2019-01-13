@@ -43,35 +43,35 @@ status_t inquisitive_mediaaudio(memview mv, inquisitive_result_t &ir) {
                                        0x57, 0x41, 0x56, 0x45};
   constexpr const byte_t amrMagic[] = {0x23, 0x21, 0x41, 0x4D, 0x52, 0x0A};
   if (mv.startswith(midiMagic)) {
-    ir.Assign(L"MIDI Audio", types::midi);
+    ir.assign(L"MIDI Audio", types::midi);
     return Found;
   }
   if (IsMp3(mv.udata(), mv.size())) {
-    ir.Assign(L"MP3 Audio", types::mp3);
+    ir.assign(L"MP3 Audio", types::mp3);
     return Found;
   }
   if (IsM4a(mv.udata(), mv.size())) {
-    ir.Assign(L"M4A Audio", types::m4a);
+    ir.assign(L"M4A Audio", types::m4a);
     return Found;
   }
   if (mv.startswith(oggMagic)) {
-    ir.Assign(L"OGG Audio/Video", types::ogg);
+    ir.assign(L"OGG Audio/Video", types::ogg);
     return Found;
   }
   if (mv.startswith(flacMagic)) {
-    ir.Assign(L"Free Lossless Audio Codec", types::flac);
+    ir.assign(L"Free Lossless Audio Codec", types::flac);
     return Found;
   }
   if (mv.startswith(wavMagic)) {
-    ir.Assign(L"Waveform Audio File Format", types::wav);
+    ir.assign(L"Waveform Audio File Format", types::wav);
     return Found;
   }
   if (mv.startswith(amrMagic)) {
-    ir.Assign(L"Adaptive Multi-Rate audio codecat", types::amr);
+    ir.assign(L"Adaptive Multi-Rate audio codecat", types::amr);
     return Found;
   }
   if (IsAac(mv.udata(), mv.size())) {
-    ir.Assign(L"Advanced Audio Coding", types::aac);
+    ir.assign(L"Advanced Audio Coding", types::aac);
     return Found;
   }
   return None;
@@ -144,35 +144,35 @@ status_t inquisitive_mediavideo(memview mv, inquisitive_result_t &ir) {
                                        0x66, 0xCF, 0x11, 0xA6, 0xD6};
   constexpr const byte_t flvMagic[] = {0x46, 0x4C, 0x56, 0x01};
   if (IsM4v(mv.udata(), mv.size())) {
-    ir.Assign(L"M4V Video", types::m4v);
+    ir.assign(L"M4V Video", types::m4v);
     return Found;
   }
   if (IsMkv(mv.udata(), mv.size())) {
-    ir.Assign(L"Matroska Multimedia Container (.mkv)", types::mkv);
+    ir.assign(L"Matroska Multimedia Container (.mkv)", types::mkv);
     return Found;
   }
   if (mv.startswith(webmMagic)) {
-    ir.Assign(L"WebM Video", types::webm);
+    ir.assign(L"WebM Video", types::webm);
     return Found;
   }
   if (IsAvi(mv.udata(), mv.size())) {
-    ir.Assign(L"Audio Video Interleaved (.avi)", types::avi);
+    ir.assign(L"Audio Video Interleaved (.avi)", types::avi);
     return Found;
   }
   if (mv.startswith(wmvMagic)) {
-    ir.Assign(L"", types::wmv);
+    ir.assign(L"", types::wmv);
     return Found;
   }
   if (IsMpeg(mv.udata(), mv.size())) {
-    ir.Assign(L"MPEG Video", types::mpeg);
+    ir.assign(L"MPEG Video", types::mpeg);
     return Found;
   }
   if (mv.startswith(flvMagic)) {
-    ir.Assign(L"Flash Video", types::flv);
+    ir.assign(L"Flash Video", types::flv);
     return Found;
   }
   if (IsMp4(mv.udata(), mv.size())) {
-    ir.Assign(L"MPEG-4 Part 14 Video (.mp4)", types::mp4);
+    ir.assign(L"MPEG-4 Part 14 Video (.mp4)", types::mp4);
     return Found;
   }
   return None;

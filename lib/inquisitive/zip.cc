@@ -19,15 +19,15 @@ inline bool IsZip(const byte_t *buf, size_t size) {
 
 status_t msdocssubview(memview mv, inquisitive_result_t &ir) {
   if (mv.startswith("word/")) {
-    ir.Assign(L"Microsoft Word (.docx)", types::docx);
+    ir.assign(L"Microsoft Word (.docx)", types::docx);
     return Found;
   }
   if (mv.startswith("ppt/")) {
-    ir.Assign(L"Microsoft PowerPoint (.pptx)", types::pptx);
+    ir.assign(L"Microsoft PowerPoint (.pptx)", types::pptx);
     return Found;
   }
   if (mv.startswith("xl/")) {
-    ir.Assign(L"Microsoft Excel (.xlsx)", types::xlsx);
+    ir.assign(L"Microsoft Excel (.xlsx)", types::xlsx);
     return Found;
   }
   return None;
@@ -128,7 +128,7 @@ status_t inquisitive_zip_family(memview mv, inquisitive_result_t &ir) {
   if (inquisitive_msxmldocs(mv, ir) == Found) {
     return Found;
   }
-  ir.Assign(L"Zip archive data", types::zip);
+  ir.assign(L"Zip archive data", types::zip);
   return Found;
 }
 } // namespace inquisitive

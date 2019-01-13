@@ -32,7 +32,7 @@ status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
   wchar_t buf[64];
   _snwprintf_s(buf, 64, L"7-zip archive data, version %d.%d", (int)hd->major,
                (int)hd->minor);
-  ir.Assign(buf, types::p7z);
+  ir.assign(buf, types::p7z);
   return Found;
 }
 
@@ -48,11 +48,11 @@ status_t inquisitive_rarinternal(memview mv, inquisitive_result_t &ir) {
   constexpr const byte_t rar4Signature[] = {0x52, 0x61, 0x72, 0x21,
                                             0x1A, 0x07, 0x00};
   if (mv.startswith(rarSignature)) {
-    ir.Assign(L"Roshal Archive (rar), version 5", types::rar);
+    ir.assign(L"Roshal Archive (rar), version 5", types::rar);
     return Found;
   }
   if (mv.startswith(rar4Signature)) {
-    ir.Assign(L"Roshal Archive (rar), version 4", types::rar);
+    ir.assign(L"Roshal Archive (rar), version 4", types::rar);
     return Found;
   }
   return None;
@@ -86,7 +86,7 @@ status_t inquisitive_xarinternal(memview mv, inquisitive_result_t &ir) {
   auto ver = planck::resolvebe(xhd->version);
   wchar_t buf[64];
   _snwprintf_s(buf, 64, L"eXtensible ARchive format, version %d", (int)ver);
-  ir.Assign(buf, types::xar);
+  ir.assign(buf, types::xar);
   return Found;
 }
 
@@ -139,7 +139,7 @@ status_t inquisitive_dmginternal(memview mv, inquisitive_result_t &ir) {
   auto ver = planck::resolvebe(hd->Version);
   wchar_t buf[64];
   _snwprintf_s(buf, 64, L"Apple Disk Image, version %d", (int)ver);
-  ir.Assign(buf, types::dmg);
+  ir.assign(buf, types::dmg);
   return Found;
 }
 
@@ -164,7 +164,7 @@ status_t inquisitive_pdfinternal(memview mv, inquisitive_result_t &ir) {
   if (!newline) {
     return None;
   }
-  ir.Assign(buf, types::pdf);
+  ir.assign(buf, types::pdf);
   return Found;
 }
 
@@ -230,36 +230,36 @@ status_t inquisitive_wiminternal(memview mv, inquisitive_result_t &ir) {
   if (hd == nullptr || planck::resolvele(hd->cbSize) < hdsize) {
     return None;
   }
-  wchar_t buf[128];
-  _snwprintf_s(buf, 128, L"Windows Imaging Format, version %d,",
-               planck::resolvele(hd->dwVersion));
-  ir.Assign(buf, types::wim);
+
+  std::wstring name(L"Windows Imaging Format, version ");
+  base::Integer_append_chars(planck::resolvele(hd->dwVersion), 10, name);
+
   auto flag = planck::resolvele(hd->dwFlags);
   if ((flag & WimReadOnly) != 0) {
-    ir.name.append(L" ReadOnly,");
+    name.append(L" ReadOnly,");
   }
   if ((flag & WimCompression) != 0) {
-    ir.name.append(L" Compression:");
+    name.append(L" Compression:");
     if ((flag & WimCompressionXpress) != 0) {
-      ir.name.append(L" XPRESS");
+      name.append(L" XPRESS");
     }
     if ((flag & WimCompressionLXZ) != 0) {
-
-      ir.name.append(L" LXZ");
+      name.append(L" LXZ");
     }
     if ((flag & WimCompressionLZMS) != 0) {
-      ir.name.append(L" LZMS");
+      name.append(L" LZMS");
     }
     if ((flag & WimCompressionXPRESS2) != 0) {
-      ir.name.append(L" XPRESSv2");
+      name.append(L" XPRESSv2");
     }
-    ir.name.push_back(',');
+    name.push_back(',');
   }
-  ir.Add(L"Imagecount",
+  ir.assign(name, types::wim);
+  ir.add(L"Imagecount",
          base::Integer_to_chars(planck::resolvele(hd->dwImageCount), 10));
-  ir.Add(L"TotalParts",
+  ir.add(L"TotalParts",
          base::Integer_to_chars(planck::resolvele(hd->usTotalParts), 10));
-  ir.Add(L"PartNumber",
+  ir.add(L"PartNumber",
          base::Integer_to_chars(planck::resolvele(hd->usPartNumber), 10));
 
   return Found;
@@ -309,7 +309,7 @@ status_t inquisitive_cabinetinternal(memview mv, inquisitive_result_t &ir) {
   wchar_t buf[64];
   _snwprintf_s(buf, 64, L"Microsoft Cabinet data(cab), version %d.%d",
                (int)hd->versionMajor, (int)hd->versionMinor);
-  ir.Assign(buf, types::cab);
+  ir.assign(buf, types::cab);
   return Found;
 }
 
@@ -382,12 +382,12 @@ status_t inquisitive_tarinternal(memview mv, inquisitive_result_t &ir) {
   constexpr const byte_t ustarMagic[] = {'u', 's', 't', 'a', 'r', 0};
   constexpr const byte_t gnutarMagic[] = {'u', 's', 't', 'a', 'r', ' ', ' ', 0};
   if (memcmp(hd->magic, ustarMagic, ArrayLength(ustarMagic)) == 0) {
-    ir.Assign(L"Tarball (ustar) archive data", types::tar);
+    ir.assign(L"Tarball (ustar) archive data", types::tar);
     return Found;
   }
   if (memcmp(hd->magic, gnutarMagic, ArrayLength(gnutarMagic)) == 0 &&
       mv.size() > sizeof(gnutar_header_t)) {
-    ir.Assign(L"Tarball (gnutar) archive data", types::tar);
+    ir.assign(L"Tarball (gnutar) archive data", types::tar);
     return Found;
   }
   return None;
@@ -409,8 +409,9 @@ status_t inquisitive_sqliteinternal(memview mv, inquisitive_result_t &ir) {
   if (hd == nullptr || hd->sigver[15] != 0) {
     return None;
   }
-  ir.Assign(L"SQLite DB, format ", types::sqlite);
-  ir.name.push_back(hd->sigver[14]);
+  std::wstring name(L"SQLite DB, format ");
+  name.push_back(hd->sigver[14]);
+  ir.assign(name, types::sqlite);
   return Found;
 }
 
@@ -442,7 +443,7 @@ status_t inquisitive_archivesinternal(memview mv, inquisitive_result_t &ir) {
   // D0 CF 11 E0 A1 B1 1A E1 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3E
   // 00 03 00 FE FF 09 00 06
   if (mv.startswith(msiMagic)) {
-    ir.Assign(L"Windows Installer packages", types::msi);
+    ir.assign(L"Windows Installer packages", types::msi);
     return Found;
   }
   // DEB
@@ -450,44 +451,44 @@ status_t inquisitive_archivesinternal(memview mv, inquisitive_result_t &ir) {
       0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A, 0x64, 0x65, 0x62,
       0x69, 0x61, 0x6E, 0x2D, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79};
   if (mv.startswith(debMagic)) {
-    ir.Assign(L"Debian packages", types::deb);
+    ir.assign(L"Debian packages", types::deb);
     return Found;
   }
   // RPM
   constexpr const byte_t rpmMagic[] = {0xED, 0xAB, 0xEE, 0xDB}; // size>96
   if (mv.startswith(rpmMagic) && mv.size() > 96) {
-    ir.Assign(L"RPM Package Manager", types::rpm);
+    ir.assign(L"RPM Package Manager", types::rpm);
     return Found;
   }
   constexpr const byte_t crxMagic[] = {0x43, 0x72, 0x32, 0x34};
   if (mv.startswith(crxMagic)) {
-    ir.Assign(L"Chrome Extension", types::crx);
+    ir.assign(L"Chrome Extension", types::crx);
     return Found;
   }
   // XZ
   constexpr const byte_t xzMagic[] = {0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00};
   if (mv.startswith(xzMagic)) {
-    ir.Assign(L"XZ archive data", types::xz);
+    ir.assign(L"XZ archive data", types::xz);
     return Found;
   }
   // GZ
   constexpr const byte_t gzMagic[] = {0x1F, 0x8B, 0x8};
   if (mv.startswith(gzMagic)) {
-    ir.Assign(L"GZ archive data", types::gz);
+    ir.assign(L"GZ archive data", types::gz);
     return Found;
   }
   // BZ2
   // https://github.com/dsnet/compress/blob/master/doc/bzip2-format.pdf
   constexpr const byte_t bz2Magic[] = {0x42, 0x5A, 0x68};
   if (mv.startswith(bz2Magic)) {
-    ir.Assign(L"BZ2 archive data", types::bz2);
+    ir.assign(L"BZ2 archive data", types::bz2);
     return Found;
   }
 
   // NES
   constexpr const byte_t nesMagic[] = {0x41, 0x45, 0x53, 0x1A};
   if (mv.startswith(nesMagic)) {
-    ir.Assign(L"Nintendo NES ROM", types::nes);
+    ir.assign(L"Nintendo NES ROM", types::nes);
     return Found;
   }
 
@@ -495,23 +496,23 @@ status_t inquisitive_archivesinternal(memview mv, inquisitive_result_t &ir) {
   // constexpr const byte_t arMagic[]={0x21,0x3c,0x61,0x72,0x63,0x68,0x3E};
   constexpr const byte_t zMagic[] = {0x1F, 0xA0, 0x1F, 0x9D};
   if (mv.startswith(zMagic)) {
-    ir.Assign(L"X compressed archive data", types::z);
+    ir.assign(L"X compressed archive data", types::z);
     return Found;
   }
 
   constexpr const byte_t lzMagic[] = {0x4C, 0x5A, 0x49, 0x50};
   if (mv.startswith(lzMagic)) {
-    ir.Assign(L"LZ archive data", types::lz);
+    ir.assign(L"LZ archive data", types::lz);
     return Found;
   }
   // SWF
   if (IsSwf(mv.udata(), mv.size())) {
-    ir.Assign(L"Adobe Flash file format", types::swf);
+    ir.assign(L"Adobe Flash file format", types::swf);
     return Found;
   }
   // EPUB
   if (IsEPUB(mv.udata(), mv.size())) {
-    ir.Assign(L"EPUB document", types::epub);
+    ir.assign(L"EPUB document", types::epub);
     return Found;
   }
   return None;

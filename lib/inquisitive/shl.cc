@@ -250,8 +250,8 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
     offset += l + 2;
   }
 
-  ir.Assign(L"Windows Shortcut", types::shelllink);
-  ir.Add(L"Attribute", shl::DumpFlags(flag));
+  ir.assign(L"Windows Shortcut", types::shelllink);
+  ir.add(L"Attribute", shl::DumpFlags(flag));
 
   // LinkINFO https://msdn.microsoft.com/en-us/library/dd871404.aspx
   if ((flag & shl::HasLinkInfo) != 0) {
@@ -275,7 +275,7 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
       if (!shm.stringvalue(pos, isunicode, su)) {
         return Found;
       }
-      ir.Add(L"Target", su);
+      ir.add(L"Target", su);
     } else if ((liflag & shl::CommonNetworkRelativeLinkAndPathSuffix) != 0) {
       //// NetworkRelative
     }
@@ -301,7 +301,7 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
       return Found;
     }
     offset += sdlen;
-    ir.Add(i.n, sd);
+    ir.add(i.n, sd);
   }
 
   // ExtraData https://msdn.microsoft.com/en-us/library/dd891345.aspx

@@ -107,45 +107,66 @@ struct inquisitive_mattribute_t {
   std::vector<std::wstring> values;
 };
 
-struct inquisitive_result_t {
-  using mcontainer_t = std::vector<inquisitive_mattribute_t>;
-  using container_t = std::vector<inquisitive_attribute_t>;
-  static constexpr size_t deslen = sizeof("Description") - 1;
+class inquisitive_result {
+private:
   std::wstring name;
   std::vector<inquisitive_attribute_t> attrs;
   std::vector<inquisitive_mattribute_t> mattrs;
   std::size_t mnlen{deslen}; // description
-  types::Type type{types::none};
-  types::TypeEx typeex{types::NONE};
-  inquisitive_result_t() = default;
-  inquisitive_result_t(std::wstring_view dv, types::Type t0 = types::none,
-                       types::TypeEx t1 = types::NONE) {
-    Assign(dv, t0, t1);
+  types::Type t{types::none};
+  types::TypeEx e{types::NONE};
+
+public:
+  using mcontainer_t = std::vector<inquisitive_mattribute_t>;
+  using container_t = std::vector<inquisitive_attribute_t>;
+  static constexpr size_t deslen = sizeof("Description") - 1;
+  inquisitive_result() = default;
+  inquisitive_result(std::wstring_view dv, types::Type t0 = types::none,
+                     types::TypeEx t1 = types::NONE) {
+    assign(dv, t0, t1);
   }
-  void Clear() {
+
+  void clear() {
     name.clear();
     attrs.clear();
     mattrs.clear();
     mnlen = deslen;
-    mnlen = deslen;
-    type = types::none;
-    typeex = types::NONE;
+    t = types::none;
+    e = types::NONE;
   }
-  inquisitive_result_t &Assign(std::wstring_view dv,
-                               types::Type t0 = types::none,
-                               types::TypeEx t1 = types::NONE) {
+
+  inquisitive_result &assign(const std::wstring_view &dv,
+                             types::Type t0 = types::none,
+                             types::TypeEx t1 = types::NONE) {
     name.assign(dv);
-    type = t0;
-    typeex = t1;
+    t = t0;
+    e = t1;
     return *this;
   }
-  inquisitive_result_t &Add(std::wstring_view name, std::wstring_view value) {
+
+  inquisitive_result &assign(std::wstring &&dv, types::Type t0 = types::none,
+                             types::TypeEx t1 = types::NONE) {
+    name.assign(std::move(dv));
+    t = t0;
+    e = t1;
+    return *this;
+  }
+
+  inquisitive_result &add(const std::wstring_view &name,
+                          const std::wstring_view &value) {
     mnlen = (std::max)(mnlen, name.size());
     attrs.emplace_back(name, value);
     return *this;
   }
-  inquisitive_result_t &Add(std::wstring_view name,
-                            const std::vector<std::wstring> &values) {
+
+  inquisitive_result &add(std::wstring &&name, std::wstring &&value) {
+    mnlen = (std::max)(mnlen, name.size());
+    attrs.emplace_back(std::move(name), std::move(value));
+    return *this;
+  }
+
+  inquisitive_result &add(const std::wstring_view &name,
+                          const std::vector<std::wstring> &values) {
     mnlen = (std::max)(mnlen, name.size());
     inquisitive_mattribute_t ma;
     ma.name = name;
@@ -153,13 +174,26 @@ struct inquisitive_result_t {
     mattrs.push_back(std::move(ma));
     return *this;
   }
-  const std::wstring &Description() const { return name; }
-  size_t AlignLength() const { return mnlen; }
-  types::TypeEx TypeEx() const { return typeex; }
-  types::Type Type() const { return type; }
-  const container_t &Container() const { return attrs; }
-  const mcontainer_t &Mcontainer() const { return mattrs; }
+
+  inquisitive_result &add(std::wstring &&name,
+                          const std::vector<std::wstring> &values) {
+    mnlen = (std::max)(mnlen, name.size());
+    inquisitive_mattribute_t ma;
+    ma.name.assign(std::move(name));
+    ma.values.assign(values.begin(), values.end());
+    mattrs.push_back(std::move(ma));
+    return *this;
+  }
+
+  const std::wstring &description() const { return name; }
+  size_t alignlen() const { return mnlen; }
+  types::TypeEx typeex() const { return e; }
+  types::Type type() const { return t; }
+  const container_t &container() const { return attrs; }
+  const mcontainer_t &mcontainer() const { return mattrs; }
 };
+
+using inquisitive_result_t = inquisitive_result;
 
 std::wstring fromutf8(std::string_view text);
 

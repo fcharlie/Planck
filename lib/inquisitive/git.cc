@@ -48,7 +48,7 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
     _snwprintf_s(
         buf, ArrayLength(buf), L"Git pack file, version %d, objects %d",
         planck::resolvebe(hd->version), planck::resolvebe(hd->objsize));
-    ir.Assign(buf, types::gitpack);
+    ir.assign(buf, types::gitpack);
     return Found;
   }
   if (mv.startswith(indexMagic)) {
@@ -76,7 +76,7 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
       break;
     };
 
-    ir.Assign(buf, types::gitpkindex);
+    ir.assign(buf, types::gitpkindex);
     return Found;
   }
   if (mv.startswith(midxMagic)) {
@@ -90,7 +90,7 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
                  L"%d, pack files %d",
                  (int)hd->version, int(hd->oidversion), int(hd->chunks),
                  planck::resolvebe(hd->packfiles));
-    ir.Assign(buf, types::gitpack);
+    ir.assign(buf, types::gitpack);
     return Found;
   }
 
