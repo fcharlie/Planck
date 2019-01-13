@@ -4,15 +4,12 @@
 namespace inquisitive {
 // check text details
 
-bool IsText(memview mv) {
-  auto data = mv.data();
-  auto size = (std::min)(mv.size(), size_t(1024));
-  for (size_t i = i; i < size; i++) {
-    if (mv[i] == 0 && mv[i - 1] == 0) {
-      return false;
-    }
+bool buffer_is_binary(memview mv) {
+  auto size = (std::min)(mv.size(), size_t(0x8000));
+  if (memchr(mv.data(), 0, size) != nullptr) {
+    return true;
   }
-  return true;
+  return false;
 }
 
 /*
@@ -67,7 +64,13 @@ status_t inquisitive_text(memview mv, inquisitive_result_t &ir) {
 //////// --------------> use chardet
 status_t inquisitive_chardet(memview mv, inquisitive_result_t &ir) {
   //
-  return None;
+
+  if (buffer_is_binary(mv)) {
+    ir.assign(L"binary", types::none);
+  } else {
+    ir.assign(L"ASCII", types::none);
+  }
+  return Found;
 }
 
 } // namespace inquisitive
