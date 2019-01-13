@@ -79,10 +79,10 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
                 types::windows_resource);
       return Found;
     }
-    if (mv[1] == 0) {
-      ir.assign(L"COFF object", types::coff_object);
-      return Found;
-    }
+    // if (mv[1] == 0) {
+    //   ir.assign(L"COFF object", types::coff_object);
+    //   return Found;
+    // }
     if (mv.startswith("\0asm", 4)) {
       ir.assign(L"WebAssembly Object file", types::wasm_object);
       return Found;
