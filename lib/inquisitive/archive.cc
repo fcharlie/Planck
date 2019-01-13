@@ -84,9 +84,9 @@ status_t inquisitive_xarinternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
   auto ver = planck::resolvebe(xhd->version);
-  wchar_t buf[64];
-  _snwprintf_s(buf, 64, L"eXtensible ARchive format, version %d", (int)ver);
-  ir.assign(buf, types::xar);
+  std::wstring name(L"eXtensible ARchive format, version ");
+  base::Integer_append_chars(ver, 10, name);
+  ir.assign(std::move(name), types::xar);
   return Found;
 }
 
@@ -164,7 +164,7 @@ status_t inquisitive_pdfinternal(memview mv, inquisitive_result_t &ir) {
   if (!newline) {
     return None;
   }
-  ir.assign(buf, types::pdf);
+  ir.assign(std::move(buf), types::pdf);
   return Found;
 }
 
@@ -254,7 +254,7 @@ status_t inquisitive_wiminternal(memview mv, inquisitive_result_t &ir) {
     }
     name.push_back(',');
   }
-  ir.assign(name, types::wim);
+  ir.assign(std::move(name), types::wim);
   ir.add(L"Imagecount",
          base::Integer_to_chars(planck::resolvele(hd->dwImageCount), 10));
   ir.add(L"TotalParts",
@@ -411,7 +411,7 @@ status_t inquisitive_sqliteinternal(memview mv, inquisitive_result_t &ir) {
   }
   std::wstring name(L"SQLite DB, format ");
   name.push_back(hd->sigver[14]);
-  ir.assign(name, types::sqlite);
+  ir.assign(std::move(name), types::sqlite);
   return Found;
 }
 

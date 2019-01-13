@@ -217,13 +217,6 @@ public:
     return *this;
   }
 
-  inquisitive_result &add(std::wstring &&name,
-                          const std::vector<std::wstring> &values) {
-    mnlen = (std::max)(mnlen, name.size());
-    mattrs.emplace_back(std::move(name), values);
-    return *this;
-  }
-
   inquisitive_result &add(const std::wstring_view &name,
                           const std::vector<std::wstring> &values) {
     mnlen = (std::max)(mnlen, name.size());
