@@ -96,8 +96,13 @@ struct inquisitive_attribute_t {
   std::wstring name;
   std::wstring value;
   inquisitive_attribute_t() = default;
-  inquisitive_attribute_t(std::wstring_view n, std::wstring_view v)
+  inquisitive_attribute_t(const std::wstring_view &n,
+                          const std::wstring_view &v)
       : name(n), value(v) {
+    //
+  }
+  inquisitive_attribute_t(std::wstring &&n, std::wstring &&v)
+      : name(std::move(n)), value(std::move(v)) {
     //
   }
 };
@@ -105,6 +110,16 @@ struct inquisitive_attribute_t {
 struct inquisitive_mattribute_t {
   std::wstring name;
   std::vector<std::wstring> values;
+  inquisitive_mattribute_t() = default;
+  inquisitive_mattribute_t(const std::wstring_view &n,
+                           const std::vector<std::wstring> &v)
+      : name(n), values(v) {
+    //
+  }
+  inquisitive_mattribute_t(std::wstring &&n, std::vector<std::wstring> &&v)
+      : name(std::move(n)), values(std::move(v)) {
+    //
+  }
 };
 
 class inquisitive_result {
@@ -115,6 +130,22 @@ private:
   std::size_t mnlen{deslen}; // description
   types::Type t{types::none};
   types::TypeEx e{types::NONE};
+  void move_from(inquisitive_result &&other) {
+    name.assign(std::move(other.name));
+    attrs = std::move(other.attrs);
+    mattrs = std::move(other.mattrs);
+    mnlen = other.mnlen;
+    t = other.t;
+    e = other.e;
+  }
+  void copy_from(const inquisitive_result &other) {
+    name = other.name;
+    attrs = other.attrs;
+    mattrs = other.mattrs;
+    mnlen = other.mnlen;
+    t = other.t;
+    e = other.e;
+  }
 
 public:
   using mcontainer_t = std::vector<inquisitive_mattribute_t>;
@@ -124,6 +155,20 @@ public:
   inquisitive_result(std::wstring_view dv, types::Type t0 = types::none,
                      types::TypeEx t1 = types::NONE) {
     assign(dv, t0, t1);
+  }
+  inquisitive_result(inquisitive_result &&other) {
+    move_from(std::move(other));
+  }
+
+  inquisitive_result &operator=(inquisitive_result &&other) {
+    move_from(std::move(other));
+    return *this;
+  }
+
+  inquisitive_result(const inquisitive_result &other) { copy_from(other); }
+  inquisitive_result &operator=(const inquisitive_result &other) {
+    copy_from(other);
+    return *this;
   }
 
   void clear() {
@@ -165,23 +210,24 @@ public:
     return *this;
   }
 
-  inquisitive_result &add(const std::wstring_view &name,
-                          const std::vector<std::wstring> &values) {
+  inquisitive_result &add(std::wstring &&name,
+                          std::vector<std::wstring> &&values) {
     mnlen = (std::max)(mnlen, name.size());
-    inquisitive_mattribute_t ma;
-    ma.name = name;
-    ma.values.assign(values.begin(), values.end());
-    mattrs.push_back(std::move(ma));
+    mattrs.emplace_back(std::move(name), std::move(values));
     return *this;
   }
 
   inquisitive_result &add(std::wstring &&name,
                           const std::vector<std::wstring> &values) {
     mnlen = (std::max)(mnlen, name.size());
-    inquisitive_mattribute_t ma;
-    ma.name.assign(std::move(name));
-    ma.values.assign(values.begin(), values.end());
-    mattrs.push_back(std::move(ma));
+    mattrs.emplace_back(std::move(name), values);
+    return *this;
+  }
+
+  inquisitive_result &add(const std::wstring_view &name,
+                          const std::vector<std::wstring> &values) {
+    mnlen = (std::max)(mnlen, name.size());
+    mattrs.emplace_back(name, values);
     return *this;
   }
 
