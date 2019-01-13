@@ -9,10 +9,13 @@ enum Type {
   none,
   /// TEXT
   ascii,
+  utf7,
   utf8,
   utf8bom,
   utf16le,
   utf16be,
+  utf32le,
+  utf32be,
   ///
   bitcode,                               ///< Bitcode file
   archive,                               ///< ar style archive file

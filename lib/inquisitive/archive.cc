@@ -441,12 +441,9 @@ bool IsSwf(const byte_t *buf, size_t size) {
 
 /// Magic only
 status_t inquisitive_archivesinternal(memview mv, inquisitive_result_t &ir) {
-  // MSI
+  // MSI // 0x4d434923
   constexpr const byte_t msiMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
                                        0xA1, 0xB1, 0x1A, 0xE1};
-
-  // D0 CF 11 E0 A1 B1 1A E1 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3E
-  // 00 03 00 FE FF 09 00 06
   if (mv.startswith(msiMagic)) {
     ir.assign(L"Windows Installer packages", types::msi);
     return Found;
