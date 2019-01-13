@@ -156,7 +156,7 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
         mv.startswith("\xFE\xED\xFA\xCF")) {
       /* Native endian */
       size_t minsize;
-      if (mv[3] == char(0xCE)) {
+      if (mv[3] == 0xCE) {
         minsize = sizeof(mach_header);
       } else {
         minsize = sizeof(mach_header_64);
@@ -167,7 +167,7 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
                mv.startswith("\xCF\xFA\xED\xFE")) {
       /* Reverse endian */
       size_t minsize;
-      if (mv[0] == char(0xCE)) {
+      if (mv[0] == 0xCE) {
         minsize = sizeof(mach_header);
       } else {
         minsize = sizeof(mach_header_64);
