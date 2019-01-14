@@ -22,7 +22,7 @@ inline bool UseWideConsole() {
   return true;
 }
 
-std::wstring fromutf8(std::string_view sv) {
+inline std::wstring fromutf8(std::string_view sv) {
   auto sz =
       MultiByteToWideChar(CP_UTF8, 0, sv.data(), (int)sv.size(), nullptr, 0);
   std::wstring output;
@@ -62,7 +62,7 @@ int StringPrint(wchar_t *const buffer, size_t const bufferCount,
 }
 
 template <typename... Args>
-ssize_t PrintNone(const wchar_t *format, Args... args) {
+ssize_t PrintNone(const wchar_t *format, Args const &... args) {
   std::wstring buffer;
   size_t size = StringPrint(nullptr, 0, format, args...);
   buffer.resize(size);

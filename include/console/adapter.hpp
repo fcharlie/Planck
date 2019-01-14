@@ -7,7 +7,7 @@
 #endif
 #include <Windows.h>
 #endif
-
+#include <string>
 #include <functional>
 
 namespace planck {

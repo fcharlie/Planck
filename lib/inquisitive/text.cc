@@ -78,7 +78,7 @@ static const uint8_t utf8d_transition[] = {
     1,   1,   1,   1,   1,   1,   1,   1,   1,   1,        // s7..s8
 };
 
-static uint32_t inline updatestate(uint32_t *state, uint32_t byte) {
+static inline uint32_t updatestate(uint32_t *state, uint32_t byte) {
   uint32_t type = utf8d[byte];
   *state = utf8d_transition[16 * *state + type];
   return *state;
@@ -147,13 +147,15 @@ status_t inquisitive_text(memview mv, inquisitive_result_t &ir) {
 }
 //////// --------------> use chardet
 status_t inquisitive_chardet(memview mv, inquisitive_result_t &ir) {
-  //
-
   if (buffer_is_binary(mv)) {
-    ir.assign(L"binary", types::none);
-  } else {
-    ir.assign(L"ASCII", types::none);
+    ir.assign(L"Binary data");
+    return Found;
   }
+  if (validate_utf8(mv.data(), mv.size())) {
+    ir.assign(L"UTF-8 Unicode text", types::utf8);
+    return Found;
+  }
+  ir.assign(L"Unknown file encoding", types::utf8);
   return Found;
 }
 

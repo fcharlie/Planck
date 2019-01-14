@@ -30,7 +30,7 @@ inline bool enablevtmode() {
 }
 
 /// Like reopen
-bool adapter::changeout(bool isstderr) {
+inline bool adapter::changeout(bool isstderr) {
   out = isstderr ? stderr : stdout;
   hConsole = GetStdHandle(isstderr ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE);
   if (hConsole == INVALID_HANDLE_VALUE || hConsole == nullptr) {

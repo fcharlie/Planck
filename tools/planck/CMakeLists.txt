@@ -3,6 +3,7 @@
 
 add_executable(planck
     main.cc
+    hastyhex.cc
 )
 
 if(lto_supported)
