@@ -142,7 +142,7 @@ static void process_color(FILE *in, FILE *out, int64_t len) {
 }
 
 static void process_plain(FILE *in, FILE *out, int64_t len) {
-  int i, n;
+  size_t i, n;
   unsigned long offset = 0;
   unsigned char input[16] = {0};
   constexpr const uint64_t inputlen = sizeof(input);
@@ -214,6 +214,7 @@ struct BinaryOptions {
   std::wstring file;
   std::wstring out;
   int64_t length{-1};
+  uint64_t seek{0};
   bool plain{false};
 };
 
@@ -223,6 +224,7 @@ Usage: hastyhex [options] <input>
 OPTIONS:
   -h [--help]                      Print hastyhex usage information and exit
   -n [--length]                    Read only N bytes from the input.
+  -s [--seek]                     Read from the specified offset
   -o [--out]                       Output to file instead of standard output
   -p                               Do not output color ("plain")
 
@@ -236,6 +238,7 @@ bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
   std::vector<planck::ParseArgv::option> opts = {
       {L"help", planck::ParseArgv::no_argument, 'h'},
       {L"length", planck::ParseArgv::required_argument, 'n'},
+      {L"seek", planck::ParseArgv::required_argument, 's'},
       {L"plain", planck::ParseArgv::no_argument, 'p'},
       {L"out", planck::ParseArgv::required_argument, 'o'}
       //
@@ -257,6 +260,14 @@ bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
           planck::_Integer_from_chars(optarg, optarg + wcslen(optarg), n, 10);
       if (ec.ec == std::errc{}) {
         bo.length = n;
+      }
+    } break;
+    case 's': {
+      int64_t n;
+      auto ec =
+          planck::_Integer_from_chars(optarg, optarg + wcslen(optarg), n, 10);
+      if (ec.ec == std::errc{}) {
+        bo.seek = n;
       }
     } break;
     case 'p':
@@ -308,7 +319,9 @@ int wmain(int argc, wchar_t *argv[]) {
       fclose(out);
     }
   });
-
+  if (in != stdin) {
+    _fseeki64(in, bo.seek, SEEK_SET);
+  }
   if (bo.plain) {
     process_plain(in, out, bo.length);
   } else {
