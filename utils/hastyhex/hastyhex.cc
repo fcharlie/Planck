@@ -230,6 +230,7 @@ OPTIONS:
 
 Example:
   hastyhex example.bin
+
 )";
   printf("%s", ua);
 }

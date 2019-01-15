@@ -361,8 +361,7 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, base::error_code &ec) {
   }
 
   if (sh_offset == 0 || sh_entsize == 0 || sh_offset >= size_) {
-    ec = base::make_error_code(L"ELF file size invalid");
-    return false;
+    return true;
   }
   auto strtab = &sects[sh_link];
   if (sh_link >= shnum) {
@@ -440,8 +439,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
   }
 
   if (sh_offset == 0 || sh_entsize == 0 || sh_offset >= size_) {
-    ec = base::make_error_code(L"ELF file size invalid");
-    return false;
+    return true;
   }
   auto strtab = &sects[sh_link];
   if (sh_link >= shnum) {
