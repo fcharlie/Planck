@@ -3,6 +3,7 @@
 #include <string_view>
 #include <optional>
 #include <endian.hpp>
+#include <strcat.hpp>
 #include "inquisitive.hpp"
 
 namespace inquisitive {
@@ -29,10 +30,10 @@ status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
   if (memcmp(hd->signature, k7zSignature, k7zSignatureSize) != 0) {
     return None;
   }
-  wchar_t buf[64];
-  _snwprintf_s(buf, 64, L"7-zip archive data, version %d.%d", (int)hd->major,
-               (int)hd->minor);
-  ir.assign(buf, types::p7z);
+
+  auto buf = planck::StrCat(L"7-zip archive data, version ", (int)hd->major,
+                            L".", (int)hd->minor);
+  ir.assign(std::move(buf), types::p7z);
   return Found;
 }
 

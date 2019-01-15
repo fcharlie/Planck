@@ -60,7 +60,7 @@ _Integer_to_chars(wchar_t *_First, wchar_t *const _Last,
         _Value = static_cast<_Unsigned>(_Value / 1'000'000'000);
 
         for (int _Idx = 0; _Idx != 9; ++_Idx) {
-          *--_RNext = static_cast<char>('0' + _Chunk % 10);
+          *--_RNext = static_cast<wchar_t>('0' + _Chunk % 10);
           _Chunk /= 10;
         }
       }
@@ -72,7 +72,7 @@ _Integer_to_chars(wchar_t *_First, wchar_t *const _Last,
     _Truncated _Trunc = static_cast<_Truncated>(_Value);
 
     do {
-      *--_RNext = static_cast<char>('0' + _Trunc % 10);
+      *--_RNext = static_cast<wchar_t>('0' + _Trunc % 10);
       _Trunc /= 10;
     } while (_Trunc != 0);
     break;
@@ -80,21 +80,21 @@ _Integer_to_chars(wchar_t *_First, wchar_t *const _Last,
 
   case 2:
     do {
-      *--_RNext = static_cast<char>('0' + (_Value & 0b1));
+      *--_RNext = static_cast<wchar_t>('0' + (_Value & 0b1));
       _Value >>= 1;
     } while (_Value != 0);
     break;
 
   case 4:
     do {
-      *--_RNext = static_cast<char>('0' + (_Value & 0b11));
+      *--_RNext = static_cast<wchar_t>('0' + (_Value & 0b11));
       _Value >>= 2;
     } while (_Value != 0);
     break;
 
   case 8:
     do {
-      *--_RNext = static_cast<char>('0' + (_Value & 0b111));
+      *--_RNext = static_cast<wchar_t>('0' + (_Value & 0b111));
       _Value >>= 3;
     } while (_Value != 0);
     break;
@@ -127,7 +127,7 @@ _Integer_to_chars(wchar_t *_First, wchar_t *const _Last,
     return {_Last, std::errc::value_too_large};
   }
 
-  std::memcpy(_First, _RNext, static_cast<size_t>(_Digits_written));
+  std::memcpy(_First, _RNext, static_cast<size_t>(_Digits_written) * 2);
 
   return {_First + _Digits_written, std::errc{}};
 }
@@ -373,6 +373,9 @@ inline from_chars_result from_chars(std::wstring_view sv, Integer &i,
                                     const int base = 10) noexcept {
   return from_chars(sv.data(), sv.data() + sv.size(), i, base);
 }
+
+// Float
+
 } // namespace planck
 
 #endif
