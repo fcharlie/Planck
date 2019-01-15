@@ -283,7 +283,9 @@ bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
   });
 
   if (ec) {
-    planck::PrintNone(L"ParseArgv: %s\n", ec.message);
+    if (ec.message != L"skipped") {
+      planck::PrintNone(L"ParseArgv: %s\n", ec.message);
+    }
     return false;
   }
   if (pv.UnresolvedArgs().empty()) {

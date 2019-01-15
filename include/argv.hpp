@@ -19,14 +19,13 @@ public:
     HasArgs has_args;
     int val;
   };
-  using ArgumentCallback =
-      std::function<bool(int, const wchar_t *optarg, const wchar_t *raw)>;
+  using ArgvInvoke = std::function<bool(int, const wchar_t *, const wchar_t *)>;
   ParseArgv(int argc, wchar_t *const *argv) : argc_(argc), argv_(argv) {}
   ParseArgv(const ParseArgv &) = delete;
   ParseArgv &operator=(const ParseArgv &) = delete;
 
   base::error_code ParseArgument(const std::vector<option> &opts,
-                                 const ArgumentCallback &callback) {
+                                 const ArgvInvoke &callback) {
     if (argc_ == 0 || argv_ == nullptr) {
       return base::make_error_code(L"invalid argument input");
     };
@@ -53,13 +52,13 @@ private:
   int index{0};
   base::error_code ParseInternal(std::wstring_view arg,
                                  const std::vector<option> &opts,
-                                 const ArgumentCallback &callback) {
+                                 const ArgvInvoke &callback) {
     /*
     -x ; -x value -Xvalue
     --xy;--xy=value;--xy value
     */
     if (arg.size() < 2) {
-      return base::make_error_code(L"Invalid argument");
+      return base::strcat_error_code(L"Invaild argument '", arg, L"'");
     }
     int ch = -1;
     HasArgs ha = optional_argument;
@@ -72,8 +71,7 @@ private:
       auto pos = arg.find('=');
       if (pos != std::wstring_view::npos) {
         if (pos + 1 >= arg.size()) {
-          return base::make_error_code(
-              std::wstring(L"Incorrect argument: ").append(arg));
+          return base::strcat_error_code(L"Incorrect argument: ", arg);
         }
         name = arg.substr(2, pos - 2);
         optarg = arg.data() + pos + 1;
@@ -93,8 +91,7 @@ private:
 
       /// -x=xxx
       if (arg.size() == 3 && arg[2] == '=') {
-        return base::make_error_code(
-            std::wstring(L"Incorrect argument: ").append(arg));
+        return base::strcat_error_code(L"Incorrect argument: ", arg);
       }
       if (arg.size() > 3) {
         if (arg[2] == '=') {
@@ -112,13 +109,11 @@ private:
     }
 
     if (optarg != nullptr && ha == no_argument) {
-      return base::make_error_code(
-          std::wstring(L"Unacceptable input: ").append(arg));
+      return base::strcat_error_code(L"Unacceptable input: ", arg);
     }
     if (optarg == nullptr && ha == required_argument) {
       if (index + 1 >= argc_) {
-        return base::make_error_code(
-            std::wstring(L"Option name cannot be empty: ").append(arg));
+        return base::strcat_error_code(L"Argument missing value: ", arg);
       }
       optarg = argv_[index + 1];
       index++;
