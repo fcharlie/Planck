@@ -1,8 +1,10 @@
-#ifndef PLACNK_CHARCONVEX_HPP
+#ifndef PLANCK_CHARCONVEX_HPP
 #define PLANCK_CHARCONVEX_HPP
 #include <cstring>
 #include <system_error>
 #include <memory>
+#include <cstdint>
+#include <climits>
 
 namespace planck {
 struct to_chars_result {
@@ -193,8 +195,8 @@ struct from_chars_result {
 };
 
 // FUNCTION from_chars (STRING TO INTEGER)
-_NODISCARD inline unsigned char
-_Digit_from_char(const char _Ch) noexcept { // strengthened
+[[nodiscard]] inline unsigned char
+_Digit_from_char(const unsigned char _Ch) noexcept { // strengthened
   // convert ['0', '9'] ['A', 'Z'] ['a', 'z'] to [0, 35], everything else to 255
   static constexpr unsigned char _Digit_from_byte[] = {
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -217,7 +219,7 @@ _Digit_from_char(const char _Ch) noexcept { // strengthened
       255};
   static_assert(std::size(_Digit_from_byte) == 256);
 
-  return _Digit_from_byte[static_cast<unsigned char>(_Ch)];
+  return _Digit_from_byte[_Ch];
 }
 
 template <class _RawTy>
@@ -264,8 +266,7 @@ _Integer_from_chars(const wchar_t *const _First, const wchar_t *const _Last,
   bool _Overflowed = false;
 
   for (; _Next != _Last; ++_Next) {
-    const unsigned char _Digit =
-        _Digit_from_char(static_cast<const char>(*_Next));
+    auto _Digit = _Digit_from_char(static_cast<const unsigned char>(*_Next));
 
     if (_Digit >= _Base) {
       break;
@@ -367,7 +368,11 @@ from_chars(const wchar_t *const _First, const wchar_t *const _Last,
            const int _Base = 10) noexcept { // strengthened
   return _Integer_from_chars(_First, _Last, _Value, _Base);
 }
-
+template <typename Integer>
+inline from_chars_result from_chars(std::wstring_view sv, Integer &i,
+                                    const int base = 10) noexcept {
+  return from_chars(sv.data(), sv.data() + sv.size(), i, base);
+}
 } // namespace planck
 
 #endif

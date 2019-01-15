@@ -224,7 +224,7 @@ Usage: hastyhex [options] <input>
 OPTIONS:
   -h [--help]                      Print hastyhex usage information and exit
   -n [--length]                    Read only N bytes from the input.
-  -s [--seek]                     Read from the specified offset
+  -s [--seek]                      Read from the specified offset
   -o [--out]                       Output to file instead of standard output
   -p                               Do not output color ("plain")
 
