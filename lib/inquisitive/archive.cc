@@ -85,8 +85,7 @@ status_t inquisitive_xarinternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
   auto ver = planck::resolvebe(xhd->version);
-  std::wstring name(L"eXtensible ARchive format, version ");
-  base::Integer_append_chars(ver, 10, name);
+  auto name = planck::StrCat(L"eXtensible ARchive format, version ", ver);
   ir.assign(std::move(name), types::xar);
   return Found;
 }
@@ -138,9 +137,8 @@ status_t inquisitive_dmginternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
   auto ver = planck::resolvebe(hd->Version);
-  wchar_t buf[64];
-  _snwprintf_s(buf, 64, L"Apple Disk Image, version %d", (int)ver);
-  ir.assign(buf, types::dmg);
+  auto name = planck::StrCat(L"Apple Disk Image, version ", ver);
+  ir.assign(std::move(name), types::dmg);
   return Found;
 }
 
@@ -232,9 +230,8 @@ status_t inquisitive_wiminternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
 
-  std::wstring name(L"Windows Imaging Format, version ");
-  base::Integer_append_chars(planck::resolvele(hd->dwVersion), 10, name);
-
+  auto name = planck::StrCat(L"Windows Imaging Format, version ",
+                             planck::resolvele(hd->dwVersion));
   auto flag = planck::resolvele(hd->dwFlags);
   if ((flag & WimReadOnly) != 0) {
     name.append(L" ReadOnly");
@@ -260,12 +257,9 @@ status_t inquisitive_wiminternal(memview mv, inquisitive_result_t &ir) {
     ir.add(L"Compression", std::move(compression));
   }
 
-  ir.add(L"Imagecount",
-         base::Integer_to_chars(planck::resolvele(hd->dwImageCount), 10));
-  ir.add(L"TotalParts",
-         base::Integer_to_chars(planck::resolvele(hd->usTotalParts), 10));
-  ir.add(L"PartNumber",
-         base::Integer_to_chars(planck::resolvele(hd->usPartNumber), 10));
+  ir.add(L"Imagecount", planck::resolvele(hd->dwImageCount));
+  ir.add(L"TotalParts", planck::resolvele(hd->usTotalParts));
+  ir.add(L"PartNumber", planck::resolvele(hd->usPartNumber));
 
   return Found;
 }
@@ -311,10 +305,10 @@ status_t inquisitive_cabinetinternal(memview mv, inquisitive_result_t &ir) {
   if (hd == nullptr) {
     return None;
   }
-  wchar_t buf[64];
-  _snwprintf_s(buf, 64, L"Microsoft Cabinet data(cab), version %d.%d",
-               (int)hd->versionMajor, (int)hd->versionMinor);
-  ir.assign(buf, types::cab);
+  auto name =
+      planck::StrCat(L"Microsoft Cabinet data(cab), version ",
+                     (int)hd->versionMajor, L".", (int)hd->versionMinor);
+  ir.assign(std::move(name), types::cab);
   return Found;
 }
 
@@ -414,8 +408,8 @@ status_t inquisitive_sqliteinternal(memview mv, inquisitive_result_t &ir) {
   if (hd == nullptr || hd->sigver[15] != 0) {
     return None;
   }
-  std::wstring name(L"SQLite DB, format ");
-  name.push_back(hd->sigver[14]);
+  std::wstring name =
+      planck::StrCat(L"SQLite DB, format ", (int)hd->sigver[14]);
   ir.assign(std::move(name), types::sqlite);
   return Found;
 }

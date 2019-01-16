@@ -1,6 +1,7 @@
 /// ELF details
 #include <elf.h>
 #include <endian.hpp>
+#include <strcat.hpp>
 #include "inquisitive.hpp"
 
 //  Executable and Linkable Format ELF
@@ -403,14 +404,13 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
   em.version = data_[EI_VERSION];
   auto msb = (em.endian == endian::BigEndian);
   resiveable = (msb != planck::IsBigEndianHost);
-  if (data_[EI_CLASS] == ELFCLASS64) {
+  int eic = data_[EI_CLASS];
+  if (eic == ELFCLASS64) {
     em.bit64 = true;
     return inquisitive64(em, ec);
   }
-  if (data_[EI_CLASS] != ELFCLASS32) {
-    std::wstring msg(L"ELF EI_CLASS ERROR: ");
-    base::Integer_append_chars(data_[EI_CLASS], 10, msg);
-    ec = base::make_error_code(msg);
+  if (eic != ELFCLASS32) {
+    ec = base::make_error_code(planck::StrCat(L"EI_CLASS invalid: ", eic));
     return false;
   }
   auto h = cast<Elf32_Ehdr>(0);

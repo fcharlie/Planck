@@ -1,5 +1,6 @@
 //////// GIT pack index and other files.
 #include <endian.hpp>
+#include <strcat.hpp>
 #include "inquisitive.hpp"
 
 namespace inquisitive {
@@ -44,11 +45,10 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
     if (hd == nullptr) {
       return None;
     }
-    wchar_t buf[64];
-    _snwprintf_s(
-        buf, ArrayLength(buf), L"Git pack file, version %d, objects %d",
-        planck::resolvebe(hd->version), planck::resolvebe(hd->objsize));
-    ir.assign(buf, types::gitpack);
+    auto name = planck::StrCat(L"Git pack file, version ",
+                               planck::resolvebe(hd->version), L", objects ",
+                               planck::resolvebe(hd->objsize));
+    ir.assign(std::move(name), types::gitpack);
     return Found;
   }
   if (mv.startswith(indexMagic)) {
@@ -56,27 +56,26 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
     if (hd == nullptr) {
       return None;
     }
-    wchar_t buf[128];
+    std::wstring name;
     auto ver = planck::resolvebe(hd->version);
     switch (ver) {
     case 2:
-      _snwprintf_s(buf, ArrayLength(buf),
-                   L"Git pack indexs file, version %d, total objects %d", ver,
-                   planck::resolvebe(hd->fanout[255]));
+      name = planck::StrCat(L"Git pack indexs file, version ", ver,
+                            L", total objects ",
+                            planck::resolvebe(hd->fanout[255]));
       break;
     case 3: {
       auto hd3 = mv.cast<git_index3_header_t>(0);
-      _snwprintf_s(buf, ArrayLength(buf),
-                   L"Git pack indexs file, version %d, total objects %d", ver,
-                   planck::resolvebe(hd3->packobjects));
+      name = planck::StrCat(L"Git pack indexs file, version ", ver,
+                            L", total objects ",
+                            planck::resolvebe(hd3->packobjects));
     } break;
     default:
-      _snwprintf_s(buf, ArrayLength(buf), L"Git pack indexs file, version %d",
-                   ver);
+      name = planck::StrCat(L"Git pack indexs file, version ", ver);
       break;
     };
 
-    ir.assign(buf, types::gitpkindex);
+    ir.assign(std::move(name), types::gitpkindex);
     return Found;
   }
   if (mv.startswith(midxMagic)) {
@@ -84,13 +83,11 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
     if (hd == nullptr) {
       return None;
     }
-    wchar_t buf[128];
-    _snwprintf_s(buf, ArrayLength(buf),
-                 L"Git multi-pack-index, version %d, oid version %d, chunks "
-                 L"%d, pack files %d",
-                 (int)hd->version, int(hd->oidversion), int(hd->chunks),
-                 planck::resolvebe(hd->packfiles));
-    ir.assign(buf, types::gitpack);
+    auto name = planck::StrCat(
+        L"Git multi-pack-index, version ", (int)hd->version, L", oid version ",
+        (int)hd->oidversion, L", chunks ", (int)hd->chunks, L", pack files ",
+        planck::resolvebe(hd->packfiles));
+    ir.assign(std::move(name), types::gitpack);
     return Found;
   }
 

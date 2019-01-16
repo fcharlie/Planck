@@ -245,42 +245,40 @@ bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
       //
   };
   planck::ParseArgv pv(argc, argv);
-  auto ec = pv.ParseArgument(opts, [&](int ch, const wchar_t *optarg,
-                                       const wchar_t *raw) {
-    switch (ch) {
-    case 'h':
-      PrintUsage();
-      exit(0);
-      break;
-    case 'o':
-      bo.out = optarg;
-      break;
-    case 'n': {
-      int64_t n;
-      auto ec =
-          planck::_Integer_from_chars(optarg, optarg + wcslen(optarg), n, 10);
-      if (ec.ec == std::errc{}) {
-        bo.length = n;
-      }
-    } break;
-    case 's': {
-      int64_t n;
-      auto ec =
-          planck::_Integer_from_chars(optarg, optarg + wcslen(optarg), n, 10);
-      if (ec.ec == std::errc{}) {
-        bo.seek = n;
-      }
-    } break;
-    case 'p':
-      bo.plain = true;
-      break;
-    default:
-      planck::PrintNone(L"Error Argument: %s\n",
-                        raw != nullptr ? raw : L"unknown");
-      return false;
-    }
-    return true;
-  });
+  auto ec = pv.ParseArgument(
+      opts, [&](int ch, const wchar_t *optarg, const wchar_t *raw) {
+        switch (ch) {
+        case 'h':
+          PrintUsage();
+          exit(0);
+          break;
+        case 'o':
+          bo.out = optarg;
+          break;
+        case 'n': {
+          int64_t n;
+          auto ec = planck::from_chars(optarg, optarg + wcslen(optarg), n, 10);
+          if (ec.ec == std::errc{}) {
+            bo.length = n;
+          }
+        } break;
+        case 's': {
+          int64_t n;
+          auto ec = planck::from_chars(optarg, optarg + wcslen(optarg), n, 10);
+          if (ec.ec == std::errc{}) {
+            bo.seek = n;
+          }
+        } break;
+        case 'p':
+          bo.plain = true;
+          break;
+        default:
+          planck::PrintNone(L"Error Argument: %s\n",
+                            raw != nullptr ? raw : L"unknown");
+          return false;
+        }
+        return true;
+      });
 
   if (ec) {
     if (ec.message != L"skipped") {
