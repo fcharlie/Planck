@@ -119,14 +119,15 @@ status_t inquisitive_text(memview mv, inquisitive_result_t &ir) {
     }
     break;
   case 0xFF: // UTF16LE 0xFF 0xFE
-    if (mv.size() >= 2 && mv[1] == 0xFE) {
-      ir.assign(L"Little-endian UTF-16 Unicode text", types::utf16le);
-      return Found;
-    }
     if (mv.size() > 4 && mv[1] == 0xFE && mv[2] == 0 && mv[3] == 0) {
       ir.assign(L"Little-endian UTF-32 Unicode text", types::utf32le);
       return Found;
     }
+    if (mv.size() >= 2 && mv[1] == 0xFE) {
+      ir.assign(L"Little-endian UTF-16 Unicode text", types::utf16le);
+      return Found;
+    }
+
     break;
   case 0xFE: // UTF16BE 0xFE 0xFF
     if (mv.size() >= 2 && mv[1] == 0xFF) {
