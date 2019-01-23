@@ -120,6 +120,7 @@ inline bool IsMp4(const byte_t *buf, size_t size) {
        (buf[8] == 'm' && buf[9] == 'm' && buf[10] == 'p' && buf[11] == '4') ||
        (buf[8] == 'm' && buf[9] == 'p' && buf[10] == '4' && buf[11] == '1') ||
        (buf[8] == 'm' && buf[9] == 'p' && buf[10] == '4' && buf[11] == '2') ||
+       (buf[8] == 'm' && buf[9] == 'p' && buf[10] == '4' && buf[11] == 'v') ||
        (buf[8] == 'm' && buf[9] == 'p' && buf[10] == '7' && buf[11] == '1') ||
        (buf[8] == 'M' && buf[9] == 'S' && buf[10] == 'N' && buf[11] == 'V') ||
        (buf[8] == 'N' && buf[9] == 'D' && buf[10] == 'A' && buf[11] == 'S') ||
