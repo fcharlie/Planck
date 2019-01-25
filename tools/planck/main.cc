@@ -86,6 +86,20 @@ int wmain(int argc, wchar_t **argv) {
     return 0;
   }
   if (ir) {
+    if (ir->typeex() == inquisitive::types::PECOFF) {
+      auto ps = inquisitive::inquisitive_pecoff(argv[1], ec);
+      if (!ec && ps) {
+        ir->add(L"Machine", ps->machine);
+        ir->add(L"Subsystem", ps->subsystem);
+        if (!ps->clrmsg.empty()) {
+          ir->add(L"CLR", ps->clrmsg);
+        }
+        ir->add(L"Depends", ps->depends);
+        if (!ps->delays.empty()) {
+          ir->add(L"Delay Depends", ps->delays);
+        }
+      }
+    }
     auto al = ir->alignlen() + 4;
     constexpr const size_t deslen = sizeof("Description") - 1;
     std::wstring space(al, L' ');
@@ -95,6 +109,17 @@ int wmain(int argc, wchar_t **argv) {
       planck::PrintNone(L"%s:%.*s%s\n", v.name, (int)(al - v.name.size() - 1),
                         space, v.value);
     }
+    for (const auto &m : ir->mcontainer()) {
+      if (m.values.empty()) {
+        continue;
+      }
+      planck::PrintNone(L"%s:%.*s%s\n", m.name, (int)(al - m.name.size() - 1),
+                        space, m.values[0]);
+      for (size_t i = 1; i < m.values.size(); i++) {
+        planck::PrintNone(L"%s%s\n", space, m.values[i]);
+      }
+    }
+    planck::PrintNone(L"\n");
   }
   return 0;
 }

@@ -284,26 +284,51 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
     // Exists IMAGE_COR20_HEADER
     pm.clrmsg = ClrMessage(mv, (PVOID)nh, clre->VirtualAddress);
   }
+
+  // Import
   auto import_ =
       &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
-  if (import_->Size == 0) {
-    return std::make_optional<>(pm);
-  }
-  auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
-                         import_->VirtualAddress, nullptr);
-  if (va == nullptr || (const char *)va + import_->Size >= end) {
-    return std::make_optional<>(pm);
-  }
-  auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
-  while (imdes->Name != 0) {
-    //
-    // ASCIIZ
-    auto dnw = DllName(mv, (LPVOID)nh, imdes->Name);
-    if (!dnw.empty()) {
-      pm.depends.push_back(dnw);
+  if (import_->Size != 0) {
+    auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
+                           import_->VirtualAddress, nullptr);
+    if (va == nullptr || (const char *)va + import_->Size >= end) {
+      return std::make_optional<>(pm);
     }
-    imdes++;
+    auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
+    while (imdes->Name != 0) {
+      //
+      // ASCIIZ
+      auto dnw = DllName(mv, (LPVOID)nh, imdes->Name);
+      if (!dnw.empty()) {
+        pm.depends.push_back(dnw);
+      }
+      imdes++;
+    }
   }
+
+  /// Delay import 
+  auto delay_ =
+      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT]);
+  if (delay_->Size != 0) {
+    auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
+                           delay_->VirtualAddress, nullptr);
+    if (va == nullptr || (const char *)va + delay_->Size >= end) {
+      return std::make_optional<>(pm);
+    }
+    auto imdes = reinterpret_cast<PIMAGE_DELAYLOAD_DESCRIPTOR>(va);
+    while (imdes->DllNameRVA != 0) {
+      //
+      // ASCIIZ
+      auto dnw = DllName(mv, (LPVOID)nh, imdes->DllNameRVA);
+      if (!dnw.empty()) {
+        pm.delays.push_back(dnw);
+      }
+      imdes++;
+    }
+  }
+
+  // IMAGE_DIRECTORY_ENTRY_RESOURCE resolve copyright
+
   return std::make_optional<pe_minutiae_t>(std::move(pm));
 }
 

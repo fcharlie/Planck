@@ -79,6 +79,7 @@ struct pe_minutiae_t {
   std::wstring clrmsg;
   std::vector<std::wstring> characteristics;
   std::vector<std::wstring> depends; /// DLL required
+  std::vector<std::wstring> delays;//
   pe_version_t osver;
   pe_version_t linkver;
   pe_version_t imagever;
