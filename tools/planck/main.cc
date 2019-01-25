@@ -118,8 +118,8 @@ int wmain(int argc, wchar_t **argv) {
       for (size_t i = 1; i < m.values.size(); i++) {
         planck::PrintNone(L"%s%s\n", space, m.values[i]);
       }
+      planck::PrintNone(L"\n");
     }
-    planck::PrintNone(L"\n");
   }
   return 0;
 }
