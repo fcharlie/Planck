@@ -78,9 +78,10 @@ struct error_code {
   explicit operator bool() const noexcept { return code != NO_ERROR; }
 };
 
-inline error_code make_error_code(std::wstring_view msg,int val=-1) {
+inline error_code make_error_code(std::wstring_view msg, int val = -1) {
   return error_code{std::wstring(msg), val};
 }
+
 
 template <typename... Args>
 inline error_code strcat_error_code(std::wstring_view v0,
