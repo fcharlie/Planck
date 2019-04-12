@@ -87,8 +87,6 @@ private:
       }
     } else {
       /// parse short
-      ch = arg[1];
-
       /// -x=xxx
       if (arg.size() == 3 && arg[2] == '=') {
         return base::strcat_error_code(L"Incorrect argument: ", arg);
@@ -101,11 +99,15 @@ private:
         }
       }
       for (auto &o : opts) {
-        if (o.val == ch) {
+        if (o.val == arg[1]) {
+          ch = o.val;
           ha = o.has_args;
           break;
         }
       }
+    }
+    if (ch == -1) {
+      return base::strcat_error_code(L"Unregistered option: ", arg);
     }
 
     if (optarg != nullptr && ha == no_argument) {
