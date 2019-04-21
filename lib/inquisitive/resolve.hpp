@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 #include <variant>
-#include <errorcode.hpp>
+#include <base.hpp>
 
 namespace inquisitive {
 

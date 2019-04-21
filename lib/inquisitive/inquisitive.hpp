@@ -15,8 +15,7 @@
 #include <algorithm>
 #include <system_error>
 #include <mapview.hpp>
-#include <charconv.hpp>
-#include <errorcode.hpp>
+#include <base.hpp>
 #include "types.hpp"
 
 namespace inquisitive {
@@ -212,8 +211,8 @@ public:
   }
   inquisitive_result &add(std::wstring &&name, uint64_t value) {
     mnlen = (std::max)(mnlen, name.size());
-    auto sv = base::to_chars(value, 10);
-    attrs.emplace_back(std::move(name), std::move(sv));
+    auto sv = base::AlphaNum(value);
+    attrs.emplace_back(std::move(name), std::wstring(sv.Piece()));
     return *this;
   }
 

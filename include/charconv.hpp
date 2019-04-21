@@ -1,10 +1,12 @@
-#ifndef PLANCK_CHARCONV_HPP
-#define PLANCK_CHARCONV_HPP
-#include <cstring>
-#include <system_error>
-#include <memory>
-#include <cstdint>
+//////
+#ifndef CLANGBUILDER_CHARCONV_HPP
+#define CLANGBUILDER_CHARCONV_HPP
+
 #include <climits>
+#include <cstdint>
+#include <cstring>
+#include <memory>
+#include <system_error>
 
 namespace base {
 struct to_chars_result {
@@ -186,20 +188,6 @@ inline to_chars_result to_chars(wchar_t *const _First, wchar_t *const _Last,
                                 const unsigned long long _Value,
                                 const int _Base = 10) noexcept { // strengthened
   return _Integer_to_chars(_First, _Last, _Value, _Base);
-}
-
-template <typename Integer>
-std::wstring to_chars(const Integer value, const int base = 10) noexcept {
-  std::wstring s(32, L'\0');
-  auto _First = &s[0];
-  auto _End = _First + s.size();
-  auto result = to_chars(_First, _End, value, base);
-  if (result.ec != std::errc{}) {
-    s.clear();
-    return s;
-  }
-  s.resize(result.ptr - _First);
-  return s;
 }
 
 // STRUCT from_chars_result
@@ -387,9 +375,6 @@ inline from_chars_result from_chars(std::wstring_view sv, Integer &i,
                                     const int base = 10) noexcept {
   return from_chars(sv.data(), sv.data() + sv.size(), i, base);
 }
-
-// Float
-
-} // namespace planck
+} // namespace base
 
 #endif

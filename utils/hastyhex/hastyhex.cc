@@ -14,7 +14,7 @@
 #endif
 #endif
 #include "console/console.hpp"
-#include <errorcode.hpp>
+#include <base.hpp>
 #include <argv.hpp>
 
 #define PROGRAM_NAME L"hastyhex"

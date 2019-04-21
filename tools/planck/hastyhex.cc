@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
-#include <errorcode.hpp>
+#include <base.hpp>
 #include <console/console.hpp>
 
 static const char hex[] = "0123456789abcdef";

@@ -1,14 +1,10 @@
-///////////////
-#ifndef PLANCK_STRCAT_HPP
-#define PLANCK_STRCAT_HPP
-#include <string>
-#include <string_view>
+///////
+#ifndef CLANGBUILDER_STRCAT_HPP
+#define CLANGBUILDER_STRCAT_HPP
 #include "charconv.hpp"
 
-// https://github.com/abseil/abseil-cpp/blob/master/absl/strings/str_cat.h
-// https://github.com/abseil/abseil-cpp/blob/master/absl/strings/str_cat.cc
-
 namespace base {
+
 namespace strings_internal {
 // AlphaNumBuffer allows a way to pass a string to StrCat without having to do
 // memory allocation.  It is simply a pair of a fixed-size character array, and
@@ -101,7 +97,7 @@ static inline wchar_t *Append(wchar_t *out, const AlphaNum &x) {
 inline std::wstring StringCat() { return std::wstring(); }
 
 inline std::wstring StringCat(const AlphaNum &a) {
-  return std::wstring(a.data(), a.size());
+  return std::wstring(a.Piece());
 }
 
 inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b) {
@@ -114,7 +110,7 @@ inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b) {
   return result;
 }
 inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b,
-                              const AlphaNum &c) {
+                           const AlphaNum &c) {
   std::wstring result;
   result.resize(a.size() + b.size() + c.size());
   wchar_t *const begin = &*result.begin();
@@ -125,7 +121,7 @@ inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b,
   return result;
 }
 inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b,
-                              const AlphaNum &c, const AlphaNum &d) {
+                           const AlphaNum &c, const AlphaNum &d) {
   std::wstring result;
   result.resize(a.size() + b.size() + c.size() + d.size());
   wchar_t *const begin = &*result.begin();
@@ -140,13 +136,13 @@ inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b,
 // Support 5 or more arguments
 template <typename... AV>
 inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b,
-                              const AlphaNum &c, const AlphaNum &d,
-                              const AlphaNum &e, const AV &... args) {
+                           const AlphaNum &c, const AlphaNum &d,
+                           const AlphaNum &e, const AV &... args) {
   return internal::CatPieces({a.Piece(), b.Piece(), c.Piece(), d.Piece(),
                               e.Piece(),
                               static_cast<const AlphaNum &>(args).Piece()...});
 }
 
-} // namespace planck
+} // namespace base
 
 #endif
