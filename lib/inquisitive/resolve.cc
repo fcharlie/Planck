@@ -272,6 +272,7 @@ std::optional<file_links_t> ResolveLinks(std::wstring_view sv,
                                 FILE_ATTRIBUTE_NORMAL, // normal file
                                 NULL);
   if (FileHandle == INVALID_HANDLE_VALUE) {
+    ec = base::make_system_error_code();
     return std::nullopt;
   }
   BY_HANDLE_FILE_INFORMATION bi;
