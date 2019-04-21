@@ -410,7 +410,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
     return inquisitive64(em, ec);
   }
   if (eic != ELFCLASS32) {
-    ec = base::make_error_code(planck::StrCat(L"EI_CLASS invalid: ", eic));
+    ec = base::strcat_error_code(L"EI_CLASS invalid: ", eic);
     return false;
   }
   auto h = cast<Elf32_Ehdr>(0);

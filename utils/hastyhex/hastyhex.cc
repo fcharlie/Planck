@@ -14,6 +14,7 @@
 #endif
 #endif
 #include "console/console.hpp"
+#include <errorcode.hpp>
 #include <argv.hpp>
 
 #define PROGRAM_NAME L"hastyhex"
@@ -236,35 +237,34 @@ Example:
 }
 
 bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
-  std::vector<planck::ParseArgv::option> opts = {
-      {L"help", planck::ParseArgv::no_argument, 'h'},
-      {L"length", planck::ParseArgv::required_argument, 'n'},
-      {L"seek", planck::ParseArgv::required_argument, 's'},
-      {L"plain", planck::ParseArgv::no_argument, 'p'},
-      {L"out", planck::ParseArgv::required_argument, 'o'}
-      //
-  };
-  planck::ParseArgv pv(argc, argv);
-  auto ec = pv.ParseArgument(
-      opts, [&](int ch, const wchar_t *optarg, const wchar_t *raw) {
+
+  av::ParseArgv pv(argc, argv);
+  pv.Add(L"help", av::no_argument, L'h')
+      .Add(L"length", av::required_argument, L'n')
+      .Add(L"seek", av::required_argument, L's')
+      .Add(L"plain", av::no_argument, L'p')
+      .Add(L"out", av::required_argument, L'o');
+  av::error_code ec;
+  auto result = pv.Execute(
+      [&](int ch, const wchar_t *oa, const wchar_t *) {
         switch (ch) {
         case 'h':
           PrintUsage();
           exit(0);
           break;
         case 'o':
-          bo.out = optarg;
+          bo.out = oa;
           break;
         case 'n': {
           int64_t n;
-          auto ec = planck::from_chars(optarg, optarg + wcslen(optarg), n, 10);
+          auto ec = base::from_chars(oa, oa + wcslen(oa), n, 10);
           if (ec.ec == std::errc{}) {
             bo.length = n;
           }
         } break;
         case 's': {
           int64_t n;
-          auto ec = planck::from_chars(optarg, optarg + wcslen(optarg), n, 10);
+          auto ec = base::from_chars(oa, oa + wcslen(oa), n, 10);
           if (ec.ec == std::errc{}) {
             bo.seek = n;
           }
@@ -273,17 +273,14 @@ bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
           bo.plain = true;
           break;
         default:
-          planck::PrintNone(L"Error Argument: %s\n",
-                            raw != nullptr ? raw : L"unknown");
           return false;
         }
         return true;
-      });
+      },
+      ec);
 
-  if (ec) {
-    if (ec.message != L"skipped") {
-      planck::PrintNone(L"ParseArgv: %s\n", ec.message);
-    }
+  if (!result) {
+    planck::PrintNone(L"ParseArgv: %s\n", ec.message);
     return false;
   }
   if (pv.UnresolvedArgs().empty()) {

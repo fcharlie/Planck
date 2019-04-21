@@ -79,7 +79,7 @@ struct pe_minutiae_t {
   std::wstring clrmsg;
   std::vector<std::wstring> characteristics;
   std::vector<std::wstring> depends; /// DLL required
-  std::vector<std::wstring> delays;//
+  std::vector<std::wstring> delays;  //
   pe_version_t osver;
   pe_version_t linkver;
   pe_version_t imagever;
@@ -212,7 +212,7 @@ public:
   }
   inquisitive_result &add(std::wstring &&name, uint64_t value) {
     mnlen = (std::max)(mnlen, name.size());
-    auto sv = planck::to_chars(value, 10);
+    auto sv = base::to_chars(value, 10);
     attrs.emplace_back(std::move(name), std::move(sv));
     return *this;
   }

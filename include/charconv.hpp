@@ -1,12 +1,12 @@
-#ifndef PLANCK_CHARCONVEX_HPP
-#define PLANCK_CHARCONVEX_HPP
+#ifndef PLANCK_CHARCONV_HPP
+#define PLANCK_CHARCONV_HPP
 #include <cstring>
 #include <system_error>
 #include <memory>
 #include <cstdint>
 #include <climits>
 
-namespace planck {
+namespace base {
 struct to_chars_result {
   wchar_t *ptr;
   std::errc ec;

@@ -45,9 +45,9 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
     if (hd == nullptr) {
       return None;
     }
-    auto name = planck::StrCat(L"Git pack file, version ",
-                               planck::resolvebe(hd->version), L", objects ",
-                               planck::resolvebe(hd->objsize));
+    auto name = base::StringCat(L"Git pack file, version ",
+                                planck::resolvebe(hd->version), L", objects ",
+                                planck::resolvebe(hd->objsize));
     ir.assign(std::move(name), types::gitpack);
     return Found;
   }
@@ -60,18 +60,18 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
     auto ver = planck::resolvebe(hd->version);
     switch (ver) {
     case 2:
-      name = planck::StrCat(L"Git pack indexs file, version ", ver,
-                            L", total objects ",
-                            planck::resolvebe(hd->fanout[255]));
+      name = base::StringCat(L"Git pack indexs file, version ", ver,
+                             L", total objects ",
+                             planck::resolvebe(hd->fanout[255]));
       break;
     case 3: {
       auto hd3 = mv.cast<git_index3_header_t>(0);
-      name = planck::StrCat(L"Git pack indexs file, version ", ver,
-                            L", total objects ",
-                            planck::resolvebe(hd3->packobjects));
+      name = base::StringCat(L"Git pack indexs file, version ", ver,
+                             L", total objects ",
+                             planck::resolvebe(hd3->packobjects));
     } break;
     default:
-      name = planck::StrCat(L"Git pack indexs file, version ", ver);
+      name = base::StringCat(L"Git pack indexs file, version ", ver);
       break;
     };
 
@@ -83,7 +83,7 @@ status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
     if (hd == nullptr) {
       return None;
     }
-    auto name = planck::StrCat(
+    auto name = base::StringCat(
         L"Git multi-pack-index, version ", (int)hd->version, L", oid version ",
         (int)hd->oidversion, L", chunks ", (int)hd->chunks, L", pack files ",
         planck::resolvebe(hd->packfiles));

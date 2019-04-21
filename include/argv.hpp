@@ -7,13 +7,14 @@
 #include <string_view>
 #include <vector>
 
-namespace planck {
+namespace av {
 
 enum ParseError {
   SkipParse = -1,
   None = 0,
   ErrorNormal = 1 //
 };
+
 struct error_code {
   std::wstring message;
   int ec{0};
@@ -25,10 +26,11 @@ struct error_code {
   template <typename... Args> void Assign(int val, Args... args) {
     ec = val;
     std::initializer_list<std::wstring_view> as = {
-        static_cast<const AlphaNum &>(args).Piece()...};
-    message = internal::CatPieces(as);
+        static_cast<const base::AlphaNum &>(args).Piece()...};
+    message = base::internal::CatPieces(as);
   }
 };
+
 enum HasArgs {
   required_argument, /// -i 11 or -i=xx
   no_argument,
@@ -195,6 +197,6 @@ inline bool ParseArgv::parse_internal(std::wstring_view a, const invoke_t &v,
   return parse_internal_short(a.substr(1), v, ec);
 }
 
-} // namespace planck
+} // namespace av
 
 #endif

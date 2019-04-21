@@ -8,7 +8,7 @@
 // https://github.com/abseil/abseil-cpp/blob/master/absl/strings/str_cat.h
 // https://github.com/abseil/abseil-cpp/blob/master/absl/strings/str_cat.cc
 
-namespace planck {
+namespace base {
 namespace strings_internal {
 // AlphaNumBuffer allows a way to pass a string to StrCat without having to do
 // memory allocation.  It is simply a pair of a fixed-size character array, and
@@ -22,8 +22,37 @@ template <size_t max_size> struct AlphaNumBuffer {
 
 class AlphaNum {
 public:
-  template <typename Integer> AlphaNum(Integer x) {
-    auto ret = planck::to_chars(digist_, digist_ + 32, x, 10);
+  AlphaNum(short x) {
+    auto ret = to_chars(digist_, digist_ + 32, x, 10);
+    piece_ = std::wstring_view(digist_, ret.ptr - digist_);
+  }
+  AlphaNum(unsigned short x) {
+    auto ret = to_chars(digist_, digist_ + 32, x, 10);
+    piece_ = std::wstring_view(digist_, ret.ptr - digist_);
+  }
+  AlphaNum(int x) {
+    auto ret = to_chars(digist_, digist_ + 32, x, 10);
+    piece_ = std::wstring_view(digist_, ret.ptr - digist_);
+  }
+  AlphaNum(unsigned int x) {
+    auto ret = to_chars(digist_, digist_ + 32, x, 10);
+    piece_ = std::wstring_view(digist_, ret.ptr - digist_);
+  }
+  AlphaNum(long x) {
+    auto ret = to_chars(digist_, digist_ + 32, x, 10);
+    piece_ = std::wstring_view(digist_, ret.ptr - digist_);
+  }
+
+  AlphaNum(unsigned long x) {
+    auto ret = to_chars(digist_, digist_ + 32, x, 10);
+    piece_ = std::wstring_view(digist_, ret.ptr - digist_);
+  }
+  AlphaNum(long long x) {
+    auto ret = to_chars(digist_, digist_ + 32, x, 10);
+    piece_ = std::wstring_view(digist_, ret.ptr - digist_);
+  }
+  AlphaNum(unsigned long long x) {
+    auto ret = to_chars(digist_, digist_ + 32, x, 10);
     piece_ = std::wstring_view(digist_, ret.ptr - digist_);
   }
   AlphaNum(const wchar_t *cstr) : piece_(cstr) {}
@@ -69,13 +98,13 @@ static inline wchar_t *Append(wchar_t *out, const AlphaNum &x) {
 }
 
 } // namespace internal
-inline std::wstring StrCat() { return std::wstring(); }
+inline std::wstring StringCat() { return std::wstring(); }
 
-inline std::wstring StrCat(const AlphaNum &a) {
+inline std::wstring StringCat(const AlphaNum &a) {
   return std::wstring(a.data(), a.size());
 }
 
-inline std::wstring StrCat(const AlphaNum &a, const AlphaNum &b) {
+inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b) {
   std::wstring result;
   result.resize(a.size() + b.size());
   wchar_t *const begin = &*result.begin();
@@ -84,8 +113,8 @@ inline std::wstring StrCat(const AlphaNum &a, const AlphaNum &b) {
   out = internal::Append(out, b);
   return result;
 }
-inline std::wstring StrCat(const AlphaNum &a, const AlphaNum &b,
-                           const AlphaNum &c) {
+inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b,
+                              const AlphaNum &c) {
   std::wstring result;
   result.resize(a.size() + b.size() + c.size());
   wchar_t *const begin = &*result.begin();
@@ -95,8 +124,8 @@ inline std::wstring StrCat(const AlphaNum &a, const AlphaNum &b,
   out = internal::Append(out, c);
   return result;
 }
-inline std::wstring StrCat(const AlphaNum &a, const AlphaNum &b,
-                           const AlphaNum &c, const AlphaNum &d) {
+inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b,
+                              const AlphaNum &c, const AlphaNum &d) {
   std::wstring result;
   result.resize(a.size() + b.size() + c.size() + d.size());
   wchar_t *const begin = &*result.begin();
@@ -110,9 +139,9 @@ inline std::wstring StrCat(const AlphaNum &a, const AlphaNum &b,
 
 // Support 5 or more arguments
 template <typename... AV>
-inline std::wstring StrCat(const AlphaNum &a, const AlphaNum &b,
-                           const AlphaNum &c, const AlphaNum &d,
-                           const AlphaNum &e, const AV &... args) {
+inline std::wstring StringCat(const AlphaNum &a, const AlphaNum &b,
+                              const AlphaNum &c, const AlphaNum &d,
+                              const AlphaNum &e, const AV &... args) {
   return internal::CatPieces({a.Piece(), b.Piece(), c.Piece(), d.Piece(),
                               e.Piece(),
                               static_cast<const AlphaNum &>(args).Piece()...});
