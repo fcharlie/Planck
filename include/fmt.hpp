@@ -5,11 +5,24 @@
 #include <cstdlib>
 #include <cstddef>
 #include <string_view>
+// #if defined(OS_POSIX) || defined(OS_FUCHSIA)
+// // For ssize_t
+// #include <unistd.h>
+// #endif
 // Thanks
 // https://github.com/chromium/chromium/blob/master/base/strings/safe_sprintf.cc
 // https://github.com/chromium/chromium/blob/master/base/strings/safe_sprintf.h
 
 namespace wink {
+#if defined(__MSC_VER)
+// Define ssize_t inside of our namespace.
+#if defined(_WIN64)
+typedef __int64 ssize_t;
+#else
+typedef long ssize_t;
+#endif
+#endif
+
 namespace internal {
 struct Arg {
   enum Type {
