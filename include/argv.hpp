@@ -27,7 +27,7 @@ struct error_code {
     ec = val;
     std::initializer_list<std::wstring_view> as = {
         static_cast<const base::AlphaNum &>(args).Piece()...};
-    message = base::internal::CatPieces(as);
+    message = base::strings_internal::CatPieces(as);
   }
 };
 
