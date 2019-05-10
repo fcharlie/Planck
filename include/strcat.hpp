@@ -1,4 +1,5 @@
-///////
+//  strcat.hpp for wchar_t
+// Lookup https://github.com/abseil/abseil-cpp/blob/master/LICENSE
 #ifndef CLANGBUILDER_STRCAT_HPP
 #define CLANGBUILDER_STRCAT_HPP
 #pragma once

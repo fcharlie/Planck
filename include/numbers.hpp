@@ -1,4 +1,5 @@
-// numbers.hpp
+// numbers.hpp numbers for wchar_t
+// Lookup https://github.com/abseil/abseil-cpp/blob/master/LICENSE
 #ifndef CLANGBUILDER_NUMBERS_HPP
 #define CLANGBUILDER_NUMBERS_HPP
 #include <algorithm>
