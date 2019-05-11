@@ -88,5 +88,6 @@ include_directories(
 )
 
 add_subdirectory(lib/inquisitive)
+add_subdirectory(lib/strings)
 add_subdirectory(tools)
 add_subdirectory(utils)
