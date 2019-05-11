@@ -13,7 +13,7 @@
 // https://github.com/chromium/chromium/blob/master/base/strings/safe_sprintf.cc
 // https://github.com/chromium/chromium/blob/master/base/strings/safe_sprintf.h
 
-namespace wink {
+namespace base {
 #if defined(_MSC_VER)
 // Define ssize_t inside of our namespace.
 #if defined(_WIN64)
@@ -23,12 +23,13 @@ typedef long ssize_t;
 #endif
 #endif
 
-namespace internal {
+namespace strings_internal {
 struct Arg {
   enum Type {
     INTEGER,
     UINTEGER,
     STRING, // C-style string and string_view
+    FLOAT,
     POINTER
   };
   // Any integer-like value.
@@ -72,7 +73,18 @@ struct Arg {
     integer.i = j;
     integer.width = sizeof(long long);
   }
-
+  Arg(float f) : type(FLOAT) {
+    floating.ld = f;
+    floating.width = (unsigned char)sizeof(float);
+  }
+  Arg(double d) : type(FLOAT) {
+    floating.ld = d;
+    floating.width = (unsigned char)sizeof(double);
+  }
+  Arg(long double ld) : type(FLOAT) {
+    floating.ld = ld;
+    floating.width = (unsigned char)sizeof(long double);
+  }
   // A C-style text string. and string_view
   Arg(std::wstring_view sv) : type(STRING) {
     stringview.data = sv.data();
@@ -81,13 +93,14 @@ struct Arg {
 
   // Any pointer value that can be cast to a "void*".
   template <class T> Arg(T *p) : ptr((void *)p), type(POINTER) {}
+  /// types
   union {
     struct {
       int64_t i;
       unsigned char width;
     } integer;
     struct {
-      double f;
+      long double ld;
       unsigned char width;
     } floating;
     struct {
@@ -100,7 +113,7 @@ struct Arg {
 };
 ssize_t StrFormatInternal(wchar_t *buf, size_t sz, const wchar_t *fmt,
                           const Arg *args, size_t max_args);
-} // namespace internal
+} // namespace strings_internal
 template <typename... Args>
 ssize_t StrFormat(wchar_t *buf, size_t N, const wchar_t *fmt, Args... args) {
   const internal::Arg arg_array[] = {args...};
@@ -121,6 +134,6 @@ inline ssize_t StrFormat(wchar_t (&buf)[N], const wchar_t *fmt) {
   return StrFormat(buf, N, fmt);
 }
 
-} // namespace wink
+} // namespace base
 
 #endif

@@ -1,9 +1,11 @@
+//
+#include <algorithm>
+#include "charconv.hpp"
 #include "fmt.hpp"
 
-namespace wink {
-namespace internal {
+namespace base {
+namespace strings_internal {
 constexpr const size_t kSSizeMaxConst = ((size_t)(ssize_t)-1) >> 1;
-
 constexpr const wchar_t kUpCaseHexDigits[] = L"0123456789ABCDEF";
 constexpr const wchar_t kDownCaseHexDigits[] = L"0123456789abcdef";
 constexpr const size_t kSSizeMax = kSSizeMaxConst;
@@ -292,7 +294,7 @@ ssize_t StrFormatInternal(wchar_t *buf, size_t sz, const wchar_t *fmt,
   if (static_cast<ssize_t>(sz) < 1) {
     return -1;
   }
-  sz = std::min(sz, kSSizeMax);
+  sz = (std::min)(sz, kSSizeMax);
 
   // Iterate over format string and interpret '%' arguments as they are
   // encountered.
@@ -436,6 +438,23 @@ ssize_t StrFormatInternal(wchar_t *buf, size_t sz, const wchar_t *fmt,
                         prefix);
         break;
       }
+        //   * `f` or `F` for floating point values into decimal notation
+        //   * `e` or `E` for floating point values into exponential notation
+        //   * `a` or `A` for floating point values into hex exponential
+        //   notation
+        //   * `g` or `G` for floating point values into decimal or exponential
+      case 'f':
+      case 'F':
+        break;
+      case 'e':
+      case 'E':
+        break;
+      case 'a':
+      case 'A':
+        break;
+      case 'g':
+      case 'G':
+        break;
       case 's': {
         // Check that there are arguments left to be inserted.
         if (cur_arg >= max_args) {
@@ -449,7 +468,8 @@ ssize_t StrFormatInternal(wchar_t *buf, size_t sz, const wchar_t *fmt,
         if (arg.type == Arg::STRING) {
           s = arg.stringview.data;
           slen = arg.stringview.len;
-        } else if (arg.type == Arg::INTEGER && arg.integer.width == sizeof(NULL) &&
+        } else if (arg.type == Arg::INTEGER &&
+                   arg.integer.width == sizeof(NULL) &&
                    arg.integer.i == 0) { // Allow C++'s version of NULL
           s = L"<NULL>";
           slen = sizeof("<NULL>") - 1;
@@ -507,7 +527,7 @@ end_of_format_string:
 end_of_output_buffer:
   return buffer.GetCount();
 }
-} // namespace internal
+} // namespace strings_internal
 ssize_t StrFormat(wchar_t *buf, size_t sz, const wchar_t *fmt) {
   // Make sure that at least one NUL byte can be written, and that the buffer
   // never overflows kSSizeMax. Not only does that use up most or all of the
@@ -515,9 +535,9 @@ ssize_t StrFormat(wchar_t *buf, size_t sz, const wchar_t *fmt) {
   // represented.
   if (static_cast<ssize_t>(sz) < 1)
     return -1;
-  sz = std::min(sz, internal::kSSizeMax);
+  sz = (std::min)(sz, strings_internal::kSSizeMax);
 
-  internal::Buffer buffer(buf, sz);
+  strings_internal::Buffer buffer(buf, sz);
 
   // In the slow-path, we deal with errors by copying the contents of
   // "fmt" unexpanded. This means, if there are no arguments passed, the
@@ -532,4 +552,4 @@ ssize_t StrFormat(wchar_t *buf, size_t sz, const wchar_t *fmt) {
   }
   return buffer.GetCount();
 }
-} // namespace wink
+} // namespace base
