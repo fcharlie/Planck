@@ -98,13 +98,9 @@ struct inquisitive_attribute_t {
   inquisitive_attribute_t() = default;
   inquisitive_attribute_t(const std::wstring_view &n,
                           const std::wstring_view &v)
-      : name(n), value(v) {
-    //
-  }
+      : name(n), value(v) {}
   inquisitive_attribute_t(std::wstring &&n, std::wstring &&v)
-      : name(std::move(n)), value(std::move(v)) {
-    //
-  }
+      : name(std::move(n)), value(std::move(v)) {}
 };
 
 struct inquisitive_mattribute_t {
@@ -113,13 +109,9 @@ struct inquisitive_mattribute_t {
   inquisitive_mattribute_t() = default;
   inquisitive_mattribute_t(const std::wstring_view &n,
                            const std::vector<std::wstring> &v)
-      : name(n), values(v) {
-    //
-  }
+      : name(n), values(v) {}
   inquisitive_mattribute_t(std::wstring &&n, std::vector<std::wstring> &&v)
-      : name(std::move(n)), values(std::move(v)) {
-    //
-  }
+      : name(std::move(n)), values(std::move(v)) {}
 };
 
 class inquisitive_result {

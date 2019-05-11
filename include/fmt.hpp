@@ -14,7 +14,7 @@
 // https://github.com/chromium/chromium/blob/master/base/strings/safe_sprintf.h
 
 namespace wink {
-#if defined(__MSC_VER)
+#if defined(_MSC_VER)
 // Define ssize_t inside of our namespace.
 #if defined(_WIN64)
 typedef __int64 ssize_t;
@@ -89,7 +89,7 @@ struct Arg {
     struct {
       double f;
       unsigned char width;
-    }floating;
+    } floating;
     struct {
       const wchar_t *data;
       size_t len;
@@ -116,7 +116,8 @@ ssize_t StrFormat(wchar_t (&buf)[N], const wchar_t *fmt, Args... args) {
 }
 // Fast-path when we don't actually need to substitute any arguments.
 ssize_t StrFormat(wchar_t *buf, size_t N, const wchar_t *fmt);
-template <size_t N> inline ssize_t StrFormat(wchar_t (&buf)[N], const wchar_t *fmt) {
+template <size_t N>
+inline ssize_t StrFormat(wchar_t (&buf)[N], const wchar_t *fmt) {
   return StrFormat(buf, N, fmt);
 }
 
