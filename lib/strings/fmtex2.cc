@@ -70,16 +70,21 @@ using StringWriter = Writer<std::wstring>;
 using BufferWriter = Writer<buffer>;
 
 template <typename T>
-ssize_t StrFormatInternal(Writer<T> &w, std::wstring_view fmt,
-                          const FormatArg *args, size_t max_args) {
-  auto pos = fmt.find(L'%');
-  if (pos == std::wstring_view::npos) {
-    w.Append(fmt);
-    return 0;
-  }
-  w.Append(fmt.substr(0, pos));
-  fmt.remove_prefix(pos);
-  return 0;
+bool StrFormatInternal(Writer<T> &w, std::wstring_view fmt,
+                       const FormatArg *args, size_t max_args) {
+  do {
+    auto pos = fmt.find(L'%');
+    if (pos == std::wstring_view::npos) {
+      w.Append(fmt);
+      return !w.Overflow();
+    }
+    w.Append(fmt.substr(0, pos));
+    fmt.remove_prefix(pos);
+    /// --parse format
+    
+  } while (!fmt.empty());
+
+  return true;
 }
 
 std::wstring StrFormatInternal(std::wstring_view fmt, const FormatArg *args,
