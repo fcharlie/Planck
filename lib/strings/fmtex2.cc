@@ -79,9 +79,9 @@ bool StrFormatInternal(Writer<T> &w, std::wstring_view fmt,
       return !w.Overflow();
     }
     w.Append(fmt.substr(0, pos));
-    fmt.remove_prefix(pos);
+    fmt.remove_prefix(pos + 1);
     /// --parse format
-    
+
   } while (!fmt.empty());
 
   return true;
