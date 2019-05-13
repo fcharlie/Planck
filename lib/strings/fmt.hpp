@@ -149,6 +149,10 @@ struct FormatArg {
       const wchar_t *data;
       size_t len;
     } strings;
+    // struct {
+    //   const char *str;
+    //   size_t len;
+    // } mbstring;
     const void *ptr;
   };
   const ArgType at;
