@@ -50,7 +50,7 @@ private:
 
 template <typename T> class Writer {
 public:
-  Writer(T &t_) : t(t) {}
+  Writer(T &t_) : t(t_) {}
   Writer(const Writer &) = delete;
   Writer &operator=(const Writer &) = delete;
   void Append(std::wstring_view sv, size_t pad) {
