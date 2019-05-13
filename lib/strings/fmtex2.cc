@@ -1,4 +1,5 @@
 //////
+#include <cstring>
 #include "fmt_fwd.hpp"
 
 namespace base {
@@ -28,6 +29,15 @@ public:
     }
     return *this;
   }
+  buffer &append(const wchar_t *str, size_t dl) {
+    if (len + dl < cap) {
+      memcpy(data + len, str, dl * 2);
+      len += dl;
+    } else {
+      overflow = true;
+    }
+    return *this;
+  }
   bool IsOverflow() const { return overflow; }
   size_t length() const { return len; }
 
@@ -44,10 +54,10 @@ public:
   Writer(const Writer &) = delete;
   Writer &operator=(const Writer &) = delete;
   void Append(std::wstring_view sv, size_t pad) {
-    constexpr std::wstring_view padzero =
+    constexpr const wchar_t padzero[] =
         L"000000000000000000000000000000000000000000000000";
     if (sv.size() < pad) {
-      t.append(padzero.substr(0, pad - sv.size()));
+      t.append(padzero, pad - sv.size());
     }
     t.append(sv);
   }
@@ -75,10 +85,10 @@ bool StrFormatInternal(Writer<T> &w, std::wstring_view fmt,
   do {
     auto pos = fmt.find(L'%');
     if (pos == std::wstring_view::npos) {
-      w.Append(fmt);
+      w.Append(fmt, 0);
       return !w.Overflow();
     }
-    w.Append(fmt.substr(0, pos));
+    w.Append(fmt.substr(0, pos), 0);
     fmt.remove_prefix(pos + 1);
     /// --parse format
 
