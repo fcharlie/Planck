@@ -70,12 +70,6 @@ _Integer_to_chars(wchar_t *_First, wchar_t *const _Last,
   wchar_t *const _Buff_end = _Buff + _Buff_size;
   wchar_t *_RNext = _Buff_end;
 
-  static constexpr wchar_t _Digits[] = {
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
-      'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-      'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
-  static_assert(std::size(_Digits) == 36);
-
   switch (_Base) {
   case 10: { // Derived from _UIntegral_to_buff()
     // Performance note: Ryu's digit table should be faster here.
@@ -131,21 +125,21 @@ _Integer_to_chars(wchar_t *_First, wchar_t *const _Last,
 
   case 16:
     do {
-      *--_RNext = _Digits[_Value & 0b1111];
+      *--_RNext = _Charconv_digits[_Value & 0b1111];
       _Value >>= 4;
     } while (_Value != 0);
     break;
 
   case 32:
     do {
-      *--_RNext = _Digits[_Value & 0b11111];
+      *--_RNext = _Charconv_digits[_Value & 0b11111];
       _Value >>= 5;
     } while (_Value != 0);
     break;
 
   default:
     do {
-      *--_RNext = _Digits[_Value % _Base];
+      *--_RNext = _Charconv_digits[_Value % _Base];
       _Value = static_cast<_Unsigned>(_Value / _Base);
     } while (_Value != 0);
     break;
