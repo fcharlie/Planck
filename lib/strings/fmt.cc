@@ -1,6 +1,7 @@
 //////
 #include <cstring>
 #include <wchar.h>
+#include <algorithm>
 #include "fmt.hpp"
 
 namespace base {
@@ -322,7 +323,7 @@ std::wstring StrFormatInternal(const wchar_t *fmt, const FormatArg *args,
   std::wstring s;
   StringWriter sw(s);
   if (!StrFormatInternal(sw, fmt, args, max_args)) {
-    return "";
+    return L"";
   }
   return s;
 }
