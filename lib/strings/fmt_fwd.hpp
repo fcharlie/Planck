@@ -24,7 +24,8 @@ enum class ArgType {
   UINTEGER,
   FLOAT,
   STRING,
-  POINTER
+  POINTER,
+  BOOLEAN
 };
 struct FormatArg {
   FormatArg(char c) : at(ArgType::INTEGER) {
@@ -67,6 +68,10 @@ struct FormatArg {
     integer.i = j;
     integer.width = sizeof(long long);
   }
+  FormatArg(bool b) : at(ArgType::BOOLEAN) {
+    integer.i = b ? 1 : 0;
+    integer.width = sizeof(char);
+  }
   FormatArg(float f) : at(ArgType::FLOAT) {
     floating.ld = f;
     floating.width = sizeof(float);
@@ -98,6 +103,39 @@ struct FormatArg {
 
   // Any pointer value that can be cast to a "void*".
   template <class T> FormatArg(T *p) : ptr((void *)p), at(ArgType::POINTER) {}
+
+  /// Convert To integer
+  uint64_t ToInteger(bool *sign = nullptr) const noexcept {
+    switch (at) {
+    case ArgType::POINTER:
+      return reinterpret_cast<uintptr_t>(ptr);
+    case ArgType::FLOAT:
+      return static_cast<uint64_t>(floating.ld);
+    default:
+      break;
+    }
+    int64_t i = integer.i;
+    if (sign != nullptr) {
+      if (at == ArgType::UINTEGER || !(*sign = i < 0)) {
+        return static_cast<uint64_t>(i);
+      }
+      if (integer.width == 1) {
+        return static_cast<uint32_t>(0 - static_cast<int8_t>(i));
+      }
+      if (integer.width == 2) {
+        return static_cast<uint32_t>(0 - static_cast<int16_t>(i));
+      }
+      if (integer.width == 1) {
+        return static_cast<uint32_t>(0 - static_cast<int32_t>(i));
+      }
+      return static_cast<uint64_t>(0 - i);
+    }
+    if (integer.width < sizeof(int64_t)) {
+      i &= (1LL << (8 * integer.width)) - 1;
+    }
+    return static_cast<uint64_t>(i);
+  }
+
   union {
     struct {
       int64_t i;
@@ -115,9 +153,9 @@ struct FormatArg {
   };
   const ArgType at;
 };
-ssize_t StrFormatInternal(wchar_t *buf, size_t sz, std::wstring_view fmt,
+ssize_t StrFormatInternal(wchar_t *buf, size_t sz, const wchar_t *fmt,
                           const FormatArg *args, size_t max_args);
-std::wstring StrFormatInternal(std::wstring_view fmt, const FormatArg *args,
+std::wstring StrFormatInternal(const wchar_t *fmt, const FormatArg *args,
                                size_t max_args);
 } // namespace format_internal
 
