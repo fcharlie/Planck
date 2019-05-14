@@ -2,6 +2,7 @@
 #include <cstring>
 #include <wchar.h>
 #include <algorithm>
+#include <cmath>
 #include "fmt.hpp"
 
 namespace base {
@@ -261,11 +262,12 @@ bool StrFormatInternal(Writer<T> &w, const wchar_t *fmt, const FormatArg *args,
         return false;
       }
       if (args[ca].at == ArgType::FLOAT) {
-        if (args[ca].floating.ld < 0) {
+        auto d = args[ca].floating.d;
+        if (std::signbit(d)) {
           w.Out('-');
+          d = -d;
         }
-        auto f = args[ca].floating.ld;
-        auto ui64 = static_cast<int64_t>(f);
+        auto ui64 = static_cast<int64_t>(d);
         uint64_t frac = 0;
         uint32_t scale = 0;
         if (frac_width > 0) {
@@ -273,7 +275,7 @@ bool StrFormatInternal(Writer<T> &w, const wchar_t *fmt, const FormatArg *args,
           for (int n = frac_width; n != 0; n--) {
             scale *= 10;
           }
-          frac = (uint64_t)((f - (double)ui64) * scale + 0.5);
+          frac = (uint64_t)(std::round((d - (double)ui64) * scale));
           if (frac == scale) {
             ui64++;
             frac = 0;
@@ -294,8 +296,12 @@ bool StrFormatInternal(Writer<T> &w, const wchar_t *fmt, const FormatArg *args,
         return false;
       }
       if (args[ca].at == ArgType::FLOAT) {
-        auto val = static_cast<uint64_t>(args[ca].floating.ld);
-        auto p = AlphaNumber(val, digits, width, 16, zero ? '0' : ' ', true);
+        union {
+          double d;
+          uint64_t i;
+        } x;
+        x.d = args[ca].floating.d;
+        auto p = AlphaNumber(x.i, digits, width, 16, zero ? '0' : ' ', true);
         w.Append(p, dend - p);
       }
       ca++;
@@ -328,9 +334,9 @@ std::wstring StrFormatInternal(const wchar_t *fmt, const FormatArg *args,
   return s;
 }
 
-ssize_t StrFormatInternal(wchar_t *buf, size_t buflen, const wchar_t *fmt,
+ssize_t StrFormatInternal(wchar_t *buf, size_t N, const wchar_t *fmt,
                           const FormatArg *args, size_t max_args) {
-  buffer buffer_(buf, buflen);
+  buffer buffer_(buf, N);
   BufferWriter bw(buffer_);
   if (!StrFormatInternal(bw, fmt, args, max_args)) {
     return -1;
@@ -343,7 +349,7 @@ ssize_t StrFormat(wchar_t *buf, size_t N, const wchar_t *fmt) {
   format_internal::buffer buffer_(buf, N);
   std::wstring s;
   const wchar_t *src = fmt;
-  for (; *src; ++src) {
+  for (; *src != 0; ++src) {
     buffer_.push_back(*src);
     if (src[0] == '%' && src[1] == '%') {
       ++src;
@@ -355,7 +361,7 @@ ssize_t StrFormat(wchar_t *buf, size_t N, const wchar_t *fmt) {
 std::wstring StrFormat(const wchar_t *fmt) {
   std::wstring s;
   const wchar_t *src = fmt;
-  for (; *src; ++src) {
+  for (; *src != 0; ++src) {
     s.push_back(*src);
     if (src[0] == '%' && src[1] == '%') {
       ++src;
