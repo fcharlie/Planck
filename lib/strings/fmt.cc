@@ -182,7 +182,7 @@ bool StrFormatInternal(Writer<T> &w, const wchar_t *fmt, const FormatArg *args,
   bool zero;
   uint32_t width;
   uint32_t frac_width;
-  while (it < end && !w.Overflow()) {
+  while (it < end) {
     ///  Fast search %,
     auto pos = memsearch(it, end, '%');
     if (pos == npos) {
@@ -205,9 +205,6 @@ bool StrFormatInternal(Writer<T> &w, const wchar_t *fmt, const FormatArg *args,
       }
     }
     switch (*it) {
-    case '%':
-      w.Out('%');
-      break;
     case 'b':
       if (ca >= max_args) {
         return false;
@@ -329,6 +326,10 @@ bool StrFormatInternal(Writer<T> &w, const wchar_t *fmt, const FormatArg *args,
         w.Append(p, dend - p); // 0xffff00000;
       }
       ca++;
+      break;
+    default:
+      // % and other
+      w.Out(*it);
       break;
     }
     it++;
