@@ -120,6 +120,43 @@ public:
   void Append(const wchar_t *str, size_t len) { t.append(str, len); }
   void Out(wchar_t ch) { t.push_back(ch); }
   bool Overflow();
+  void Floating(double d, uint32_t width, uint32_t frac_width, bool zero) {
+    if (std::signbit(d)) {
+      Out('-');
+      d = -d;
+    }
+    if (std::isnan(d)) {
+      Append(L"nan", 3);
+      return;
+    }
+    if (std::isinf(d)) {
+      Append(L"inf", 3);
+      return;
+    }
+    wchar_t digits[kFastToBufferSize + 1];
+    const auto dend = digits + kFastToBufferSize;
+    auto ui64 = static_cast<int64_t>(d);
+    uint64_t frac = 0;
+    uint32_t scale = 0;
+    if (frac_width > 0) {
+      scale = 1;
+      for (int n = frac_width; n != 0; n--) {
+        scale *= 10;
+      }
+      frac = (uint64_t)(std::round((d - (double)ui64) * scale));
+      if (frac == scale) {
+        ui64++;
+        frac = 0;
+      }
+    }
+    auto p = AlphaNumber(ui64, digits, width, 10, zero ? '0' : ' ');
+    Append(p, dend - p);
+    if (frac_width != 0) {
+      Out('.');
+      p = AlphaNumber(frac, digits, frac_width, 10, zero ? '0' : ' ');
+      Append(p, dend - p);
+    }
+  }
 
 private:
   T &t;
@@ -262,32 +299,7 @@ bool StrFormatInternal(Writer<T> &w, const wchar_t *fmt, const FormatArg *args,
         return false;
       }
       if (args[ca].at == ArgType::FLOAT) {
-        auto d = args[ca].floating.d;
-        if (std::signbit(d)) {
-          w.Out('-');
-          d = -d;
-        }
-        auto ui64 = static_cast<int64_t>(d);
-        uint64_t frac = 0;
-        uint32_t scale = 0;
-        if (frac_width > 0) {
-          scale = 1;
-          for (int n = frac_width; n != 0; n--) {
-            scale *= 10;
-          }
-          frac = (uint64_t)(std::round((d - (double)ui64) * scale));
-          if (frac == scale) {
-            ui64++;
-            frac = 0;
-          }
-        }
-        auto p = AlphaNumber(ui64, digits, width, 10, zero ? '0' : ' ');
-        w.Append(p, dend - p);
-        if (frac_width != 0) {
-          w.Out('.');
-          p = AlphaNumber(frac, digits, frac_width, 10, zero ? '0' : ' ');
-          w.Append(p, dend - p);
-        }
+        w.Floating(args[ca].floating.d, width, frac_width, zero);
       }
       ca++;
       break;
