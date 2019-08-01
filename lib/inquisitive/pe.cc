@@ -269,7 +269,7 @@ BelaImageRvaToVa(PIMAGE_NT_HEADERS nh, PVOID BaseAddress, ULONG rva,
   return reinterpret_cast<PVOID>(va);
 }
 
-inline std::wstring DllName(memview mv, LPVOID nh, ULONG nva) {
+inline std::wstring DllName(bela::MemView mv, LPVOID nh, ULONG nva) {
   auto va =
       BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), nva, nullptr);
   if (va == nullptr) {
@@ -277,7 +277,7 @@ inline std::wstring DllName(memview mv, LPVOID nh, ULONG nva) {
   }
   std::string name;
   name.reserve(256);
-  auto dn = reinterpret_cast<char *>(va);
+  auto dn = reinterpret_cast<const uint8_t *>(va);
   auto end = mv.data() + mv.size();
   for (auto it = dn; it < end && *it != 0; it++) {
     name.push_back(*it);
@@ -285,21 +285,21 @@ inline std::wstring DllName(memview mv, LPVOID nh, ULONG nva) {
   return fromascii(name);
 }
 
-inline std::wstring ClrMessage(memview mv, LPVOID nh, ULONG clrva) {
+inline std::wstring ClrMessage(bela::MemView mv, LPVOID nh, ULONG clrva) {
   auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), clrva,
                              nullptr);
   auto end = mv.data() + mv.size();
-  if (va == nullptr || (char *)va + sizeof(IMAGE_COR20_HEADER) > end) {
+  if (va == nullptr || (uint8_t *)va + sizeof(IMAGE_COR20_HEADER) > end) {
     return L"";
   }
   auto clrh = reinterpret_cast<PIMAGE_COR20_HEADER>(va);
   auto va2 = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(),
                               clrh->MetaData.VirtualAddress, nullptr);
-  if (va2 == nullptr || (const char *)va2 + sizeof(STORAGESIGNATURE) > end) {
+  if (va2 == nullptr || (const uint8_t *)va2 + sizeof(STORAGESIGNATURE) > end) {
     return L"";
   }
   auto clrmsg = reinterpret_cast<const STORAGESIGNATURE *>(va2);
-  if ((const char *)clrmsg + clrmsg->Length > end) {
+  if ((const uint8_t *)clrmsg + clrmsg->Length > end) {
     return L"";
   }
   return bela::ToWide(std::string_view(
@@ -307,7 +307,7 @@ inline std::wstring ClrMessage(memview mv, LPVOID nh, ULONG clrva) {
 }
 
 template <typename NtHeaderT>
-std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
+std::optional<pe_minutiae_t> pecoff_dump(bela::MemView mv, NtHeaderT *nh,
                                          bela::error_code &ec) {
   pe_minutiae_t pm;
   pm.machine = Machine(nh->FileHeader.Machine);
@@ -337,7 +337,7 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
   if (import_->Size != 0) {
     auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
                                import_->VirtualAddress, nullptr);
-    if (va == nullptr || (const char *)va + import_->Size >= end) {
+    if (va == nullptr || (const uint8_t *)va + import_->Size >= end) {
       return std::make_optional<>(pm);
     }
     auto imdes = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>(va);
@@ -358,7 +358,7 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
   if (delay_->Size != 0) {
     auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
                                delay_->VirtualAddress, nullptr);
-    if (va == nullptr || (const char *)va + delay_->Size >= end) {
+    if (va == nullptr || (const uint8_t *)va + delay_->Size >= end) {
       return std::make_optional<>(pm);
     }
     auto imdes = reinterpret_cast<PIMAGE_DELAYLOAD_DESCRIPTOR>(va);
@@ -381,11 +381,13 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
                                                 bela::error_code &ec) {
 
-  planck::mapview mv;
-  if (!mv.mapfile(sv, sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
-    ec = bela::make_error_code(L"PE file unable mapview");
+  bela::MapView mmv;
+  if (!mmv.MappingView(sv, ec,
+                       sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
     return std::nullopt;
   }
+  auto mv = mmv.subview();
+
   auto h = mv.cast<IMAGE_DOS_HEADER>(0);
   if (h == nullptr) {
     ec = bela::make_error_code(L"PE file size tool small");
@@ -399,9 +401,9 @@ std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
   }
   switch (nh->OptionalHeader.Magic) {
   case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-    return pecoff_dump(mv.subview(0), (PIMAGE_NT_HEADERS64)nh, ec);
+    return pecoff_dump(mv, (PIMAGE_NT_HEADERS64)nh, ec);
   case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-    return pecoff_dump(mv.subview(0), (PIMAGE_NT_HEADERS32)nh, ec);
+    return pecoff_dump(mv, (PIMAGE_NT_HEADERS32)nh, ec);
   case IMAGE_ROM_OPTIONAL_HDR_MAGIC: {
     // ROM
   } break;

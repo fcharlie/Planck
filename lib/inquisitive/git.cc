@@ -1,6 +1,4 @@
 //////// GIT pack index and other files.
-#include <endian.hpp>
-#include <strcat.hpp>
 #include "inquisitive.hpp"
 
 namespace inquisitive {
@@ -36,57 +34,57 @@ struct git_midx_header_t {
 };
 #pragma pack()
 // https://github.com/git/git/blob/master/Documentation/technical/pack-format.txt
-status_t inquisitive_gitbinary(memview mv, inquisitive_result_t &ir) {
+status_t inquisitive_gitbinary(bela::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t packMagic[] = {'P', 'A', 'C', 'K'};
   constexpr const byte_t midxMagic[] = {'M', 'I', 'D', 'X'};
   constexpr const byte_t indexMagic[] = {0xFF, 0x74, 0x4F, 0x63};
-  if (mv.startswith(packMagic)) {
+  if (mv.StartsWith(packMagic)) {
     auto hd = mv.cast<git_pack_header_t>(0);
     if (hd == nullptr) {
       return None;
     }
-    auto name = base::StringCat(L"Git pack file, version ",
-                                planck::resolvebe(hd->version), L", objects ",
-                                planck::resolvebe(hd->objsize));
+    auto name = bela::StringCat(L"Git pack file, version ",
+                                bela::swapbe(hd->version), L", objects ",
+                                bela::swapbe(hd->objsize));
     ir.assign(std::move(name), types::gitpack);
     return Found;
   }
-  if (mv.startswith(indexMagic)) {
+  if (mv.StartsWith(indexMagic)) {
     auto hd = mv.cast<git_index_header_t>(0);
     if (hd == nullptr) {
       return None;
     }
     std::wstring name;
-    auto ver = planck::resolvebe(hd->version);
+    auto ver = bela::swapbe(hd->version);
     switch (ver) {
     case 2:
-      name = base::StringCat(L"Git pack indexs file, version ", ver,
+      name = bela::StringCat(L"Git pack indexs file, version ", ver,
                              L", total objects ",
-                             planck::resolvebe(hd->fanout[255]));
+                             bela::swapbe(hd->fanout[255]));
       break;
     case 3: {
       auto hd3 = mv.cast<git_index3_header_t>(0);
-      name = base::StringCat(L"Git pack indexs file, version ", ver,
+      name = bela::StringCat(L"Git pack indexs file, version ", ver,
                              L", total objects ",
-                             planck::resolvebe(hd3->packobjects));
+                             bela::swapbe(hd3->packobjects));
     } break;
     default:
-      name = base::StringCat(L"Git pack indexs file, version ", ver);
+      name = bela::StringCat(L"Git pack indexs file, version ", ver);
       break;
     };
 
     ir.assign(std::move(name), types::gitpkindex);
     return Found;
   }
-  if (mv.startswith(midxMagic)) {
+  if (mv.StartsWith(midxMagic)) {
     auto hd = mv.cast<git_midx_header_t>(0);
     if (hd == nullptr) {
       return None;
     }
-    auto name = base::StringCat(
+    auto name = bela::StringCat(
         L"Git multi-pack-index, version ", (int)hd->version, L", oid version ",
         (int)hd->oidversion, L", chunks ", (int)hd->chunks, L", pack files ",
-        planck::resolvebe(hd->packfiles));
+        bela::swapbe(hd->packfiles));
     ir.assign(std::move(name), types::gitpack);
     return Found;
   }

@@ -1,6 +1,5 @@
 ///////// check binary object file format
 #include <string_view>
-#include <endian.hpp>
 #include "macho.hpp"
 #include "inquisitive.hpp"
 
@@ -48,19 +47,24 @@ struct BigObjHeader {
   uint32_t NumberOfSymbols;
 };
 
-status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
+status_t inquisitive_binobj(bela::MemView mv, inquisitive_result_t &ir) {
   if (mv.size() < 4) {
     return None;
   }
+  constexpr std::string_view wasmobj{"\0asm", 4};
+  constexpr std::string_view irobj{"\xDE\xC0\x17\x0B", 4};
+  constexpr std::string_view irobj2{"\xBC\xC0\xDE", 3};
+  constexpr std::string_view bobj{"\0\0\xFF\xFF", 4};
   switch (mv[0]) {
   case 0x00:
-    if (mv.startswith("\0\0\xFF\xFF", 4)) {
+    if (mv.StartsWith(bobj)) {
       size_t minsize = offsetof(BigObjHeader, UUID) + sizeof(BigObjMagic);
       if (mv.size() < minsize) {
         ir.assign(L"COFF import library", types::coff_import_library);
         return Found;
       }
-      const char *start = mv.data() + offsetof(BigObjHeader, UUID);
+      const char *start = reinterpret_cast<const char *>(mv.data()) +
+                          offsetof(BigObjHeader, UUID);
       if (memcmp(start, BigObjMagic, sizeof(BigObjMagic)) == 0) {
         ir.assign(L"COFF object", types::coff_object);
         return Found;
@@ -83,33 +87,35 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
     //   ir.assign(L"COFF object", types::coff_object);
     //   return Found;
     // }
-    if (mv.startswith("\0asm", 4)) {
+    if (mv.StartsWith(wasmobj)) {
       ir.assign(L"WebAssembly Object file", types::wasm_object);
       return Found;
     }
     break;
   case 0xDE:
-    if (mv.startswith("\xDE\xC0\x17\x0B", 4)) {
+
+    if (mv.StartsWith(irobj)) {
       ir.assign(L"LLVM IR bitcode", types::bitcode);
       return Found;
     }
     break;
   case 'B':
-    if (mv.startswith("BC\xC0\xDE", 3)) {
+
+    if (mv.StartsWith(irobj2)) {
       ir.assign(L"LLVM IR bitcode", types::bitcode);
       return Found;
     }
     break;
   case '!': // .a
-    if (mv.startswith("!<arch>\n") && !mv.startswith(debMagic) ||
-        mv.startswith("!<thin>\n")) {
+    if (mv.StartsWith("!<arch>\n") && !mv.StartsWith(debMagic) ||
+        mv.StartsWith("!<thin>\n")) {
       // Skip DEB package
       ir.assign(L"ar style archive file", types::archive);
       return Found;
     }
     break;
   case '\177': // ELF
-    if (mv.startswith(ElfMagic) && mv.size() >= 18) {
+    if (mv.StartsWith(ElfMagic) && mv.size() >= 18) {
       bool Data2MSB = (mv[5] == 2);
       unsigned high = Data2MSB ? 16 : 17;
       unsigned low = Data2MSB ? 17 : 16;
@@ -139,8 +145,8 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
     }
     break;
   case 0xCA:
-    if (mv.startswith("\xCA\xFE\xBA\xBE") ||
-        mv.startswith("\xCA\xFE\xBA\xBF")) {
+    if (mv.StartsWith("\xCA\xFE\xBA\xBE") ||
+        mv.StartsWith("\xCA\xFE\xBA\xBF")) {
       if (mv.size() >= 8 && mv[7] < 43) {
         ir.assign(L"Mach-O universal binary", types::macho_universal_binary,
                   types::MACHO);
@@ -152,8 +158,8 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
   case 0xCE:
   case 0xCF: {
     uint16_t type = 0;
-    if (mv.startswith("\xFE\xED\xFA\xCE") ||
-        mv.startswith("\xFE\xED\xFA\xCF")) {
+    if (mv.StartsWith("\xFE\xED\xFA\xCE") ||
+        mv.StartsWith("\xFE\xED\xFA\xCF")) {
       /* Native endian */
       size_t minsize;
       if (mv[3] == 0xCE) {
@@ -163,8 +169,8 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
       }
       if (mv.size() >= minsize)
         type = mv[12] << 24 | mv[13] << 12 | mv[14] << 8 | mv[15];
-    } else if (mv.startswith("\xCE\xFA\xED\xFE") ||
-               mv.startswith("\xCF\xFA\xED\xFE")) {
+    } else if (mv.StartsWith("\xCE\xFA\xED\xFE") ||
+               mv.StartsWith("\xCF\xFA\xED\xFE")) {
       /* Reverse endian */
       size_t minsize;
       if (mv[0] == 0xCE) {
@@ -242,15 +248,15 @@ status_t inquisitive_binobj(memview mv, inquisitive_result_t &ir) {
     }
     break;
   case 'M':
-    if (mv.startswith("Microsoft C/C++ MSF 7.00\r\n")) {
+    if (mv.StartsWith("Microsoft C/C++ MSF 7.00\r\n")) {
       ir.assign(L"Windows PDB debug info file", types::pdb);
       return Found;
     }
-    if (mv.startswith("MZ") && mv.size() >= 0x3c + 4) {
+    if (mv.StartsWith("MZ") && mv.size() >= 0x3c + 4) {
       // read32le
-      uint32_t off = planck::readle<uint32_t>(mv.data() + 0x3c);
+      uint32_t off = bela::readle<uint32_t>(mv.data() + 0x3c);
       auto sv = mv.submv(off);
-      if (sv.startswith(PEMagic)) {
+      if (sv.StartsWith(PEMagic)) {
         ir.assign(L"PE executable file", types::pecoff_executable,
                   types::PECOFF);
         return Found;

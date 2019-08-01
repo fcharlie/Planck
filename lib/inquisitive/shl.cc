@@ -1,7 +1,6 @@
 ////////////
 #include "shl.hpp"
 #include "inquisitive.hpp"
-#include <endian.hpp>
 /// shutcut resolve
 // 4C 00 00 00 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46
 
@@ -78,14 +77,14 @@ public:
     if (size_ < sizeof(shl::shell_link_t)) {
       return false;
     }
-    auto dwSize = planck::readle<uint32_t>(data_);
+    auto dwSize = bela::readle<uint32_t>(data_);
     if (dwSize != 0x0000004C) {
       return false;
     }
     if (memcmp(data_ + 4, shuuid, ArrayLength(shuuid)) != 0) {
       return false;
     }
-    linkflags_ = planck::readle<uint32_t>(data_ + 20);
+    linkflags_ = bela::readle<uint32_t>(data_ + 20);
     IsUnicode = (linkflags_ & shl::IsUnicode) != 0;
     return true;
   }
@@ -114,7 +113,7 @@ public:
     // default code page, or a Unicode string with a length specified by the
     // CountCharacters field. This string MUST NOT be NULL-terminated.
 
-    auto len = planck::readle<uint16_t>(data_ + pos); /// Ch
+    auto len = bela::readle<uint16_t>(data_ + pos); /// Ch
     if (IsUnicode) {
       sdlen = len * 2 + 2;
       if (sdlen + pos >= size_) {
@@ -124,7 +123,7 @@ public:
       sd.clear();
       for (size_t i = 0; i < len; i++) {
         // Winodws UTF16LE
-        sd.push_back(planck::resolvele(p[i]));
+        sd.push_back(bela::swaple(p[i]));
       }
       return true;
     }
@@ -158,7 +157,7 @@ public:
       if (*it == 0) {
         return true;
       }
-      su.push_back(planck::resolvele(*it));
+      su.push_back(bela::swaple(*it));
     }
     return false;
   }
@@ -231,8 +230,8 @@ private:
 // This field can be present only if the value of the LinkInfoHeaderSize field
 // is greater than or equal to 0x00000024
 
-status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
-  shl_memview shm(mv.data(), mv.size());
+status_t inquisitive_shlink(bela::MemView mv, inquisitive_result_t &ir) {
+  shl_memview shm(reinterpret_cast<const char *>(mv.data()), mv.size());
   if (!shm.prepare()) {
     return None;
   }
@@ -242,7 +241,7 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
     if (shm.size() <= offset + 2) {
       return None;
     }
-    auto l = planck::readle<uint16_t>(shm.data() + offset);
+    auto l = bela::readle<uint16_t>(shm.data() + offset);
     if (l + 2 + offset >= shm.size()) {
       return None;
     }
@@ -259,17 +258,17 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
     if (li == nullptr) {
       return Found;
     }
-    auto liflag = planck::resolvele(li->dwFlags);
+    auto liflag = bela::swaple(li->dwFlags);
     if ((liflag & shl::VolumeIDAndLocalBasePath) != 0) {
       std::wstring su;
       bool isunicode;
       size_t pos;
-      if (planck::resolvele(li->cbHeaderSize) < 0x00000024) {
+      if (bela::swaple(li->cbHeaderSize) < 0x00000024) {
         isunicode = false;
-        pos = offset + planck::resolvele(li->cbLocalBasePathOffset);
+        pos = offset + bela::swaple(li->cbLocalBasePathOffset);
       } else {
         isunicode = true;
-        pos = offset + planck::resolvele(li->cbLocalBasePathUnicodeOffset);
+        pos = offset + bela::swaple(li->cbLocalBasePathUnicodeOffset);
       }
 
       if (!shm.stringvalue(pos, isunicode, su)) {
@@ -279,7 +278,7 @@ status_t inquisitive_shlink(memview mv, inquisitive_result_t &ir) {
     } else if ((liflag & shl::CommonNetworkRelativeLinkAndPathSuffix) != 0) {
       //// NetworkRelative
     }
-    offset += planck::resolvele(li->cbSize);
+    offset += bela::swaple(li->cbSize);
   }
   // StringData https://msdn.microsoft.com/en-us/library/dd871306.aspx
   static const shl::link_value_flags_t sdv[] = {

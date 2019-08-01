@@ -1,5 +1,4 @@
 ///////////////
-#include <endian.hpp>
 #include "inquisitive.hpp"
 
 namespace inquisitive {
@@ -16,7 +15,7 @@ namespace inquisitive {
 // };
 // https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_19840
 
-status_t inquisitive_images(memview mv, inquisitive_result_t &ir) {
+status_t inquisitive_images(bela::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t icoMagic[] = {0x00, 0x00, 0x01, 0x00};
   constexpr const byte_t jpegMagic[] = {0xFF, 0xD8, 0xFF};
   constexpr const byte_t jpeg2000Magic[] = {0x0,  0x0, 0x0, 0xC,  0x6A, 0x50,
@@ -28,19 +27,19 @@ status_t inquisitive_images(memview mv, inquisitive_result_t &ir) {
   constexpr const size_t psdhlen = 4 + 2 + 6 + 2 + 4 + 4 + 2 + 2;
   switch (mv[0]) {
   case 0x0:
-    if (mv.startswith(icoMagic)) {
+    if (mv.StartsWith(icoMagic)) {
       ir.assign(L"ICO file format (.ico)", types::ico);
       return Found;
     }
-    if (mv.startswith(jpeg2000Magic)) {
+    if (mv.StartsWith(jpeg2000Magic)) {
       ir.assign(L"JPEG 2000 Image", types::jp2);
       return Found;
     }
     break;
   case 0x38:
-    if (mv.startswith(psdMagic) && mv.size() > psdhlen) {
+    if (mv.StartsWith(psdMagic) && mv.size() > psdhlen) {
       // Version: always equal to 1.
-      auto ver = planck::readbe<uint16_t>((void *)(mv.data() + 4));
+      auto ver = bela::readbe<uint16_t>((void *)(mv.data() + 4));
       if (ver == 1) {
         ir.assign(L"Photoshop document file extension", types::psd);
         return Found;
@@ -54,7 +53,7 @@ status_t inquisitive_images(memview mv, inquisitive_result_t &ir) {
     }
     break;
   case 0x47:
-    if (mv.startswith(gifMagic)) {
+    if (mv.StartsWith(gifMagic)) {
       constexpr size_t gmlen = sizeof(gifMagic);
       if (mv.size() > gmlen + 3 && mv[gmlen] == '8' &&
           (mv[gmlen + 1] == '7' || mv[gmlen + 1] == '9') &&
@@ -91,19 +90,19 @@ status_t inquisitive_images(memview mv, inquisitive_result_t &ir) {
     }
     break;
   case 0x57:
-    if (mv.startswith(webpMagic)) {
+    if (mv.StartsWith(webpMagic)) {
       ir.assign(L"WebP Image", types::webp);
       return Found;
     }
     break;
   case 0x89:
-    if (mv.startswith(pngMagic)) {
+    if (mv.StartsWith(pngMagic)) {
       ir.assign(L"Portable Network Graphics (.png)", types::png);
       return Found;
     }
     break;
   case 0xFF:
-    if (mv.startswith(jpegMagic)) {
+    if (mv.StartsWith(jpegMagic)) {
       ir.assign(L"JPEG Image", types::jpg);
       return Found;
     }

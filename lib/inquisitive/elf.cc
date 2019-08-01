@@ -1,6 +1,5 @@
 /// ELF details
 #include <elf.h>
-#include <endian.hpp>
 #include <bela/codecvt.hpp>
 #include <bela/strcat.hpp>
 #include "inquisitive.hpp"
@@ -294,8 +293,8 @@ inline endian::endian_t Endian(uint8_t t) {
 
 class elf_memview {
 public:
-  elf_memview(const char *data__, size_t size__)
-      : data_(data__), size_(size__) {
+  elf_memview(bela::MemView mv)
+      : data_(reinterpret_cast<const char *>(mv.data())), size_(mv.size()) {
     //
   }
   const char *data() const { return data_; }
@@ -310,7 +309,7 @@ public:
     if (!resiveable) {
       return i;
     }
-    return planck::bswap(i);
+    return bela::bswap(i);
   }
   std::string stroffset(size_t off, size_t end);
   bool inquisitive(elf_minutiae_t &em, bela::error_code &ec);
@@ -404,7 +403,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, bela::error_code &ec) {
   em.osabi = elf_osabi(data_[EI_OSABI]);
   em.version = data_[EI_VERSION];
   auto msb = (em.endian == endian::BigEndian);
-  resiveable = (msb != planck::IsBigEndianHost);
+  resiveable = (msb != bela::IsBigEndianHost);
   int eic = data_[EI_CLASS];
   if (eic == ELFCLASS64) {
     em.bit64 = true;
@@ -476,12 +475,11 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, bela::error_code &ec) {
 }
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
                                               bela::error_code &ec) {
-  planck::mapview mv;
-  if (!mv.mapfile(sv, sizeof(Elf32_Ehdr))) {
-    ec = bela::make_error_code(L"ELF file unable mapview");
+  bela::MapView mv;
+  if (!mv.MappingView(sv, ec, sizeof(Elf32_Ehdr))) {
     return std::nullopt;
   }
-  elf_memview emv(mv.data(), mv.size());
+  elf_memview emv(mv.subview());
   elf_minutiae_t em;
   if (emv.inquisitive(em, ec)) {
     return std::make_optional<elf_minutiae_t>(std::move(em));

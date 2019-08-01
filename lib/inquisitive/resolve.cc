@@ -6,7 +6,6 @@
 #include <vector>
 #include <charconv>
 #include <ShlObj.h>
-#include <mapview.hpp>
 #include "comutils.hpp"
 #include "reparsepoint.hpp"
 

@@ -2,7 +2,6 @@
 #ifndef INQUISITIVE_ZIP_HPP
 #define INQUISITIVE_ZIP_HPP
 #include <cstdint>
-#include <endian.hpp>
 // https://en.wikipedia.org/wiki/Zip_(file_format)
 
 namespace inquisitive {

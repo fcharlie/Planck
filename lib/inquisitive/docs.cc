@@ -7,9 +7,9 @@ namespace inquisitive {
 // RTF format
 // https://en.wikipedia.org/wiki/Rich_Text_Format
 /*{\rtf1*/
-status_t inquisitive_rtfinternal(memview mv, inquisitive_result_t &ir) {
+status_t inquisitive_rtfinternal(bela::MemView mv, inquisitive_result_t &ir) {
   constexpr byte_t rtfMagic[] = {0x7B, 0x5C, 0x72, 0x74, 0x66};
-  if (!mv.startswith(rtfMagic) || mv.size() < 6) {
+  if (!mv.StartsWith(rtfMagic) || mv.size() < 6) {
     return None;
   }
   std::wstring name(L"Rich Text Format data, version ");
@@ -30,7 +30,7 @@ status_t inquisitive_rtfinternal(memview mv, inquisitive_result_t &ir) {
 // http://www.openoffice.org/sc/compdocfileformat.pdf
 // https://interoperability.blob.core.windows.net/files/MS-PPT/[MS-PPT].pdf
 
-status_t inquisitive_docs(memview mv, inquisitive_result_t &ir) {
+status_t inquisitive_docs(bela::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t msofficeMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
                                             0xA1, 0xB1, 0x1A, 0xE1};
   constexpr const byte_t pptMagic[] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1,
@@ -43,7 +43,7 @@ status_t inquisitive_docs(memview mv, inquisitive_result_t &ir) {
     return Found;
   }
   constexpr const auto olesize = sizeof(oleheader_t);
-  if (mv.startswith(msofficeMagic) || mv.size() < 512) {
+  if (mv.StartsWith(msofficeMagic) || mv.size() < 512) {
     return None;
   }
   auto oh = mv.cast<oleheader_t>(0);

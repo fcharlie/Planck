@@ -35,42 +35,42 @@ inline bool Mpeg(const byte_t *buf, size_t size) {
           buf[3] >= 0xb0 && buf[3] <= 0xbf);
 }
 
-status_t inquisitive_mediaaudio(memview mv, inquisitive_result_t &ir) {
+status_t inquisitive_mediaaudio(bela::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t midiMagic[] = {0x4D, 0x54, 0x68, 0x64};
   constexpr const byte_t oggMagic[] = {0x4F, 0x67, 0x67, 0x53};
   constexpr const byte_t flacMagic[] = {0x66, 0x4C, 0x61, 0x43};
   constexpr const byte_t wavMagic[] = {0x52, 0x49, 0x46, 0x46,
                                        0x57, 0x41, 0x56, 0x45};
   constexpr const byte_t amrMagic[] = {0x23, 0x21, 0x41, 0x4D, 0x52, 0x0A};
-  if (mv.startswith(midiMagic)) {
+  if (mv.StartsWith(midiMagic)) {
     ir.assign(L"MIDI Audio", types::midi);
     return Found;
   }
-  if (IsMp3(mv.udata(), mv.size())) {
+  if (IsMp3(mv.data(), mv.size())) {
     ir.assign(L"MP3 Audio", types::mp3);
     return Found;
   }
-  if (IsM4a(mv.udata(), mv.size())) {
+  if (IsM4a(mv.data(), mv.size())) {
     ir.assign(L"M4A Audio", types::m4a);
     return Found;
   }
-  if (mv.startswith(oggMagic)) {
+  if (mv.StartsWith(oggMagic)) {
     ir.assign(L"OGG Audio/Video", types::ogg);
     return Found;
   }
-  if (mv.startswith(flacMagic)) {
+  if (mv.StartsWith(flacMagic)) {
     ir.assign(L"Free Lossless Audio Codec", types::flac);
     return Found;
   }
-  if (mv.startswith(wavMagic)) {
+  if (mv.StartsWith(wavMagic)) {
     ir.assign(L"Waveform Audio File Format", types::wav);
     return Found;
   }
-  if (mv.startswith(amrMagic)) {
+  if (mv.StartsWith(amrMagic)) {
     ir.assign(L"Adaptive Multi-Rate audio codecat", types::amr);
     return Found;
   }
-  if (IsAac(mv.udata(), mv.size())) {
+  if (IsAac(mv.data(), mv.size())) {
     ir.assign(L"Advanced Audio Coding", types::aac);
     return Found;
   }
@@ -139,47 +139,47 @@ inline bool IsMp4(const byte_t *buf, size_t size) {
        (buf[8] == 'F' && buf[9] == '4' && buf[10] == 'P' && buf[11] == ' ')));
 }
 
-status_t inquisitive_mediavideo(memview mv, inquisitive_result_t &ir) {
+status_t inquisitive_mediavideo(bela::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t webmMagic[] = {0x1A, 0x45, 0xDF, 0xA3};
   constexpr const byte_t wmvMagic[] = {0x30, 0x26, 0xB2, 0x75, 0x8E,
                                        0x66, 0xCF, 0x11, 0xA6, 0xD6};
   constexpr const byte_t flvMagic[] = {0x46, 0x4C, 0x56, 0x01};
-  if (IsM4v(mv.udata(), mv.size())) {
+  if (IsM4v(mv.data(), mv.size())) {
     ir.assign(L"M4V Video", types::m4v);
     return Found;
   }
-  if (IsMkv(mv.udata(), mv.size())) {
+  if (IsMkv(mv.data(), mv.size())) {
     ir.assign(L"Matroska Multimedia Container (.mkv)", types::mkv);
     return Found;
   }
-  if (mv.startswith(webmMagic)) {
+  if (mv.StartsWith(webmMagic)) {
     ir.assign(L"WebM Video", types::webm);
     return Found;
   }
-  if (IsAvi(mv.udata(), mv.size())) {
+  if (IsAvi(mv.data(), mv.size())) {
     ir.assign(L"Audio Video Interleaved (.avi)", types::avi);
     return Found;
   }
-  if (mv.startswith(wmvMagic)) {
+  if (mv.StartsWith(wmvMagic)) {
     ir.assign(L"", types::wmv);
     return Found;
   }
-  if (IsMpeg(mv.udata(), mv.size())) {
+  if (IsMpeg(mv.data(), mv.size())) {
     ir.assign(L"MPEG Video", types::mpeg);
     return Found;
   }
-  if (mv.startswith(flvMagic)) {
+  if (mv.StartsWith(flvMagic)) {
     ir.assign(L"Flash Video", types::flv);
     return Found;
   }
-  if (IsMp4(mv.udata(), mv.size())) {
+  if (IsMp4(mv.data(), mv.size())) {
     ir.assign(L"MPEG-4 Part 14 Video (.mp4)", types::mp4);
     return Found;
   }
   return None;
 }
 
-status_t inquisitive_media(memview mv, inquisitive_result_t &ir) {
+status_t inquisitive_media(bela::MemView mv, inquisitive_result_t &ir) {
   if (inquisitive_mediaaudio(mv, ir) == Found) {
     return Found;
   }
