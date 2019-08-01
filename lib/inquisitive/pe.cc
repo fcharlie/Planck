@@ -269,7 +269,7 @@ BelaImageRvaToVa(PIMAGE_NT_HEADERS nh, PVOID BaseAddress, ULONG rva,
   return reinterpret_cast<PVOID>(va);
 }
 
-inline std::wstring DllName(bela::MemView mv, LPVOID nh, ULONG nva) {
+inline std::wstring DllName(base::MemView mv, LPVOID nh, ULONG nva) {
   auto va =
       BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), nva, nullptr);
   if (va == nullptr) {
@@ -285,7 +285,7 @@ inline std::wstring DllName(bela::MemView mv, LPVOID nh, ULONG nva) {
   return fromascii(name);
 }
 
-inline std::wstring ClrMessage(bela::MemView mv, LPVOID nh, ULONG clrva) {
+inline std::wstring ClrMessage(base::MemView mv, LPVOID nh, ULONG clrva) {
   auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), clrva,
                              nullptr);
   auto end = mv.data() + mv.size();
@@ -307,7 +307,7 @@ inline std::wstring ClrMessage(bela::MemView mv, LPVOID nh, ULONG clrva) {
 }
 
 template <typename NtHeaderT>
-std::optional<pe_minutiae_t> pecoff_dump(bela::MemView mv, NtHeaderT *nh,
+std::optional<pe_minutiae_t> pecoff_dump(base::MemView mv, NtHeaderT *nh,
                                          bela::error_code &ec) {
   pe_minutiae_t pm;
   pm.machine = Machine(nh->FileHeader.Machine);
@@ -381,7 +381,7 @@ std::optional<pe_minutiae_t> pecoff_dump(bela::MemView mv, NtHeaderT *nh,
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
                                                 bela::error_code &ec) {
 
-  bela::MapView mmv;
+  base::MapView mmv;
   if (!mmv.MappingView(sv, ec,
                        sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
     return std::nullopt;

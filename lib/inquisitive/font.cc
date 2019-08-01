@@ -3,14 +3,14 @@
 
 namespace inquisitive {
 
-inline bool IsEot(bela::MemView mv) {
+inline bool IsEot(base::MemView mv) {
   return mv.size() > 35 && mv[34] == 0x4C && mv[35] == 0x50 &&
          ((mv[8] == 0x02 && mv[9] == 0x00 && mv[10] == 0x01) ||
           (mv[8] == 0x01 && mv[9] == 0x00 && mv[10] == 0x00) ||
           (mv[8] == 0x02 && mv[9] == 0x00 && mv[10] == 0x02));
 }
 
-status_t inquisitive_fonts(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_fonts(base::MemView mv, inquisitive_result_t &ir) {
   //
   switch (mv[0]) {
   case 0x00:

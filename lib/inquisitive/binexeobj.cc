@@ -47,7 +47,7 @@ struct BigObjHeader {
   uint32_t NumberOfSymbols;
 };
 
-status_t inquisitive_binobj(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
   if (mv.size() < 4) {
     return None;
   }
@@ -93,14 +93,12 @@ status_t inquisitive_binobj(bela::MemView mv, inquisitive_result_t &ir) {
     }
     break;
   case 0xDE:
-
     if (mv.StartsWith(irobj)) {
       ir.assign(L"LLVM IR bitcode", types::bitcode);
       return Found;
     }
     break;
   case 'B':
-
     if (mv.StartsWith(irobj2)) {
       ir.assign(L"LLVM IR bitcode", types::bitcode);
       return Found;

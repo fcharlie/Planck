@@ -17,7 +17,7 @@ inline bool IsZip(const byte_t *buf, size_t size) {
           (buf[3] == 0x4 || buf[3] == 0x6 || buf[3] == 0x8));
 }
 
-status_t msdocssubview(bela::MemView mv, inquisitive_result_t &ir) {
+status_t msdocssubview(base::MemView mv, inquisitive_result_t &ir) {
   if (mv.StartsWith("word/")) {
     ir.assign(L"Microsoft Word (.docx)", types::docx);
     return Found;
@@ -64,7 +64,7 @@ void *Memmem(const void *haystack, size_t haystack_len, const void *needle,
 
 using ssize_t = SSIZE_T;
 
-ssize_t MagicIndex(bela::MemView mv, size_t offset) {
+ssize_t MagicIndex(base::MemView mv, size_t offset) {
   constexpr const byte_t docsMagic[] = {'P', 'K', 0x03, 0x04};
   if (offset > mv.size()) {
     return -1;
@@ -77,7 +77,7 @@ ssize_t MagicIndex(bela::MemView mv, size_t offset) {
   return reinterpret_cast<const uint8_t *>(p) - mv.data();
 }
 
-status_t inquisitive_msxmldocs(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_msxmldocs(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t docsMagic[] = {'P', 'K', 0x03, 0x04};
   if (!mv.StartsWith(docsMagic)) {
     return None;
@@ -121,7 +121,7 @@ status_t inquisitive_msxmldocs(bela::MemView mv, inquisitive_result_t &ir) {
   return None;
 }
 
-status_t inquisitive_zip_family(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_zip_family(base::MemView mv, inquisitive_result_t &ir) {
   if (!IsZip(mv.data(), mv.size())) {
     return None;
   }

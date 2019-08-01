@@ -34,7 +34,7 @@ struct git_midx_header_t {
 };
 #pragma pack()
 // https://github.com/git/git/blob/master/Documentation/technical/pack-format.txt
-status_t inquisitive_gitbinary(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_gitbinary(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t packMagic[] = {'P', 'A', 'C', 'K'};
   constexpr const byte_t midxMagic[] = {'M', 'I', 'D', 'X'};
   constexpr const byte_t indexMagic[] = {0xFF, 0x74, 0x4F, 0x63};

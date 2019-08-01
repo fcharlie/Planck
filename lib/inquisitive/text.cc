@@ -6,7 +6,7 @@
 namespace inquisitive {
 // check text details
 
-bool buffer_is_binary(bela::MemView mv) {
+bool buffer_is_binary(base::MemView mv) {
   auto size = (std::min)(mv.size(), size_t(0x8000));
   if (memchr(mv.data(), 0, size) != nullptr) {
     return true;
@@ -103,7 +103,7 @@ FE FF	UTF-16, big-endian
 FF FE	UTF-16, little-endian
 EF BB BF	UTF-8
 */
-status_t inquisitive_text(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_text(base::MemView mv, inquisitive_result_t &ir) {
   //
   switch (mv[0]) {
   case 0x2B:
@@ -147,7 +147,7 @@ status_t inquisitive_text(bela::MemView mv, inquisitive_result_t &ir) {
   return None;
 }
 //////// --------------> use chardet
-status_t inquisitive_chardet(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_chardet(base::MemView mv, inquisitive_result_t &ir) {
   if (buffer_is_binary(mv)) {
     ir.assign(L"Binary data");
     return Found;

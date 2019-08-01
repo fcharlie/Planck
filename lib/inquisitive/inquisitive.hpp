@@ -14,7 +14,7 @@
 #include <vector>
 #include <algorithm>
 #include <system_error>
-#include <bela/mapview.hpp>
+#include <mapview.hpp>
 #include <bela/base.hpp>
 #include <bela/endian.hpp>
 #include "types.hpp"
@@ -245,20 +245,20 @@ typedef enum inquisitive_status_e : int {
 } status_t;
 
 // ---> todo resolve
-typedef status_t (*inquisitive_handle_t)(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_binobj(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_fonts(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_zip_family(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_docs(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_images(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_archives(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_media(bela::MemView mv, inquisitive_result_t &ir);
+typedef status_t (*inquisitive_handle_t)(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_fonts(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_zip_family(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_docs(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_images(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_archives(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_media(base::MemView mv, inquisitive_result_t &ir);
 // EX
-status_t inquisitive_gitbinary(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_shlink(bela::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_gitbinary(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_shlink(base::MemView mv, inquisitive_result_t &ir);
 /////////// ---
-status_t inquisitive_text(bela::MemView mv, inquisitive_result_t &ir);
-status_t inquisitive_chardet(bela::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_text(base::MemView mv, inquisitive_result_t &ir);
+status_t inquisitive_chardet(base::MemView mv, inquisitive_result_t &ir);
 
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
                                                 bela::error_code &ec);

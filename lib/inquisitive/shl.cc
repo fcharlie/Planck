@@ -230,7 +230,7 @@ private:
 // This field can be present only if the value of the LinkInfoHeaderSize field
 // is greater than or equal to 0x00000024
 
-status_t inquisitive_shlink(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_shlink(base::MemView mv, inquisitive_result_t &ir) {
   shl_memview shm(reinterpret_cast<const char *>(mv.data()), mv.size());
   if (!shm.prepare()) {
     return None;

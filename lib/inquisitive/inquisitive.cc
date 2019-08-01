@@ -25,9 +25,8 @@ std::wstring FindExtension(std::wstring_view sv) {
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
                                                 bela::error_code &ec) {
   auto extension = FindExtension(sv);
-  bela::MapView mmv;
-  if (!mmv.MappingView(sv, ec, 2, 32 * 1024)) {
-    ec = bela::make_system_error_code();
+  base::MapView mmv;
+  if (!mmv.MappingView(sv, ec, 1, 32 * 1024)) {
     return std::nullopt;
   }
   auto mv = mmv.subview();

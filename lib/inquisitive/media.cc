@@ -35,7 +35,7 @@ inline bool Mpeg(const byte_t *buf, size_t size) {
           buf[3] >= 0xb0 && buf[3] <= 0xbf);
 }
 
-status_t inquisitive_mediaaudio(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_mediaaudio(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t midiMagic[] = {0x4D, 0x54, 0x68, 0x64};
   constexpr const byte_t oggMagic[] = {0x4F, 0x67, 0x67, 0x53};
   constexpr const byte_t flacMagic[] = {0x66, 0x4C, 0x61, 0x43};
@@ -139,7 +139,7 @@ inline bool IsMp4(const byte_t *buf, size_t size) {
        (buf[8] == 'F' && buf[9] == '4' && buf[10] == 'P' && buf[11] == ' ')));
 }
 
-status_t inquisitive_mediavideo(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_mediavideo(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t webmMagic[] = {0x1A, 0x45, 0xDF, 0xA3};
   constexpr const byte_t wmvMagic[] = {0x30, 0x26, 0xB2, 0x75, 0x8E,
                                        0x66, 0xCF, 0x11, 0xA6, 0xD6};
@@ -179,7 +179,7 @@ status_t inquisitive_mediavideo(bela::MemView mv, inquisitive_result_t &ir) {
   return None;
 }
 
-status_t inquisitive_media(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_media(base::MemView mv, inquisitive_result_t &ir) {
   if (inquisitive_mediaaudio(mv, ir) == Found) {
     return Found;
   }

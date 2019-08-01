@@ -293,7 +293,7 @@ inline endian::endian_t Endian(uint8_t t) {
 
 class elf_memview {
 public:
-  elf_memview(bela::MemView mv)
+  elf_memview(base::MemView mv)
       : data_(reinterpret_cast<const char *>(mv.data())), size_(mv.size()) {
     //
   }
@@ -475,7 +475,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, bela::error_code &ec) {
 }
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
                                               bela::error_code &ec) {
-  bela::MapView mv;
+  base::MapView mv;
   if (!mv.MappingView(sv, ec, sizeof(Elf32_Ehdr))) {
     return std::nullopt;
   }

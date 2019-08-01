@@ -15,7 +15,7 @@ namespace inquisitive {
 // };
 // https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_19840
 
-status_t inquisitive_images(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_images(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t icoMagic[] = {0x00, 0x00, 0x01, 0x00};
   constexpr const byte_t jpegMagic[] = {0xFF, 0xD8, 0xFF};
   constexpr const byte_t jpeg2000Magic[] = {0x0,  0x0, 0x0, 0xC,  0x6A, 0x50,

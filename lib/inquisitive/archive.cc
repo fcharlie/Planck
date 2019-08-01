@@ -17,7 +17,7 @@ struct p7z_header_t {
 };
 #pragma pack()
 
-status_t inquisitive_7zinternal(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_7zinternal(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t k7zSignature[k7zSignatureSize] = {'7',  'z',  0xBC,
                                                            0xAF, 0x27, 0x1C};
   constexpr const byte_t k7zFinishSignature[k7zSignatureSize] = {
@@ -38,7 +38,7 @@ status_t inquisitive_7zinternal(bela::MemView mv, inquisitive_result_t &ir) {
 
 // RAR archive
 // https://www.rarlab.com/technote.htm
-status_t inquisitive_rarinternal(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_rarinternal(base::MemView mv, inquisitive_result_t &ir) {
   /*RAR 5.0 signature consists of 8 bytes: 0x52 0x61 0x72 0x21 0x1A 0x07 0x01
    * 0x00. You need to search for this signature in supposed archive from
    * beginning and up to maximum SFX module size. Just for comparison this is
@@ -73,7 +73,7 @@ struct xar_header {
 };
 #pragma pack()
 
-status_t inquisitive_xarinternal(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_xarinternal(base::MemView mv, inquisitive_result_t &ir) {
   // https://github.com/mackyle/xar/wiki/xarformat
   constexpr const byte_t xarSignature[] = {'x', 'a', 'r', '!'};
   if (!mv.StartsWith(xarSignature)) {
@@ -125,7 +125,7 @@ struct apple_disk_image_header {
 };
 #pragma pack()
 
-status_t inquisitive_dmginternal(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_dmginternal(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t dmgSignature[] = {'k', 'o', 'l', 'y'};
   if (!mv.StartsWith(dmgSignature)) {
     return None;
@@ -142,7 +142,7 @@ status_t inquisitive_dmginternal(bela::MemView mv, inquisitive_result_t &ir) {
 }
 
 // PDF file format
-status_t inquisitive_pdfinternal(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_pdfinternal(base::MemView mv, inquisitive_result_t &ir) {
   // https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf
   // %PDF-1.7
   constexpr const byte_t pdfMagic[] = {0x25, 0x50, 0x44, 0x46, '-'};
@@ -216,7 +216,7 @@ struct wim_header_t {
 };
 #pragma pack()
 // https://www.microsoft.com/en-us/download/details.aspx?id=13096
-status_t inquisitive_wiminternal(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_wiminternal(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t wimMagic[] = {'M', 'S',  'W',  'I',
                                        'M', 0x00, 0x00, 0x00};
   if (!mv.StartsWith(wimMagic)) {
@@ -295,7 +295,7 @@ struct cabinet_header_t {
   // uint8_t  szDiskNext[];     /* (optional) name of next disk */
 };
 
-status_t inquisitive_cabinetinternal(bela::MemView mv,
+status_t inquisitive_cabinetinternal(base::MemView mv,
                                      inquisitive_result_t &ir) {
   constexpr const byte_t cabMagic[] = {'M', 'S', 'C', 'F', 0, 0, 0, 0};
   if (!mv.StartsWith(cabMagic)) {
@@ -373,7 +373,7 @@ struct gnutar_header_t {
 };
 #pragma pack()
 
-status_t inquisitive_tarinternal(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_tarinternal(base::MemView mv, inquisitive_result_t &ir) {
   auto hd = mv.cast<ustar_header_t>(0);
   if (hd == nullptr) {
     return None;
@@ -398,7 +398,7 @@ struct sqlite_header_t {
   uint16_t version;
 };
 
-status_t inquisitive_sqliteinternal(bela::MemView mv,
+status_t inquisitive_sqliteinternal(base::MemView mv,
                                     inquisitive_result_t &ir) {
   constexpr const byte_t sqliteMagic[] = {'S', 'Q', 'L', 'i', 't', 'e', ' ',
                                           'f', 'o', 'r', 'm', 'a', 't'};
@@ -436,7 +436,7 @@ bool IsSwf(const byte_t *buf, size_t size) {
 }
 
 /// Magic only
-status_t inquisitive_archivesinternal(bela::MemView mv,
+status_t inquisitive_archivesinternal(base::MemView mv,
                                       inquisitive_result_t &ir) {
   // MSI // 0x4d434923
   constexpr const byte_t msiMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
@@ -517,7 +517,7 @@ status_t inquisitive_archivesinternal(bela::MemView mv,
   return None;
 }
 
-status_t inquisitive_archives(bela::MemView mv, inquisitive_result_t &ir) {
+status_t inquisitive_archives(base::MemView mv, inquisitive_result_t &ir) {
   if (inquisitive_7zinternal(mv, ir) == Found) {
     return Found;
   }
