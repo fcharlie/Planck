@@ -6,8 +6,8 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
-#include <base.hpp>
-#include <console/console.hpp>
+#include <bela/base.hpp>
+#include <bela/stdwriter.hpp>
 
 static const char hex[] = "0123456789abcdef";
 
@@ -96,8 +96,8 @@ private:
 bool Processcolor(std::wstring_view sv, FILE *out, int64_t len) {
   BinaryFile bin;
   if (!bin.Open(sv)) {
-    auto ec = base::make_system_error_code();
-    planck::PrintNone(L"planck: open binary %s\n", ec.message);
+    auto ec = bela::make_system_error_code();
+    bela::FPrintF(stderr, L"planck: open binary %s\n", ec.message);
     return false;
   }
   uint64_t maxlen = len > 0 ? len : UINT64_MAX;

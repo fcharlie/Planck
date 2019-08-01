@@ -15,8 +15,14 @@
 #include <algorithm>
 #include <system_error>
 #include <mapview.hpp>
-#include <base.hpp>
+#include <bela/base.hpp>
 #include "types.hpp"
+
+namespace bela {
+inline bela::error_code make_error_code(const bela::AlphaNum &a) {
+  return bela::error_code{std::wstring(a.Piece()), 1};
+}
+} // namespace base
 
 namespace inquisitive {
 using byte_t = unsigned char;
@@ -203,7 +209,7 @@ public:
   }
   inquisitive_result &add(std::wstring &&name, uint64_t value) {
     mnlen = (std::max)(mnlen, name.size());
-    auto sv = base::AlphaNum(value);
+    auto sv = bela::AlphaNum(value);
     attrs.emplace_back(std::move(name), std::wstring(sv.Piece()));
     return *this;
   }
@@ -232,8 +238,6 @@ public:
 
 using inquisitive_result_t = inquisitive_result;
 
-std::wstring fromutf8(std::string_view text);
-
 typedef enum inquisitive_status_e : int {
   None = 0,
   Found, ///
@@ -257,14 +261,14 @@ status_t inquisitive_text(memview mv, inquisitive_result_t &ir);
 status_t inquisitive_chardet(memview mv, inquisitive_result_t &ir);
 
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
-                                                base::error_code &ec);
+                                                bela::error_code &ec);
 
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
-                                                base::error_code &ec);
+                                                bela::error_code &ec);
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
-                                              base::error_code &ec);
+                                              bela::error_code &ec);
 std::optional<macho_minutiae_t> inquisitive_macho(std::wstring_view sv,
-                                                  base::error_code &ec);
+                                                  bela::error_code &ec);
 } // namespace inquisitive
 
 #endif

@@ -76,11 +76,11 @@ std::wstring FindExtension(std::wstring_view sv) {
 }
 
 std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
-                                                base::error_code &ec) {
+                                                bela::error_code &ec) {
   auto extension = FindExtension(sv);
   FileView fv;
   if (!fv.initialize(sv, 32 * 1024)) {
-    ec = base::make_system_error_code();
+    ec = bela::make_system_error_code();
     return std::nullopt;
   }
   auto mv = fv.view();

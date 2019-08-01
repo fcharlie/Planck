@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 #include <variant>
-#include <base.hpp>
+#include <bela/base.hpp>
 
 namespace inquisitive {
 
@@ -98,9 +98,9 @@ struct file_links_t {
 };
 
 std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
-                                           base::error_code &ec);
+                                           bela::error_code &ec);
 std::optional<file_links_t> ResolveLinks(std::wstring_view sv,
-                                         base::error_code &ec);
+                                         bela::error_code &ec);
 } // namespace inquisitive
 
 #endif

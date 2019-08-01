@@ -1,7 +1,8 @@
 /// ELF details
 #include <elf.h>
 #include <endian.hpp>
-#include <strcat.hpp>
+#include <bela/codecvt.hpp>
+#include <bela/strcat.hpp>
 #include "inquisitive.hpp"
 
 //  Executable and Linkable Format ELF
@@ -312,8 +313,8 @@ public:
     return planck::bswap(i);
   }
   std::string stroffset(size_t off, size_t end);
-  bool inquisitive(elf_minutiae_t &em, base::error_code &ec);
-  bool inquisitive64(elf_minutiae_t &em, base::error_code &ec);
+  bool inquisitive(elf_minutiae_t &em, bela::error_code &ec);
+  bool inquisitive64(elf_minutiae_t &em, bela::error_code &ec);
 
 private:
   const char *data_{nullptr};
@@ -332,7 +333,7 @@ std::string elf_memview::stroffset(size_t off, size_t end) {
 }
 
 //
-bool elf_memview::inquisitive64(elf_minutiae_t &em, base::error_code &ec) {
+bool elf_memview::inquisitive64(elf_minutiae_t &em, bela::error_code &ec) {
   auto h = cast<Elf64_Ehdr>(0);
   if (h == nullptr) {
     return false;
@@ -343,7 +344,7 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, base::error_code &ec) {
   auto sects = cast<Elf64_Shdr>(off);
   auto shnum = resive(h->e_shnum);
   if (shnum * sizeof(Elf64_Shdr) + off > size_) {
-    ec = base::make_error_code(L"ELF file size too small");
+    ec = bela::make_error_code(L"ELF file size too small");
     return false;
   }
   Elf64_Off sh_offset = 0;
@@ -366,7 +367,7 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, base::error_code &ec) {
   }
   auto strtab = &sects[sh_link];
   if (sh_link >= shnum) {
-    ec = base::make_error_code(L"ELF file size too small");
+    ec = bela::make_error_code(L"ELF file size too small");
     return false;
   }
 
@@ -379,16 +380,16 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, base::error_code &ec) {
     switch (resive(dyn[i].d_tag)) {
     case DT_NEEDED: {
       auto deps = stroffset(soff + first, send);
-      em.depends.push_back(fromutf8(deps));
+      em.depends.push_back(bela::ToWide(deps));
     } break;
     case DT_SONAME:
-      em.soname = fromutf8(stroffset(soff + first, send));
+      em.soname = bela::ToWide(stroffset(soff + first, send));
       break;
     case DT_RUNPATH:
-      em.rupath = fromutf8(stroffset(soff + first, send));
+      em.rupath = bela::ToWide(stroffset(soff + first, send));
       break;
     case DT_RPATH:
-      em.rpath = fromutf8(stroffset(soff + first, send));
+      em.rpath = bela::ToWide(stroffset(soff + first, send));
       break;
     default:
       break;
@@ -398,7 +399,7 @@ bool elf_memview::inquisitive64(elf_minutiae_t &em, base::error_code &ec) {
   return true;
 }
 
-bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
+bool elf_memview::inquisitive(elf_minutiae_t &em, bela::error_code &ec) {
   em.endian = Endian(static_cast<uint8_t>(data_[EI_DATA]));
   em.osabi = elf_osabi(data_[EI_OSABI]);
   em.version = data_[EI_VERSION];
@@ -410,7 +411,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
     return inquisitive64(em, ec);
   }
   if (eic != ELFCLASS32) {
-    ec = base::strcat_error_code(L"EI_CLASS invalid: ", eic);
+    ec = bela::make_error_code(1, L"EI_CLASS invalid:", eic);
     return false;
   }
   auto h = cast<Elf32_Ehdr>(0);
@@ -420,7 +421,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
   auto sects = cast<Elf32_Shdr>(off);
   auto shnum = resive(h->e_shnum);
   if (shnum * sizeof(Elf32_Shdr) + off > size_) {
-    ec = base::make_error_code(L"ELF file size too small");
+    ec = bela::make_error_code(L"ELF file size too small");
     return false;
   }
   Elf32_Off sh_offset = 0;
@@ -456,16 +457,16 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
     switch (resive(dyn[i].d_tag)) {
     case DT_NEEDED: {
       auto deps = stroffset(soff + first, send);
-      em.depends.push_back(fromutf8(deps));
+      em.depends.push_back(bela::ToWide(deps));
     } break;
     case DT_SONAME:
-      em.soname = fromutf8(stroffset(soff + first, send));
+      em.soname = bela::ToWide(stroffset(soff + first, send));
       break;
     case DT_RUNPATH:
-      em.rupath = fromutf8(stroffset(soff + first, send));
+      em.rupath = bela::ToWide(stroffset(soff + first, send));
       break;
     case DT_RPATH:
-      em.rpath = fromutf8(stroffset(soff + first, send));
+      em.rpath = bela::ToWide(stroffset(soff + first, send));
       break;
     default:
       break;
@@ -474,10 +475,10 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, base::error_code &ec) {
   return true;
 }
 std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
-                                              base::error_code &ec) {
+                                              bela::error_code &ec) {
   planck::mapview mv;
   if (!mv.mapfile(sv, sizeof(Elf32_Ehdr))) {
-    ec = base::make_error_code(L"ELF file unable mapview");
+    ec = bela::make_error_code(L"ELF file unable mapview");
     return std::nullopt;
   }
   elf_memview emv(mv.data(), mv.size());

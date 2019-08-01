@@ -10,6 +10,7 @@ if(lto_supported)
 endif()
 
 target_link_libraries(hastyhex
+    bela
     Pathcch
     Kernel32
     Advapi32

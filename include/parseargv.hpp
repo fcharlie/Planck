@@ -12,7 +12,7 @@ enum ParseError {
   None = 0,
   ErrorNormal = 1 //
 };
-// not like base::error_code
+// not like bela::error_code
 struct error_code {
   std::wstring message;
   int ec{0};

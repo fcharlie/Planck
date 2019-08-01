@@ -5,9 +5,9 @@
 // Windows PE32 executable (console) Intel 80386, for MS Windows file command
 // not support check arm and arm64
 #include "inquisitive.hpp"
-#include <Dbghelp.h>
-
-#pragma comment(lib, "DbgHelp.lib")
+#include <bela/endian.hpp>
+#include <bela/codecvt.hpp>
+#include <bela/pe.hpp>
 
 #ifndef PROCESSOR_ARCHITECTURE_ARM64
 #define PROCESSOR_ARCHITECTURE_ARM64 12
@@ -223,9 +223,55 @@ std::wstring fromascii(std::string_view sv) {
   return output;
 }
 
+static inline PVOID belarva(PVOID m, PVOID b) {
+  return reinterpret_cast<PVOID>(reinterpret_cast<ULONG_PTR>(b) +
+                                 reinterpret_cast<ULONG_PTR>(m));
+}
+
+PIMAGE_SECTION_HEADER
+BelaImageRvaToSection(PIMAGE_NT_HEADERS nh, PVOID BaseAddress, ULONG rva) {
+  (void)BaseAddress;
+  ULONG count = bela::swaple(nh->FileHeader.NumberOfSections);
+  PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(nh);
+  ULONG va = 0;
+  while (count-- != 0) {
+    va = bela::swaple(section->VirtualAddress);
+    if ((va <= rva) && (rva < va + bela::swaple(section->SizeOfRawData))) {
+      return section;
+    }
+    section++;
+  }
+  return nullptr;
+}
+
+// like RtlImageRvaToVa
+PVOID
+BelaImageRvaToVa(PIMAGE_NT_HEADERS nh, PVOID BaseAddress, ULONG rva,
+                 PIMAGE_SECTION_HEADER *sh) {
+  PIMAGE_SECTION_HEADER section = nullptr;
+  if (sh != nullptr) {
+    section = *sh;
+  }
+  if ((section == nullptr) || (rva < bela::swaple(section->VirtualAddress)) ||
+      (rva >= bela::swaple(section->VirtualAddress) +
+                  bela::swaple(section->SizeOfRawData))) {
+    section = BelaImageRvaToSection(nh, BaseAddress, rva);
+    if (section == nullptr) {
+      return nullptr;
+    }
+    if (sh) {
+      *sh = section;
+    }
+  }
+  auto va = reinterpret_cast<ULONG_PTR>(BaseAddress) + rva +
+            static_cast<ULONG_PTR>(bela::swaple(section->PointerToRawData)) -
+            static_cast<ULONG_PTR>(bela::swaple(section->VirtualAddress));
+  return reinterpret_cast<PVOID>(va);
+}
+
 inline std::wstring DllName(memview mv, LPVOID nh, ULONG nva) {
   auto va =
-      ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), nva, nullptr);
+      BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), nva, nullptr);
   if (va == nullptr) {
     return L"";
   }
@@ -240,15 +286,15 @@ inline std::wstring DllName(memview mv, LPVOID nh, ULONG nva) {
 }
 
 inline std::wstring ClrMessage(memview mv, LPVOID nh, ULONG clrva) {
-  auto va =
-      ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), clrva, nullptr);
+  auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), clrva,
+                             nullptr);
   auto end = mv.data() + mv.size();
   if (va == nullptr || (char *)va + sizeof(IMAGE_COR20_HEADER) > end) {
     return L"";
   }
   auto clrh = reinterpret_cast<PIMAGE_COR20_HEADER>(va);
-  auto va2 = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(),
-                          clrh->MetaData.VirtualAddress, nullptr);
+  auto va2 = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(),
+                              clrh->MetaData.VirtualAddress, nullptr);
   if (va2 == nullptr || (const char *)va2 + sizeof(STORAGESIGNATURE) > end) {
     return L"";
   }
@@ -256,13 +302,13 @@ inline std::wstring ClrMessage(memview mv, LPVOID nh, ULONG clrva) {
   if ((const char *)clrmsg + clrmsg->Length > end) {
     return L"";
   }
-  return fromutf8(std::string_view(
+  return bela::ToWide(std::string_view(
       (const char *)clrmsg + sizeof(STORAGESIGNATURE), clrmsg->Length));
 }
 
 template <typename NtHeaderT>
 std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
-                                         base::error_code &ec) {
+                                         bela::error_code &ec) {
   pe_minutiae_t pm;
   pm.machine = Machine(nh->FileHeader.Machine);
   pm.characteristics = Characteristics(nh->FileHeader.Characteristics,
@@ -289,8 +335,8 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
   auto import_ =
       &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
   if (import_->Size != 0) {
-    auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
-                           import_->VirtualAddress, nullptr);
+    auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
+                               import_->VirtualAddress, nullptr);
     if (va == nullptr || (const char *)va + import_->Size >= end) {
       return std::make_optional<>(pm);
     }
@@ -306,12 +352,12 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
     }
   }
 
-  /// Delay import 
+  /// Delay import
   auto delay_ =
       &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT]);
   if (delay_->Size != 0) {
-    auto va = ImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
-                           delay_->VirtualAddress, nullptr);
+    auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
+                               delay_->VirtualAddress, nullptr);
     if (va == nullptr || (const char *)va + delay_->Size >= end) {
       return std::make_optional<>(pm);
     }
@@ -333,22 +379,22 @@ std::optional<pe_minutiae_t> pecoff_dump(memview mv, NtHeaderT *nh,
 }
 
 std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
-                                                base::error_code &ec) {
+                                                bela::error_code &ec) {
 
   planck::mapview mv;
   if (!mv.mapfile(sv, sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
-    ec = base::make_error_code(L"PE file unable mapview");
+    ec = bela::make_error_code(L"PE file unable mapview");
     return std::nullopt;
   }
   auto h = mv.cast<IMAGE_DOS_HEADER>(0);
   if (h == nullptr) {
-    ec = base::make_error_code(L"PE file size tool small");
+    ec = bela::make_error_code(L"PE file size tool small");
     return std::nullopt;
   }
   // PE/PE+ lIMAGE_NT_HEADERS32 ayout
   auto nh = mv.cast<IMAGE_NT_HEADERS32>(h->e_lfanew);
   if (nh == nullptr) {
-    ec = base::make_error_code(L"PE file size tool small");
+    ec = bela::make_error_code(L"PE file size tool small");
     return std::nullopt;
   }
   switch (nh->OptionalHeader.Magic) {

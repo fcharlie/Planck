@@ -3,7 +3,6 @@
 add_library(Inquisitive STATIC
   archive.cc
   binexeobj.cc
-  convertutf.cc
   docs.cc
   elf.cc
   font.cc
@@ -18,4 +17,8 @@ add_library(Inquisitive STATIC
   shl.cc
   text.cc
   zip.cc
+)
+
+target_link_libraries(Inquisitive
+  belawin
 )

@@ -2,8 +2,8 @@
 // BZ 7z Rar!
 #include <string_view>
 #include <optional>
+#include <bela/strcat.hpp>
 #include <endian.hpp>
-#include <strcat.hpp>
 #include "inquisitive.hpp"
 
 namespace inquisitive {
@@ -31,7 +31,7 @@ status_t inquisitive_7zinternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
 
-  auto buf = base::StringCat(L"7-zip archive data, version ", (int)hd->major,
+  auto buf = bela::StringCat(L"7-zip archive data, version ", (int)hd->major,
                              L".", (int)hd->minor);
   ir.assign(std::move(buf), types::p7z);
   return Found;
@@ -85,7 +85,7 @@ status_t inquisitive_xarinternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
   auto ver = planck::resolvebe(xhd->version);
-  auto name = base::StringCat(L"eXtensible ARchive format, version ", ver);
+  auto name = bela::StringCat(L"eXtensible ARchive format, version ", ver);
   ir.assign(std::move(name), types::xar);
   return Found;
 }
@@ -137,7 +137,7 @@ status_t inquisitive_dmginternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
   auto ver = planck::resolvebe(hd->Version);
-  auto name = base::StringCat(L"Apple Disk Image, version ", ver);
+  auto name = bela::StringCat(L"Apple Disk Image, version ", ver);
   ir.assign(std::move(name), types::dmg);
   return Found;
 }
@@ -230,7 +230,7 @@ status_t inquisitive_wiminternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
 
-  auto name = base::StringCat(L"Windows Imaging Format, version ",
+  auto name = bela::StringCat(L"Windows Imaging Format, version ",
                               planck::resolvele(hd->dwVersion));
   auto flag = planck::resolvele(hd->dwFlags);
   if ((flag & WimReadOnly) != 0) {
@@ -306,7 +306,7 @@ status_t inquisitive_cabinetinternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
   auto name =
-      base::StringCat(L"Microsoft Cabinet data(cab), version ",
+      bela::StringCat(L"Microsoft Cabinet data(cab), version ",
                       (int)hd->versionMajor, L".", (int)hd->versionMinor);
   ir.assign(std::move(name), types::cab);
   return Found;
@@ -409,7 +409,7 @@ status_t inquisitive_sqliteinternal(memview mv, inquisitive_result_t &ir) {
     return None;
   }
   std::wstring name =
-      base::StringCat(L"SQLite DB, format ", (int)hd->sigver[14]);
+      bela::StringCat(L"SQLite DB, format ", (int)hd->sigver[14]);
   ir.assign(std::move(name), types::sqlite);
   return Found;
 }

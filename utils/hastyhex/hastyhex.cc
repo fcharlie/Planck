@@ -13,10 +13,11 @@
 #include <windows.h>
 #endif
 #endif
-#include "console/console.hpp"
-#include <base.hpp>
-#include <charconv.hpp>
-#include <argv.hpp>
+#include <bela/stdwriter.hpp>
+#include <bela/base.hpp>
+#include <bela/numbers.hpp>
+#include <bela/parseargv.hpp>
+#include <bela/finaly.hpp>
 
 #define PROGRAM_NAME L"hastyhex"
 
@@ -239,13 +240,13 @@ Example:
 
 bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
 
-  av::ParseArgv pv(argc, argv);
-  pv.Add(L"help", av::no_argument, L'h')
-      .Add(L"length", av::required_argument, L'n')
-      .Add(L"seek", av::required_argument, L's')
-      .Add(L"plain", av::no_argument, L'p')
-      .Add(L"out", av::required_argument, L'o');
-  av::error_code ec;
+  bela::ParseArgv pv(argc, argv);
+  pv.Add(L"help", bela::no_argument, L'h')
+      .Add(L"length", bela::required_argument, L'n')
+      .Add(L"seek", bela::required_argument, L's')
+      .Add(L"plain", bela::no_argument, L'p')
+      .Add(L"out", bela::required_argument, L'o');
+  bela::error_code ec;
   auto result = pv.Execute(
       [&](int ch, const wchar_t *oa, const wchar_t *) {
         switch (ch) {
@@ -258,15 +259,13 @@ bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
           break;
         case 'n': {
           int64_t n;
-          auto ec = base::from_chars(oa, oa + wcslen(oa), n, 10);
-          if (ec.ec == std::errc{}) {
+          if (bela::SimpleAtoi(oa, &n)) {
             bo.length = n;
           }
         } break;
         case 's': {
           int64_t n;
-          auto ec = base::from_chars(oa, oa + wcslen(oa), n, 10);
-          if (ec.ec == std::errc{}) {
+          if (bela::SimpleAtoi(oa, &n)) {
             bo.seek = n;
           }
         } break;
@@ -281,11 +280,11 @@ bool ParseArgv(int argc, wchar_t **argv, BinaryOptions &bo) {
       ec);
 
   if (!result) {
-    planck::PrintNone(L"ParseArgv: %s\n", ec.message);
+    bela::FPrintF(stderr, L"ParseArgv: %s\n", ec.message);
     return false;
   }
   if (pv.UnresolvedArgs().empty()) {
-    planck::PrintNone(L"Too few arguments\n");
+    bela::FPrintF(stderr, L"Too few arguments\n");
     return false;
   }
   bo.file = pv.UnresolvedArgs()[0];
@@ -301,19 +300,19 @@ int wmain(int argc, wchar_t *argv[]) {
     return 1;
   }
   if (_wfopen_s(&in, bo.file.c_str(), L"rb") != 0) {
-    auto ec = base::make_system_error_code();
-    planck::PrintNone(L"hastyhex: open '%s': %s\n", bo.file, ec.message);
+    auto ec = bela::make_system_error_code();
+    bela::FPrintF(stderr, L"hastyhex: open '%s': %s\n", bo.file, ec.message);
     return 1;
   }
-  auto c1 = base::finally([&] { fclose(in); });
+  auto c1 = bela::finally([&] { fclose(in); });
   if (!bo.out.empty()) {
     if (_wfopen_s(&in, bo.out.c_str(), L"wb") != 0) {
-      auto ec = base::make_system_error_code();
-      planck::PrintNone(L"hastyhex: open '%s': %s\n", bo.out, ec.message);
+      auto ec = bela::make_system_error_code();
+      bela::FPrintF(stderr, L"hastyhex: open '%s': %s\n", bo.out, ec.message);
       return 1;
     }
   }
-  auto c2 = base::finally([&] {
+  auto c2 = bela::finally([&] {
     if (out != stdout) {
       fclose(out);
     }
