@@ -15,20 +15,10 @@ endif()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-if(NOT DEFINED PLANCK_VERSION_MAJOR)
-  set(PLANCK_VERSION_MAJOR 1)
-endif()
-if(NOT DEFINED PLANCK_VERSION_MINOR)
-  set(PLANCK_VERSION_MINOR 0)
-endif()
-if(NOT DEFINED PLANCK_VERSION_PATCH)
-  set(PLANCK_VERSION_PATCH 1)
-endif()
-
-if (NOT PACKAGE_VERSION)
-  set(PACKAGE_VERSION
-    "${PLANCK_VERSION_MAJOR}.${PLANCK_VERSION_MINOR}.${PLANCK_VERSION_PATCH}")
-endif()
+set(PLANCK_VERSION_MAJOR 1)
+set(PLANCK_VERSION_MINOR 0)
+set(PLANCK_VERSION_PATCH 1)
+set(PACKAGE_VERSION "${PLANCK_VERSION_MAJOR}.${PLANCK_VERSION_MINOR}.${PLANCK_VERSION_PATCH}")
 
 set(CPACK_PACKAGE_NAME "Planck")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Planck")
@@ -83,10 +73,12 @@ add_definitions(
 
 include_directories(
   ${CMAKE_BINARY_DIR}/include
+  ./vendor/bela/include
   ./include
   ./lib/inquisitive
 )
 
+add_subdirectory(vendor/bela)
 add_subdirectory(lib/inquisitive)
 add_subdirectory(lib/strings)
 add_subdirectory(tools)
