@@ -72,12 +72,12 @@ namespace inquisitive {
 
 struct key_value_t {
   uint32_t index;
-  const wchar_t *value;
+  std::wstring_view value;
 };
 
-std::wstring Machine(uint32_t index) {
+constexpr std::wstring_view Machine(uint32_t index) {
   // https://docs.microsoft.com/en-us/windows/desktop/Debug/pe-format#machine-types
-  const key_value_t machines[] = {
+  constexpr const key_value_t machines[] = {
       {IMAGE_FILE_MACHINE_UNKNOWN, L"UNKNOWN"},
       {IMAGE_FILE_MACHINE_TARGET_HOST, L"WoW Gest"},
       {IMAGE_FILE_MACHINE_I386, L"Intel 386"},
@@ -126,7 +126,7 @@ std::wstring Machine(uint32_t index) {
 std::vector<std::wstring> Characteristics(uint32_t index,
                                           uint32_t dllindex = 0) {
   std::vector<std::wstring> csv;
-  const key_value_t cs[] = {
+  constexpr const key_value_t cs[] = {
       {IMAGE_FILE_RELOCS_STRIPPED, L"Relocation info stripped"},
       // Relocation info stripped from file.
       {IMAGE_FILE_EXECUTABLE_IMAGE, L"Executable"},
@@ -159,7 +159,7 @@ std::vector<std::wstring> Characteristics(uint32_t index,
       // Bytes of machine word are reversed.
   };
   // USHORT  DllCharacteristics;
-  const key_value_t dcs[] = {
+  constexpr const key_value_t dcs[] = {
       {IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA, L"High entropy VA"},
       {IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, L"Dynamic base"},
       {IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY, L"Force integrity check"},
@@ -175,19 +175,19 @@ std::vector<std::wstring> Characteristics(uint32_t index,
   };
   for (const auto &kv : cs) {
     if ((kv.index & index) != 0) {
-      csv.push_back(kv.value);
+      csv.emplace_back(kv.value);
     }
   }
   for (const auto &kv : dcs) {
     if ((kv.index & dllindex) != 0) {
-      csv.push_back(kv.value);
+      csv.emplace_back(kv.value);
     }
   }
   return csv;
 }
 
-std::wstring Subsystem(uint32_t index) {
-  const key_value_t subs[] = {
+constexpr std::wstring_view Subsystem(uint32_t index) {
+  constexpr const key_value_t subs[] = {
       {IMAGE_SUBSYSTEM_UNKNOWN, L"UNKNOWN"},
       {IMAGE_SUBSYSTEM_NATIVE, L"Device drivers and native Windows processes "},
       {IMAGE_SUBSYSTEM_WINDOWS_GUI, L"Windows GUI"},
