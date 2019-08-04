@@ -346,7 +346,7 @@ std::optional<pe_minutiae_t> pecoff_dump(base::MemView mv, NtHeaderT *nh,
       // ASCIIZ
       auto dnw = DllName(mv, (LPVOID)nh, imdes->Name);
       if (!dnw.empty()) {
-        pm.depends.push_back(dnw);
+        pm.depends.emplace_back(std::move(dnw));
       }
       imdes++;
     }
@@ -367,7 +367,7 @@ std::optional<pe_minutiae_t> pecoff_dump(base::MemView mv, NtHeaderT *nh,
       // ASCIIZ
       auto dnw = DllName(mv, (LPVOID)nh, imdes->DllNameRVA);
       if (!dnw.empty()) {
-        pm.delays.push_back(dnw);
+        pm.delays.emplace_back(std::move(dnw));
       }
       imdes++;
     }
