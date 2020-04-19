@@ -206,13 +206,16 @@ struct FormatArg {
         return static_cast<uint64_t>(i);
       }
       if (integer.width == 1) {
-        return static_cast<uint32_t>(0 - static_cast<int8_t>(i));
+        auto i8_ = static_cast<int8_t>(i);
+        return static_cast<uint32_t>(0 - i8_);
       }
       if (integer.width == 2) {
-        return static_cast<uint32_t>(0 - static_cast<int16_t>(i));
+        auto i16_ = static_cast<int16_t>(i);
+        return static_cast<uint32_t>(0 - i16_);
       }
       if (integer.width == 4) {
-        return static_cast<uint32_t>(0 - static_cast<int32_t>(i));
+        auto i32_ = static_cast<int32_t>(i);
+        return static_cast<uint32_t>(0 - i32_);
       }
       return static_cast<uint64_t>(0 - i);
     }
@@ -253,7 +256,17 @@ ssize_t StrFormatInternal(wchar_t *buf, size_t sz, const wchar_t *fmt,
                           const FormatArg *args, size_t max_args);
 std::wstring StrFormatInternal(const wchar_t *fmt, const FormatArg *args,
                                size_t max_args);
+size_t StrAppendFormatInternal(std::wstring *buf, const wchar_t *fmt,
+                               const FormatArg *args, size_t max_args);
 } // namespace format_internal
+
+size_t StrAppendFormat(std::wstring *buf, const wchar_t *fmt);
+template <typename... Args>
+size_t StrAppendFormat(std::wstring *buf, const wchar_t *fmt, Args... args) {
+  const format_internal::FormatArg arg_array[] = {args...};
+  return format_internal::StrAppendFormatInternal(buf, fmt, arg_array,
+                                                  sizeof...(args));
+}
 
 template <typename... Args>
 ssize_t StrFormat(wchar_t *buf, size_t N, const wchar_t *fmt, Args... args) {

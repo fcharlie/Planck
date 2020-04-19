@@ -26,7 +26,7 @@ struct zip_file_info64_t {
   uint16_t versionneeded;
   uint16_t flag;
   uint16_t method;
-  uint32_t dosdata;
+  uint32_t dosdate; // uint61_t + uint64_t
   uint32_t crc;
   uint64_t compressedsize;
   uint64_t uncompressedsize;

@@ -17,7 +17,6 @@
 #include <bela/base.hpp>
 #include <bela/numbers.hpp>
 #include <bela/parseargv.hpp>
-#include <bela/finaly.hpp>
 
 #define PROGRAM_NAME L"hastyhex"
 

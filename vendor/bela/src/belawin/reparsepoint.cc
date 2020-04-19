@@ -2,7 +2,6 @@
 // super reparse pointer resolve
 #include <bela/path.hpp>
 #include <bela/repasepoint.hpp>
-#include <bela/finaly.hpp>
 #include <bela/strcat.hpp>
 #include <winioctl.h>
 #include "reparsepoint_internal.hpp"
@@ -13,10 +12,12 @@ using ReparseBuffer = REPARSE_DATA_BUFFER;
 
 struct Distributor {
   DWORD tag;
-  bool (*imp)(const ReparseBuffer *, facv_t &);
+  bool (*imp)(const ReparseBuffer *, facv_t &, bela::error_code &);
 };
 
-static bool NtSymbolicLink(const ReparseBuffer *buf, facv_t &av) {
+static bool NtSymbolicLink(const ReparseBuffer *buf, facv_t &av,
+                           bela::error_code &ec) {
+  (void)ec;
   std::wstring target;
   auto wstr =
       buf->SymbolicLinkReparseBuffer.PathBuffer +
@@ -50,32 +51,39 @@ static bool NtSymbolicLink(const ReparseBuffer *buf, facv_t &av) {
   return true;
 }
 
-static bool GlobalSymbolicLink(const ReparseBuffer *buf, facv_t &av) {
-  if (!NtSymbolicLink(buf, av)) {
+static bool GlobalSymbolicLink(const ReparseBuffer *buf, facv_t &av,
+                               bela::error_code &ec) {
+  if (!NtSymbolicLink(buf, av, ec)) {
     return true;
   }
   av.emplace_back(L"IsGlobal", L"True");
   return true;
 }
 
-static bool AppExecLink(const ReparseBuffer *buf, facv_t &av) {
+static bool AppExecLink(const ReparseBuffer *buf, facv_t &av,
+                        bela::error_code &ec) {
   if (buf->AppExecLinkReparseBuffer.StringCount < 3) {
+    ec = bela::make_error_code(
+        1, L"Unresolved reparse point AppExecLink. StringCount=",
+        buf->AppExecLinkReparseBuffer.StringCount);
     return false;
   }
   LPWSTR szString = (LPWSTR)buf->AppExecLinkReparseBuffer.StringList;
-  std::vector<LPWSTR> strv;
-  for (ULONG i = 0; i < buf->AppExecLinkReparseBuffer.StringCount; i++) {
-    strv.push_back(szString);
-    szString += wcslen(szString) + 1;
-  }
   av.emplace_back(L"Description", L"AppExecLink");
-  av.emplace_back(L"PackageID", strv[0]);
-  av.emplace_back(L"AppUserID", strv[1]);
-  av.emplace_back(L"Target", strv[2]);
+  /// push_back
+  const std::wstring_view attrnames[] = {L"PackageID", L"AppUserID", L"Target"};
+  for (ULONG i = 0; i < buf->AppExecLinkReparseBuffer.StringCount; i++) {
+    auto szlen = wcslen(szString);
+    if (i < 3) {
+      av.emplace_back(attrnames[i], std::wstring_view(szString, szlen));
+    }
+    szString += szlen + 1;
+  }
   return true;
 }
 
-static bool MountPoint(const ReparseBuffer *buf, facv_t &av) {
+static bool MountPoint(const ReparseBuffer *buf, facv_t &av,
+                       bela::error_code &ec) {
   auto wstr =
       buf->MountPointReparseBuffer.PathBuffer +
       (buf->MountPointReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
@@ -90,6 +98,7 @@ static bool MountPoint(const ReparseBuffer *buf, facv_t &av) {
         ((wstr[4] >= L'A' && wstr[4] <= L'Z') ||
          (wstr[4] >= L'a' && wstr[4] <= L'z')) &&
         wstr[5] == L':' && (wlen == 6 || wstr[6] == L'\\'))) {
+    ec = bela::make_error_code(1, L"Unresolved reparse point MountPoint'");
     return false;
   }
 
@@ -101,13 +110,16 @@ static bool MountPoint(const ReparseBuffer *buf, facv_t &av) {
   return true;
 }
 
-static bool AFUnix(const ReparseBuffer *buf, facv_t &av) {
+static bool AFUnix(const ReparseBuffer *buf, facv_t &av, bela::error_code &) {
   //
+  (void)buf;
   av.emplace_back(L"Description", L"AF_UNIX");
   return true;
 }
 
-static bool LxSymbolicLink(const ReparseBuffer *buf, facv_t &av) {
+static bool LxSymbolicLink(const ReparseBuffer *buf, facv_t &av,
+                           bela::error_code &) {
+  (void)buf;
   // Not implemented
   av.emplace_back(L"Description", L"LxSymbolicLink");
   return true;
@@ -160,11 +172,11 @@ bool ReparsePoint::Analyze(std::wstring_view file, bela::error_code &ec) {
   tagvalue = buf->ReparseTag;
   for (auto a : av) {
     if (a.tag == tagvalue) {
-      return a.imp(buf, values);
+      return a.imp(buf, values, ec);
     }
   }
-  auto hex = bela::StringCat(L"0x", bela::Hex(tagvalue, bela::kZeroPad8));
-  values.emplace_back(L"TAG", hex);
+  values.emplace_back(
+      L"TAG", bela::StringCat(L"0x", bela::Hex(tagvalue, bela::kZeroPad8)));
   values.emplace_back(L"Description", L"UNKNOWN");
   return true;
 }

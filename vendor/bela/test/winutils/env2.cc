@@ -16,7 +16,7 @@ int wmain(int argc, wchar_t **argv) {
     auto k = bela::env::resovle_shell_name(s, off);
     bela::FPrintF(stderr, L"%s --> [%s] off: %d\n", s, k, off);
   }
-  bela::env::Derivative de;
+  bela::env::Derivator de;
   de.AddBashCompatible(argc, argv);
   de.PutEnv(L"JACK=ROSE");
 
@@ -32,5 +32,8 @@ int wmain(int argc, wchar_t **argv) {
     de.ExpandEnv(s, s2);
     bela::FPrintF(stderr, L"%s --> [%s]\n", s, s2);
   }
+  auto path =
+      bela::env::AppendEnv(L"Path", L"C:\\Program Files\\7-Zip", L"C:\\MSYS2");
+  bela::FPrintF(stderr, L"Path: %s\n", path);
   return 0;
 }

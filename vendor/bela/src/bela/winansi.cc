@@ -121,19 +121,27 @@ public:
   ssize_t WriteAnsi(HANDLE hDev, std::wstring_view msg);
 
 private:
-  WinAnsiWriter() noexcept = default;
+  WinAnsiWriter() {
+    //
+    memset(es_argv, 0, sizeof(es_argv));
+    memset(ChBuffer, 0, sizeof(ChBuffer));
+    memset(Pt_arg, 0, sizeof(Pt_arg));
+    memset(&grm, 0, sizeof(grm));
+    SavePos.X = 0;
+    SavePos.Y = 0;
+  }
   void FlushBuffer();
   void PushBuffer(wchar_t c);
   void SendSequence(std::wstring_view seq);
   void InterpretEscSeq();
   int state{0};
-  wchar_t prefix;
-  wchar_t prefix2;
-  wchar_t suffix;               // escape sequence suffix
-  int es_argc;                  // escape sequence args count
+  wchar_t prefix{0};
+  wchar_t prefix2{0};
+  wchar_t suffix{0};            // escape sequence suffix
+  int es_argc{0};               // escape sequence args count
   int es_argv[MAX_ARG];         // escape sequence args
   wchar_t Pt_arg[MAX_PATH * 2]; // text parameter for Operating System Command
-  int Pt_len;
+  int Pt_len{0};
   bool shifted{false};
   GraphicRenditionMode grm;
   COORD SavePos;
@@ -198,14 +206,15 @@ void WinAnsiWriter::SendSequence(std::wstring_view seq) {
 //-----------------------------------------------------------------------------
 
 void WinAnsiWriter::InterpretEscSeq() {
-  int i;
-  WORD attribut;
-  CONSOLE_SCREEN_BUFFER_INFO Info;
-  CONSOLE_CURSOR_INFO CursInfo;
-  DWORD len, NumberOfCharsWritten;
-  COORD Pos;
-  SMALL_RECT Rect;
-  CHAR_INFO CharInfo;
+  int i{0};
+  WORD attribut{0};
+  CONSOLE_SCREEN_BUFFER_INFO Info{0};
+  CONSOLE_CURSOR_INFO CursInfo{0};
+  DWORD len{0};
+  DWORD NumberOfCharsWritten{0};
+  COORD Pos{0};
+  SMALL_RECT Rect{0};
+  CHAR_INFO CharInfo{0};
 
   if (prefix == '[') {
     if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
@@ -690,14 +699,14 @@ void WinAnsiWriter::InterpretEscSeq() {
       if (es_argv[0] == 21) // ESC[21t Report xterm window's title
       {
         wchar_t buf[MAX_PATH * 2];
-        DWORD len = GetConsoleTitleW(buf + 3, lenof(buf) - 3 - 2);
+        DWORD tlen = GetConsoleTitleW(buf + 3, lenof(buf) - 3 - 2);
         // Too bad if it's too big or fails.
         buf[0] = ESC;
         buf[1] = ']';
         buf[2] = 'l';
-        buf[3 + len] = ESC;
-        buf[3 + len + 1] = '\\';
-        buf[3 + len + 2] = '\0';
+        buf[3 + tlen] = ESC;
+        buf[3 + tlen + 1] = '\\';
+        buf[3 + tlen + 2] = '\0';
         SendSequence(buf);
       }
       return;
@@ -820,7 +829,7 @@ ssize_t WinAnsiWriter::WriteAnsi(HANDLE hDev, std::wstring_view msg) {
         Pt_arg[--Pt_len] = '\0';
         InterpretEscSeq();
         state = 1;
-      } else if (Pt_len < lenof(Pt_arg) - 1) {
+      } else if (static_cast<size_t>(Pt_len) < lenof(Pt_arg) - 1) {
         Pt_arg[Pt_len++] = *s;
       }
       continue;

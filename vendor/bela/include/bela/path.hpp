@@ -11,13 +11,42 @@ namespace bela {
 constexpr const wchar_t PathSeparator = L'\\';
 constexpr const wchar_t PathUnixSeparator = L'/';
 constexpr const size_t PathMax = 0x8000;
-inline bool IsPathSeparator(wchar_t c) {
+inline constexpr bool IsPathSeparator(wchar_t c) {
   return c == PathSeparator || c == PathUnixSeparator;
 }
-
+std::wstring_view BaseName(std::wstring_view name);
+std::vector<std::wstring_view> SplitPath(std::wstring_view sv);
+void PathStripName(std::wstring &s);
+std::wstring PathAbsolute(std::wstring_view p);
 namespace path_internal {
 std::wstring PathCatPieces(bela::Span<std::wstring_view> pieces);
+std::wstring PathAbsoluteCatPieces(bela::Span<std::wstring_view> pieces);
 } // namespace path_internal
+
+[[nodiscard]] inline std::wstring PathAbsoluteCat(const AlphaNum &a) {
+  std::wstring_view pv[] = {a.Piece()};
+  return path_internal::PathAbsoluteCatPieces(pv);
+}
+
+[[nodiscard]] inline std::wstring PathAbsoluteCat(const AlphaNum &a,
+                                                  const AlphaNum &b) {
+  std::wstring_view pv[] = {a.Piece(), b.Piece()};
+  return path_internal::PathAbsoluteCatPieces(pv);
+}
+
+[[nodiscard]] inline std::wstring
+PathAbsoluteCat(const AlphaNum &a, const AlphaNum &b, const AlphaNum &c) {
+  std::wstring_view pv[] = {a.Piece(), b.Piece(), c.Piece()};
+  return path_internal::PathAbsoluteCatPieces(pv);
+}
+
+[[nodiscard]] inline std::wstring PathAbsoluteCat(const AlphaNum &a,
+                                                  const AlphaNum &b,
+                                                  const AlphaNum &c,
+                                                  const AlphaNum &d) {
+  std::wstring_view pv[] = {a.Piece(), b.Piece(), c.Piece(), d.Piece()};
+  return path_internal::PathAbsoluteCatPieces(pv);
+}
 
 [[nodiscard]] inline std::wstring PathCat(const AlphaNum &a) {
   std::wstring_view pv[] = {a.Piece()};
@@ -52,7 +81,6 @@ PathCat(const AlphaNum &a, const AlphaNum &b, const AlphaNum &c,
       {a.Piece(), b.Piece(), c.Piece(), d.Piece(), e.Piece(),
        static_cast<const AlphaNum &>(args).Piece()...});
 }
-std::vector<std::wstring_view> SplitPath(std::wstring_view sv);
 
 enum class FileAttribute : DWORD {
   None = 0, //
@@ -92,13 +120,33 @@ enum class FileAttribute : DWORD {
 // std::wstring_view ::data() must Null-terminated string
 bool PathExists(std::wstring_view src, FileAttribute fa = FileAttribute::None);
 bool ExecutableExistsInPath(std::wstring_view cmd, std::wstring &exe);
-bool LookupRealPath(std::wstring_view src, std::wstring &target);
+std::optional<std::wstring> RealPath(std::wstring_view src,
+                                     bela::error_code &ec);
 struct AppExecTarget {
   std::wstring pkid;
   std::wstring appuserid;
   std::wstring target;
 };
 bool LookupAppExecLinkTarget(std::wstring_view src, AppExecTarget &ae);
+std::optional<std::wstring> Executable(bela::error_code &ec);
+inline std::optional<std::wstring> ExecutableParent(bela::error_code &ec) {
+  auto exe = bela::Executable(ec);
+  if (!exe) {
+    return std::nullopt;
+  }
+  bela::PathStripName(*exe);
+  return exe;
+}
+std::optional<std::wstring> ExecutableFinalPath(bela::error_code &ec);
+inline std::optional<std::wstring>
+ExecutableFinalPathParent(bela::error_code &ec) {
+  auto exe = bela::ExecutableFinalPath(ec);
+  if (!exe) {
+    return std::nullopt;
+  }
+  bela::PathStripName(*exe);
+  return exe;
+}
 } // namespace bela
 
 #endif

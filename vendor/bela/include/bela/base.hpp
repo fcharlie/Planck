@@ -15,6 +15,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <system_error>
+#include <memory>
 #include "strcat.hpp"
 
 namespace bela {
@@ -72,32 +74,30 @@ bela::error_code make_error_code(long code, const AlphaNum &a,
   return ec;
 }
 
-inline std::wstring system_error_dump(DWORD ec) {
-  LPWSTR buf = nullptr;
-  auto rl = FormatMessageW(
-      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr, ec,
-      MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), (LPWSTR)&buf, 0, nullptr);
-  if (rl == 0) {
-    return L"FormatMessageW error";
-  }
-  if (buf[rl - 1] == '\n') {
-    rl--;
-  }
-  if (rl > 0 && buf[rl - 1] == '\r') {
-    rl--;
-  }
-  std::wstring msg(buf, rl);
-  LocalFree(buf);
-  return msg;
-}
-
-inline error_code make_system_error_code() {
+error_code make_stdc_error_code(errno_t eno, std::wstring_view prefix = L"");
+std::wstring resolve_system_error_message(DWORD ec,
+                                          std::wstring_view prefix = L"");
+inline error_code make_system_error_code(std::wstring_view prefix = L"") {
   error_code ec;
   ec.code = GetLastError();
-  ec.message = system_error_dump(ec.code);
+  ec.message = resolve_system_error_message(ec.code, prefix);
   return ec;
 }
 
+std::wstring resolve_module_error_message(const wchar_t *module, DWORD ec,
+                                          std::wstring_view prefix);
+// bela::fromascii
+inline std::wstring fromascii(std::string_view sv) {
+  auto sz =
+      MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), nullptr, 0);
+  std::wstring output;
+  output.resize(sz);
+  // C++17 must output.data()
+  MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), output.data(), sz);
+  return output;
+}
+error_code from_std_error_code(const std::error_code &e,
+                               std::wstring_view prefix = L"");
 // https://github.com/microsoft/wil/blob/master/include/wil/stl.h#L38
 template <typename T> struct secure_allocator : public std::allocator<T> {
   template <typename Other> struct rebind {
@@ -130,6 +130,39 @@ using secure_wstring = std::basic_string<wchar_t, std::char_traits<wchar_t>,
 //! `bela::secure_string` will be securely zeroed before deallocation.
 using secure_string = std::basic_string<char, std::char_traits<char>,
                                         bela::secure_allocator<char>>;
+
+// final_act
+// https://github.com/microsoft/gsl/blob/ebe7ebfd855a95eb93783164ffb342dbd85cbc27\
+// /include/gsl/gsl_util#L85-L89
+
+template <class F> class final_act {
+public:
+  explicit final_act(F f) noexcept : f_(std::move(f)), invoke_(true) {}
+
+  final_act(final_act &&other) noexcept
+      : f_(std::move(other.f_)), invoke_(std::exchange(other.invoke_, false)) {}
+
+  final_act(const final_act &) = delete;
+  final_act &operator=(const final_act &) = delete;
+  ~final_act() noexcept {
+    if (invoke_) {
+      f_();
+    }
+  }
+
+private:
+  F f_;
+  bool invoke_{true};
+};
+
+// finally() - convenience function to generate a final_act
+template <class F> inline final_act<F> finally(const F &f) noexcept {
+  return final_act<F>(f);
+}
+
+template <class F> inline final_act<F> finally(F &&f) noexcept {
+  return final_act<F>(std::forward<F>(f));
+}
 
 } // namespace bela
 
