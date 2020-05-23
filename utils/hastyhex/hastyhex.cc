@@ -13,7 +13,7 @@
 #include <windows.h>
 #endif
 #endif
-#include <bela/stdwriter.hpp>
+#include <bela/terminal.hpp>
 #include <bela/base.hpp>
 #include <bela/numbers.hpp>
 #include <bela/parseargv.hpp>

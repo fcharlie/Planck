@@ -7,7 +7,7 @@
 #include <string_view>
 #include <algorithm>
 #include <bela/base.hpp>
-#include <bela/stdwriter.hpp>
+#include <bela/terminal.hpp>
 
 static const char hex[] = "0123456789abcdef";
 
