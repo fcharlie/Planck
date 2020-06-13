@@ -11,10 +11,9 @@
 
 std::wstring guidencode(const GUID &guid) {
   wchar_t wbuf[64];
-  swprintf_s(wbuf, L"{%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X}",
-             guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
-             guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
-             guid.Data4[6], guid.Data4[7]);
+  swprintf_s(wbuf, L"{%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X}", guid.Data1, guid.Data2,
+             guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4],
+             guid.Data4[5], guid.Data4[6], guid.Data4[7]);
   return std::wstring(wbuf);
 }
 
@@ -36,17 +35,16 @@ public:
   FsRedirection() {
     auto hModule = KrModule();
     auto pfnWow64DisableWow64FsRedirection =
-        (fntype_Wow64DisableWow64FsRedirection *)GetProcAddress(
-            hModule, "Wow64DisableWow64FsRedirection");
+        (fntype_Wow64DisableWow64FsRedirection *)GetProcAddress(hModule,
+                                                                "Wow64DisableWow64FsRedirection");
     if (pfnWow64DisableWow64FsRedirection) {
       pfnWow64DisableWow64FsRedirection(&OldValue);
     }
   }
   ~FsRedirection() {
     auto hModule = KrModule();
-    auto pfnWow64RevertWow64FsRedirection =
-        (fntype_Wow64RevertWow64FsRedirection *)GetProcAddress(
-            hModule, "Wow64RevertWow64FsRedirection");
+    auto pfnWow64RevertWow64FsRedirection = (fntype_Wow64RevertWow64FsRedirection *)GetProcAddress(
+        hModule, "Wow64RevertWow64FsRedirection");
     if (pfnWow64RevertWow64FsRedirection) {
       pfnWow64RevertWow64FsRedirection(&OldValue);
     }
@@ -78,14 +76,12 @@ bool PathCanonicalizeEx(std::wstring_view sv, std::wstring &path) {
   return true;
 }
 
-std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
-                                           bela::error_code &ec) {
+std::optional<file_target_t> ResolveTarget(std::wstring_view sv, bela::error_code &ec) {
 #ifndef _M_X64
   FsRedirection fsr;
 #endif
   auto FileHandle = CreateFileW(
-      sv.data(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-      nullptr, OPEN_EXISTING,
+      sv.data(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
       FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
   if (FileHandle == INVALID_HANDLE_VALUE) {
     ec = bela::make_system_error_code();
@@ -95,8 +91,7 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
   auto rebuf = reinterpret_cast<PREPARSE_DATA_BUFFER>(mxbuf);
   DWORD dwlen = 0;
   if (DeviceIoControl(FileHandle, FSCTL_GET_REPARSE_POINT, nullptr, 0, rebuf,
-                      MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwlen,
-                      nullptr) != TRUE) {
+                      MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwlen, nullptr) != TRUE) {
     CloseHandle(FileHandle);
     return std::nullopt;
   }
@@ -106,25 +101,21 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
   switch (rebuf->ReparseTag) {
   case IO_REPARSE_TAG_SYMLINK: {
     file.type = SymbolicLink;
-    auto wstr =
-        rebuf->SymbolicLinkReparseBuffer.PathBuffer +
-        (rebuf->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
-    auto wlen =
-        rebuf->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
-    if (wlen >= 4 && wstr[0] == L'\\' && wstr[1] == L'?' && wstr[2] == L'?' &&
-        wstr[3] == L'\\') {
+    auto wstr = rebuf->SymbolicLinkReparseBuffer.PathBuffer +
+                (rebuf->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
+    auto wlen = rebuf->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
+    if (wlen >= 4 && wstr[0] == L'\\' && wstr[1] == L'?' && wstr[2] == L'?' && wstr[3] == L'\\') {
       /* Starts with \??\ */
       if (wlen >= 6 &&
-          ((wstr[4] >= L'A' && wstr[4] <= L'Z') ||
-           (wstr[4] >= L'a' && wstr[4] <= L'z')) &&
+          ((wstr[4] >= L'A' && wstr[4] <= L'Z') || (wstr[4] >= L'a' && wstr[4] <= L'z')) &&
           wstr[5] == L':' && (wlen == 6 || wstr[6] == L'\\')) {
         /* \??\<drive>:\ */
         wstr += 4;
         wlen -= 4;
 
       } else if (wlen >= 8 && (wstr[4] == L'U' || wstr[4] == L'u') &&
-                 (wstr[5] == L'N' || wstr[5] == L'n') &&
-                 (wstr[6] == L'C' || wstr[6] == L'c') && wstr[7] == L'\\') {
+                 (wstr[5] == L'N' || wstr[5] == L'n') && (wstr[6] == L'C' || wstr[6] == L'c') &&
+                 wstr[7] == L'\\') {
         /* \??\UNC\<server>\<share>\ - make sure the final path looks like */
         /* \\<server>\<share>\ */
         wstr += 6;
@@ -136,20 +127,16 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
   } break;
   case IO_REPARSE_TAG_MOUNT_POINT: {
     file.type = MountPoint;
-    auto wstr =
-        rebuf->MountPointReparseBuffer.PathBuffer +
-        (rebuf->MountPointReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
-    auto wlen =
-        rebuf->MountPointReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
+    auto wstr = rebuf->MountPointReparseBuffer.PathBuffer +
+                (rebuf->MountPointReparseBuffer.SubstituteNameOffset / sizeof(WCHAR));
+    auto wlen = rebuf->MountPointReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
     /* Only treat junctions that look like \??\<drive>:\ as symlink. */
     /* Junctions can also be used as mount points, like \??\Volume{<guid>}, */
     /* but that's confusing for programs since they wouldn't be able to */
     /* actually understand such a path when returned by uv_readlink(). */
     /* UNC paths are never valid for junctions so we don't care about them. */
-    if (!(wlen >= 6 && wstr[0] == L'\\' && wstr[1] == L'?' && wstr[2] == L'?' &&
-          wstr[3] == L'\\' &&
-          ((wstr[4] >= L'A' && wstr[4] <= L'Z') ||
-           (wstr[4] >= L'a' && wstr[4] <= L'z')) &&
+    if (!(wlen >= 6 && wstr[0] == L'\\' && wstr[1] == L'?' && wstr[2] == L'?' && wstr[3] == L'\\' &&
+          ((wstr[4] >= L'A' && wstr[4] <= L'Z') || (wstr[4] >= L'a' && wstr[4] <= L'z')) &&
           wstr[5] == L':' && (wlen == 6 || wstr[6] == L'\\'))) {
       return std::nullopt;
     }
@@ -206,8 +193,7 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
     file.path = sv;
     reparse_wim_t wim;
     wim.guid = guidencode(rebuf->WimImageReparseBuffer.ImageGuid);
-    wim.hash = hexencode(reinterpret_cast<const char *>(
-                             rebuf->WimImageReparseBuffer.ImagePathHash),
+    wim.hash = hexencode(reinterpret_cast<const char *>(rebuf->WimImageReparseBuffer.ImagePathHash),
                          sizeof(rebuf->WimImageReparseBuffer.ImagePathHash));
     file.av = wim;
   } break;
@@ -227,8 +213,7 @@ std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
     file.type = Wcifs;
     file.path = sv;
     reparse_wcifs_t wci;
-    wci.WciName.assign(rebuf->WcifsReparseBuffer.WciName,
-                       rebuf->WcifsReparseBuffer.WciNameLength);
+    wci.WciName.assign(rebuf->WcifsReparseBuffer.WciName, rebuf->WcifsReparseBuffer.WciNameLength);
     wci.Version = rebuf->WcifsReparseBuffer.Version;
     wci.Reserved = rebuf->WcifsReparseBuffer.Reserved;
     wci.LookupGuid = guidencode(rebuf->WcifsReparseBuffer.LookupGuid);
@@ -253,8 +238,7 @@ inline bool HardLinkEqual(std::wstring_view lh, std::wstring_view rh) {
 }
 
 // File hardlinks.
-std::optional<file_links_t> ResolveLinks(std::wstring_view sv,
-                                         bela::error_code &ec) {
+std::optional<file_links_t> ResolveLinks(std::wstring_view sv, bela::error_code &ec) {
 #ifndef _M_X64
   FsRedirection fsr;
 #endif

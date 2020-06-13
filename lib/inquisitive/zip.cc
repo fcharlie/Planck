@@ -33,8 +33,7 @@ status_t msdocssubview(base::MemView mv, inquisitive_result_t &ir) {
   return None;
 }
 
-void *Memmem(const void *haystack, size_t haystack_len, const void *needle,
-             size_t needle_len) {
+void *Memmem(const void *haystack, size_t haystack_len, const void *needle, size_t needle_len) {
   const char *begin = reinterpret_cast<const char *>(haystack);
   const char *last_possible = begin + haystack_len - needle_len;
   const char *tail = reinterpret_cast<const char *>(needle);
@@ -69,8 +68,7 @@ ssize_t MagicIndex(base::MemView mv, size_t offset) {
   if (offset > mv.size()) {
     return -1;
   }
-  auto p = Memmem(mv.data() + offset, mv.size() - offset, docsMagic,
-                  ArrayLength(docsMagic));
+  auto p = Memmem(mv.data() + offset, mv.size() - offset, docsMagic, ArrayLength(docsMagic));
   if (p == nullptr) {
     return -1;
   }
@@ -86,8 +84,7 @@ status_t inquisitive_msxmldocs(base::MemView mv, inquisitive_result_t &ir) {
     return Found;
   }
   /// SO we known. first file must [Content_Types.xml]
-  if (!mv.IndexsWith(0x1E, "[Content_Types].xml") &&
-      !mv.IndexsWith(0x1E, "_rels/.rels")) {
+  if (!mv.IndexsWith(0x1E, "[Content_Types].xml") && !mv.IndexsWith(0x1E, "_rels/.rels")) {
     return None;
   }
   auto hd = mv.cast<zip_file_header_t>(0);

@@ -84,8 +84,8 @@ struct reparse_hsm_t {
   USHORT Length; // Length of the data (uncompressed)
   std::vector<std::byte> data;
 };
-using av_internal_t = std::variant<appexeclink_t, reparse_wim_t, reparse_wof_t,
-                                   reparse_wcifs_t, reparse_hsm_t>;
+using av_internal_t =
+    std::variant<appexeclink_t, reparse_wim_t, reparse_wof_t, reparse_wcifs_t, reparse_hsm_t>;
 struct file_target_t {
   std::wstring path;
   av_internal_t av;
@@ -97,10 +97,8 @@ struct file_links_t {
   std::vector<std::wstring> links;
 };
 
-std::optional<file_target_t> ResolveTarget(std::wstring_view sv,
-                                           bela::error_code &ec);
-std::optional<file_links_t> ResolveLinks(std::wstring_view sv,
-                                         bela::error_code &ec);
+std::optional<file_target_t> ResolveTarget(std::wstring_view sv, bela::error_code &ec);
+std::optional<file_links_t> ResolveLinks(std::wstring_view sv, bela::error_code &ec);
 } // namespace inquisitive
 
 #endif

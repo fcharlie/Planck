@@ -43,9 +43,8 @@ status_t inquisitive_gitbinary(base::MemView mv, inquisitive_result_t &ir) {
     if (hd == nullptr) {
       return None;
     }
-    auto name = bela::StringCat(L"Git pack file, version ",
-                                bela::swapbe(hd->version), L", objects ",
-                                bela::swapbe(hd->objsize));
+    auto name = bela::StringCat(L"Git pack file, version ", bela::swapbe(hd->version),
+                                L", objects ", bela::swapbe(hd->objsize));
     ir.assign(std::move(name), types::gitpack);
     return Found;
   }
@@ -58,14 +57,12 @@ status_t inquisitive_gitbinary(base::MemView mv, inquisitive_result_t &ir) {
     auto ver = bela::swapbe(hd->version);
     switch (ver) {
     case 2:
-      name = bela::StringCat(L"Git pack indexs file, version ", ver,
-                             L", total objects ",
+      name = bela::StringCat(L"Git pack indexs file, version ", ver, L", total objects ",
                              bela::swapbe(hd->fanout[255]));
       break;
     case 3: {
       auto hd3 = mv.cast<git_index3_header_t>(0);
-      name = bela::StringCat(L"Git pack indexs file, version ", ver,
-                             L", total objects ",
+      name = bela::StringCat(L"Git pack indexs file, version ", ver, L", total objects ",
                              bela::swapbe(hd3->packobjects));
     } break;
     default:
@@ -81,10 +78,9 @@ status_t inquisitive_gitbinary(base::MemView mv, inquisitive_result_t &ir) {
     if (hd == nullptr) {
       return None;
     }
-    auto name = bela::StringCat(
-        L"Git multi-pack-index, version ", (int)hd->version, L", oid version ",
-        (int)hd->oidversion, L", chunks ", (int)hd->chunks, L", pack files ",
-        bela::swapbe(hd->packfiles));
+    auto name = bela::StringCat(L"Git multi-pack-index, version ", (int)hd->version,
+                                L", oid version ", (int)hd->oidversion, L", chunks ",
+                                (int)hd->chunks, L", pack files ", bela::swapbe(hd->packfiles));
     ir.assign(std::move(name), types::gitpack);
     return Found;
   }

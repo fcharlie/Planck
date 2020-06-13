@@ -14,17 +14,15 @@
 
 // https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/ntifs/ns-ntifs-_reparse_data_buffer
 
-#define SYMLINK_FLAG_RELATIVE                                                  \
-  0x00000001 // If set then this is a relative symlink.
-#define SYMLINK_DIRECTORY                                                      \
+#define SYMLINK_FLAG_RELATIVE 0x00000001 // If set then this is a relative symlink.
+#define SYMLINK_DIRECTORY                                                                          \
   0x80000000 // If set then this is a directory symlink. This is not persisted
              // on disk and is programmatically set by file system.
-#define SYMLINK_FILE                                                           \
+#define SYMLINK_FILE                                                                               \
   0x40000000 // If set then this is a file symlink. This is not persisted on
              // disk and is programmatically set by file system.
 
-#define SYMLINK_RESERVED_MASK                                                  \
-  0xF0000000 // We reserve the high nibble for internal use
+#define SYMLINK_RESERVED_MASK 0xF0000000 // We reserve the high nibble for internal use
 
 typedef struct _REPARSE_DATA_BUFFER {
   ULONG ReparseTag;         // Reparse tag type
@@ -106,8 +104,6 @@ typedef struct _REPARSE_DATA_BUFFER {
   } DUMMYUNIONNAME;
 } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 
-#define REPARSE_DATA_BUFFER_HEADER_SIZE                                        \
-  FIELD_OFFSET(REPARSE_DATA_BUFFER, GenericReparseBuffer)
-
+#define REPARSE_DATA_BUFFER_HEADER_SIZE FIELD_OFFSET(REPARSE_DATA_BUFFER, GenericReparseBuffer)
 
 #endif

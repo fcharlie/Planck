@@ -75,8 +75,7 @@ const wchar_t *elf_machine(uint32_t e) {
       {EM_860, L"Intel 80860"},
       {EM_MIPS, L"MIPS R3000 (officially, big-endian only)"},
       {EM_S370, L"IBM System/370"},
-      {EM_MIPS_RS3_LE,
-       L"MIPS R3000 little-endian (Oct 4 1999 Draft) Deprecated"},
+      {EM_MIPS_RS3_LE, L"MIPS R3000 little-endian (Oct 4 1999 Draft) Deprecated"},
       {EM_PARISC, L"HPPA"},
       {EM_VPP500, L"Fujitsu VPP500"},
       {EM_SPARC32PLUS, L"Sun's v8plus"},
@@ -192,8 +191,7 @@ const wchar_t *elf_machine(uint32_t e) {
       {EM_QDSP6, L"QUALCOMM DSP6 Processor"},
       {EM_8051, L"Intel 8051 and variants"},
       {EM_STXP7X, L"STMicroelectronics STxP7x family"},
-      {EM_NDS32,
-       L"Andes Technology compact code size embedded RISC processor family"},
+      {EM_NDS32, L"Andes Technology compact code size embedded RISC processor family"},
       {EM_ECOG1X, L"Cyan Technology eCOG1X family"},
       {EM_MAXQ30, L"Dallas Semiconductor MAXQ30 Core Micro-controllers"},
       {EM_XIMO16, L"New Japan Radio (NJR) 16-bit DSP Processor"},
@@ -473,8 +471,7 @@ bool elf_memview::inquisitive(elf_minutiae_t &em, bela::error_code &ec) {
   }
   return true;
 }
-std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
-                                              bela::error_code &ec) {
+std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv, bela::error_code &ec) {
   base::MapView mv;
   if (!mv.MappingView(sv, ec, sizeof(Elf32_Ehdr))) {
     return std::nullopt;

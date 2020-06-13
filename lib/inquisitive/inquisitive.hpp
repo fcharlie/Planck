@@ -23,7 +23,7 @@ namespace bela {
 inline bela::error_code make_error_code(const bela::AlphaNum &a) {
   return bela::error_code{std::wstring(a.Piece()), 1};
 }
-} // namespace base
+} // namespace bela
 
 namespace inquisitive {
 using byte_t = unsigned char;
@@ -35,9 +35,7 @@ constexpr const int einident = 16;
  *
  * Beware of the implicit trailing '\0' when using this with string constants.
  */
-template <typename T, size_t N> constexpr size_t ArrayLength(T (&aArr)[N]) {
-  return N;
-}
+template <typename T, size_t N> constexpr size_t ArrayLength(T (&aArr)[N]) { return N; }
 
 template <typename T, size_t N> constexpr T *ArrayEnd(T (&aArr)[N]) {
   return aArr + ArrayLength(aArr);
@@ -47,8 +45,7 @@ template <typename T, size_t N> constexpr T *ArrayEnd(T (&aArr)[N]) {
  * std::equal has subpar ergonomics.
  */
 
-template <typename T, typename U, size_t N>
-bool ArrayEqual(const T (&a)[N], const U (&b)[N]) {
+template <typename T, typename U, size_t N> bool ArrayEqual(const T (&a)[N], const U (&b)[N]) {
   return std::equal(a, a + N, b);
 }
 
@@ -102,8 +99,7 @@ struct inquisitive_attribute_t {
   std::wstring name;
   std::wstring value;
   inquisitive_attribute_t() = default;
-  inquisitive_attribute_t(const std::wstring_view &n,
-                          const std::wstring_view &v)
+  inquisitive_attribute_t(const std::wstring_view &n, const std::wstring_view &v)
       : name(n), value(v) {}
   inquisitive_attribute_t(std::wstring &&n, std::wstring &&v)
       : name(std::move(n)), value(std::move(v)) {}
@@ -113,8 +109,7 @@ struct inquisitive_mattribute_t {
   std::wstring name;
   std::vector<std::wstring> values;
   inquisitive_mattribute_t() = default;
-  inquisitive_mattribute_t(const std::wstring_view &n,
-                           const std::vector<std::wstring> &v)
+  inquisitive_mattribute_t(const std::wstring_view &n, const std::vector<std::wstring> &v)
       : name(n), values(v) {}
   inquisitive_mattribute_t(std::wstring &&n, std::vector<std::wstring> &&v)
       : name(std::move(n)), values(std::move(v)) {}
@@ -154,9 +149,7 @@ public:
                      types::TypeEx t1 = types::NONE) {
     assign(dv, t0, t1);
   }
-  inquisitive_result(inquisitive_result &&other) {
-    move_from(std::move(other));
-  }
+  inquisitive_result(inquisitive_result &&other) { move_from(std::move(other)); }
 
   inquisitive_result &operator=(inquisitive_result &&other) {
     move_from(std::move(other));
@@ -178,8 +171,7 @@ public:
     e = types::NONE;
   }
 
-  inquisitive_result &assign(const std::wstring_view &dv,
-                             types::Type t0 = types::none,
+  inquisitive_result &assign(const std::wstring_view &dv, types::Type t0 = types::none,
                              types::TypeEx t1 = types::NONE) {
     name.assign(dv);
     t = t0;
@@ -195,8 +187,7 @@ public:
     return *this;
   }
 
-  inquisitive_result &add(const std::wstring_view &name,
-                          const std::wstring_view &value) {
+  inquisitive_result &add(const std::wstring_view &name, const std::wstring_view &value) {
     mnlen = (std::max)(mnlen, name.size());
     attrs.emplace_back(name, value);
     return *this;
@@ -214,15 +205,13 @@ public:
     return *this;
   }
 
-  inquisitive_result &add(std::wstring &&name,
-                          std::vector<std::wstring> &&values) {
+  inquisitive_result &add(std::wstring &&name, std::vector<std::wstring> &&values) {
     mnlen = (std::max)(mnlen, name.size());
     mattrs.emplace_back(std::move(name), std::move(values));
     return *this;
   }
 
-  inquisitive_result &add(const std::wstring_view &name,
-                          const std::vector<std::wstring> &values) {
+  inquisitive_result &add(const std::wstring_view &name, const std::vector<std::wstring> &values) {
     mnlen = (std::max)(mnlen, name.size());
     mattrs.emplace_back(name, values);
     return *this;
@@ -260,15 +249,11 @@ status_t inquisitive_shlink(base::MemView mv, inquisitive_result_t &ir);
 status_t inquisitive_text(base::MemView mv, inquisitive_result_t &ir);
 status_t inquisitive_chardet(base::MemView mv, inquisitive_result_t &ir);
 
-std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
-                                                bela::error_code &ec);
+std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv, bela::error_code &ec);
 
-std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
-                                                bela::error_code &ec);
-std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv,
-                                              bela::error_code &ec);
-std::optional<macho_minutiae_t> inquisitive_macho(std::wstring_view sv,
-                                                  bela::error_code &ec);
+std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv, bela::error_code &ec);
+std::optional<elf_minutiae_t> inquisitive_elf(std::wstring_view sv, bela::error_code &ec);
+std::optional<macho_minutiae_t> inquisitive_macho(std::wstring_view sv, bela::error_code &ec);
 } // namespace inquisitive
 
 #endif

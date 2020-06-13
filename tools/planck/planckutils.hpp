@@ -41,8 +41,7 @@ struct AttributesTables {
     ats.emplace_back(AttributesTable{std::wstring(name), std::wstring(value)});
     return *this;
   }
-  AttributesTables &Append(std::wstring_view name,
-                           const std::vector<std::wstring> &value) {
+  AttributesTables &Append(std::wstring_view name, const std::vector<std::wstring> &value) {
     mnlen = (std::max)(mnlen, name.size());
     AttributesMultiTable amt;
     amt.name = name;

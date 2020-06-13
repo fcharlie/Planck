@@ -103,18 +103,15 @@ int wmain(int argc, wchar_t **argv) {
     auto al = ir->alignlen() + 4;
     constexpr const size_t deslen = sizeof("Description") - 1;
     std::wstring space(al, L' ');
-    planck::PrintNone(L"Description:%.*s%s\n", (int)(al - deslen - 1), space,
-                      ir->description());
+    planck::PrintNone(L"Description:%.*s%s\n", (int)(al - deslen - 1), space, ir->description());
     for (const auto &v : ir->container()) {
-      planck::PrintNone(L"%s:%.*s%s\n", v.name, (int)(al - v.name.size() - 1),
-                        space, v.value);
+      planck::PrintNone(L"%s:%.*s%s\n", v.name, (int)(al - v.name.size() - 1), space, v.value);
     }
     for (const auto &m : ir->mcontainer()) {
       if (m.values.empty()) {
         continue;
       }
-      planck::PrintNone(L"%s:%.*s%s\n", m.name, (int)(al - m.name.size() - 1),
-                        space, m.values[0]);
+      planck::PrintNone(L"%s:%.*s%s\n", m.name, (int)(al - m.name.size() - 1), space, m.values[0]);
       for (size_t i = 1; i < m.values.size(); i++) {
         planck::PrintNone(L"%s%s\n", space, m.values[i]);
       }

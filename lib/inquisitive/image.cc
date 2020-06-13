@@ -56,16 +56,15 @@ status_t inquisitive_images(base::MemView mv, inquisitive_result_t &ir) {
     if (mv.StartsWith(gifMagic)) {
       constexpr size_t gmlen = sizeof(gifMagic);
       if (mv.size() > gmlen + 3 && mv[gmlen] == '8' &&
-          (mv[gmlen + 1] == '7' || mv[gmlen + 1] == '9') &&
-          mv[gmlen + 2] == 'a') {
+          (mv[gmlen + 1] == '7' || mv[gmlen + 1] == '9') && mv[gmlen + 2] == 'a') {
         ir.assign(L"Graphics Interchange Format (.gif)", types::gif);
         return Found;
       }
     }
     break;
   case 0x49:
-    if (mv.size() > 9 && mv[1] == 0x49 && mv[2] == 0x2A && mv[3] == 0x0 &&
-        mv[8] == 0x43 && mv[9] == 0x52) {
+    if (mv.size() > 9 && mv[1] == 0x49 && mv[2] == 0x2A && mv[3] == 0x0 && mv[8] == 0x43 &&
+        mv[9] == 0x52) {
       ir.assign(L"Canon 5D Mark IV CR2", types::cr2);
       return Found;
     }
@@ -79,8 +78,8 @@ status_t inquisitive_images(base::MemView mv, inquisitive_result_t &ir) {
     }
     break;
   case 0x4D:
-    if (mv.size() > 9 && mv[0] == 0x4D && mv[1] == 0x4D && mv[2] == 0x0 &&
-        mv[3] == 0x2A && mv[8] == 0x43 && mv[9] == 0x52) {
+    if (mv.size() > 9 && mv[0] == 0x4D && mv[1] == 0x4D && mv[2] == 0x0 && mv[3] == 0x2A &&
+        mv[8] == 0x43 && mv[9] == 0x52) {
       ir.assign(L"Canon 5D Mark IV CR2", types::cr2);
       return Found;
     }

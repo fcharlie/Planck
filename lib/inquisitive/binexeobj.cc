@@ -25,9 +25,9 @@ static constexpr const unsigned char WinResMagic[] = {
     '\xff', '\xff', '\x00', '\x00', '\xff', '\xff', '\x00', '\x00',
 };
 
-static constexpr const byte_t debMagic[] = {
-    0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A, 0x64, 0x65, 0x62,
-    0x69, 0x61, 0x6E, 0x2D, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79};
+static constexpr const byte_t debMagic[] = {0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E,
+                                            0x0A, 0x64, 0x65, 0x62, 0x69, 0x61, 0x6E,
+                                            0x2D, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79};
 
 struct BigObjHeader {
   enum : uint16_t { MinBigObjectVersion = 2 };
@@ -63,15 +63,13 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
         ir.assign(L"COFF import library", types::coff_import_library);
         return Found;
       }
-      const char *start = reinterpret_cast<const char *>(mv.data()) +
-                          offsetof(BigObjHeader, UUID);
+      const char *start = reinterpret_cast<const char *>(mv.data()) + offsetof(BigObjHeader, UUID);
       if (memcmp(start, BigObjMagic, sizeof(BigObjMagic)) == 0) {
         ir.assign(L"COFF object", types::coff_object);
         return Found;
       }
       if (memcmp(start, ClGlObjMagic, sizeof(ClGlObjMagic)) == 0) {
-        ir.assign(L"Microsoft cl.exe's intermediate code file",
-                  types::coff_cl_gl_object);
+        ir.assign(L"Microsoft cl.exe's intermediate code file", types::coff_cl_gl_object);
         return Found;
       }
       ir.assign(L"COFF import library", types::coff_import_library);
@@ -79,8 +77,7 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
     }
     if (mv.size() >= sizeof(WinResMagic) &&
         memcmp(mv.data(), WinResMagic, sizeof(WinResMagic)) == 0) {
-      ir.assign(L"Windows compiled resource file (.res)",
-                types::windows_resource);
+      ir.assign(L"Windows compiled resource file (.res)", types::windows_resource);
       return Found;
     }
     // if (mv[1] == 0) {
@@ -105,8 +102,7 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
     }
     break;
   case '!': // .a
-    if (mv.StartsWith("!<arch>\n") && !mv.StartsWith(debMagic) ||
-        mv.StartsWith("!<thin>\n")) {
+    if (mv.StartsWith("!<arch>\n") && !mv.StartsWith(debMagic) || mv.StartsWith("!<thin>\n")) {
       // Skip DEB package
       ir.assign(L"ar style archive file", types::archive);
       return Found;
@@ -123,15 +119,13 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
           ir.assign(L"ELF Unknown type", types::elf, types::ELF);
           return Found;
         case 1:
-          ir.assign(L"ELF Relocatable object file", types::elf_relocatable,
-                    types::ELF);
+          ir.assign(L"ELF Relocatable object file", types::elf_relocatable, types::ELF);
           return Found;
         case 2:
           ir.assign(L"ELF Executable image", types::elf_executable, types::ELF);
           return Found;
         case 3:
-          ir.assign(L"ELF dynamically linked shared lib",
-                    types::elf_shared_object, types::ELF);
+          ir.assign(L"ELF dynamically linked shared lib", types::elf_shared_object, types::ELF);
           return Found;
         case 4:
           ir.assign(L"ELF core image", types::elf_core, types::ELF);
@@ -143,11 +137,9 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
     }
     break;
   case 0xCA:
-    if (mv.StartsWith("\xCA\xFE\xBA\xBE") ||
-        mv.StartsWith("\xCA\xFE\xBA\xBF")) {
+    if (mv.StartsWith("\xCA\xFE\xBA\xBE") || mv.StartsWith("\xCA\xFE\xBA\xBF")) {
       if (mv.size() >= 8 && mv[7] < 43) {
-        ir.assign(L"Mach-O universal binary", types::macho_universal_binary,
-                  types::MACHO);
+        ir.assign(L"Mach-O universal binary", types::macho_universal_binary, types::MACHO);
         return Found;
       }
     }
@@ -156,8 +148,7 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
   case 0xCE:
   case 0xCF: {
     uint16_t type = 0;
-    if (mv.StartsWith("\xFE\xED\xFA\xCE") ||
-        mv.StartsWith("\xFE\xED\xFA\xCF")) {
+    if (mv.StartsWith("\xFE\xED\xFA\xCE") || mv.StartsWith("\xFE\xED\xFA\xCF")) {
       /* Native endian */
       size_t minsize;
       if (mv[3] == 0xCE) {
@@ -167,8 +158,7 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
       }
       if (mv.size() >= minsize)
         type = mv[12] << 24 | mv[13] << 12 | mv[14] << 8 | mv[15];
-    } else if (mv.StartsWith("\xCE\xFA\xED\xFE") ||
-               mv.StartsWith("\xCF\xFA\xED\xFE")) {
+    } else if (mv.StartsWith("\xCE\xFA\xED\xFE") || mv.StartsWith("\xCF\xFA\xED\xFE")) {
       /* Reverse endian */
       size_t minsize;
       if (mv[0] == 0xCE) {
@@ -190,38 +180,34 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
       ir.assign(L"Mach-O Executable", types::macho_executable, types::MACHO);
       return Found;
     case 3:
-      ir.assign(L"Mach-O Shared Lib, FVM",
-                types::macho_fixed_virtual_memory_shared_lib, types::MACHO);
+      ir.assign(L"Mach-O Shared Lib, FVM", types::macho_fixed_virtual_memory_shared_lib,
+                types::MACHO);
       return Found;
     case 4:
       ir.assign(L"Mach-O Core File", types::macho_core, types::MACHO);
       return Found;
     case 5:
-      ir.assign(L"Mach-O Preloaded Executable", types::macho_preload_executable,
-                types::MACHO);
+      ir.assign(L"Mach-O Preloaded Executable", types::macho_preload_executable, types::MACHO);
       return Found;
     case 6:
-      ir.assign(L"Mach-O dynlinked shared lib",
-                types::macho_dynamically_linked_shared_lib, types::MACHO);
+      ir.assign(L"Mach-O dynlinked shared lib", types::macho_dynamically_linked_shared_lib,
+                types::MACHO);
       return Found;
     case 7:
-      ir.assign(L"The Mach-O dynamic linker", types::macho_dynamic_linker,
-                types::MACHO);
+      ir.assign(L"The Mach-O dynamic linker", types::macho_dynamic_linker, types::MACHO);
       return Found;
     case 8:
       ir.assign(L"Mach-O Bundle file", types::macho_bundle, types::MACHO);
       return Found;
     case 9:
-      ir.assign(L"Mach-O Shared lib stub",
-                types::macho_dynamically_linked_shared_lib_stub, types::MACHO);
+      ir.assign(L"Mach-O Shared lib stub", types::macho_dynamically_linked_shared_lib_stub,
+                types::MACHO);
       return Found;
     case 10:
-      ir.assign(L"Mach-O dSYM companion file", types::macho_dsym_companion,
-                types::MACHO);
+      ir.assign(L"Mach-O dSYM companion file", types::macho_dsym_companion, types::MACHO);
       return Found;
     case 11:
-      ir.assign(L"Mach-O kext bundle file", types::macho_kext_bundle,
-                types::MACHO);
+      ir.assign(L"Mach-O kext bundle file", types::macho_kext_bundle, types::MACHO);
       return Found;
     }
     break;
@@ -255,8 +241,7 @@ status_t inquisitive_binobj(base::MemView mv, inquisitive_result_t &ir) {
       uint32_t off = bela::readle<uint32_t>(mv.data() + 0x3c);
       auto sv = mv.submv(off);
       if (sv.StartsWith(PEMagic)) {
-        ir.assign(L"PE executable file", types::pecoff_executable,
-                  types::PECOFF);
+        ir.assign(L"PE executable file", types::pecoff_executable, types::PECOFF);
         return Found;
       }
     }

@@ -22,8 +22,7 @@ std::wstring FindExtension(std::wstring_view sv) {
   return std::wstring(fn.data() + pos + 1, fn.size() - pos - 1);
 }
 
-std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
-                                                bela::error_code &ec) {
+std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv, bela::error_code &ec) {
   auto extension = FindExtension(sv);
   base::MapView mmv;
   if (!mmv.MappingView(sv, ec, 1, 32 * 1024)) {
@@ -33,10 +32,9 @@ std::optional<inquisitive_result_t> inquisitive(std::wstring_view sv,
   inquisitive_result_t ir;
   const inquisitive_handle_t handles[] = {
       // handles
-      inquisitive_binobj, inquisitive_fonts,     inquisitive_zip_family,
-      inquisitive_docs,   inquisitive_images,    inquisitive_archives,
-      inquisitive_media,  inquisitive_gitbinary, inquisitive_shlink,
-      inquisitive_text,   inquisitive_chardet
+      inquisitive_binobj, inquisitive_fonts,    inquisitive_zip_family, inquisitive_docs,
+      inquisitive_images, inquisitive_archives, inquisitive_media,      inquisitive_gitbinary,
+      inquisitive_shlink, inquisitive_text,     inquisitive_chardet
       //
   };
   for (auto h : handles) {

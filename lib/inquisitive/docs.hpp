@@ -31,11 +31,11 @@ struct oleheader_t {
 
   uint32_t sectorcutoff; // min size of a standard stream ; if less than this
                          // then it uses short-streams
-  uint32_t sfatstart; // first short-sector or EOC
-  uint32_t csfat;     // count short sectors
-  uint32_t difstart;  // first sector master sector table or EOC
-  uint32_t cdif;      // total count
-  uint32_t MSAT[109]; // First 109 MSAT
+  uint32_t sfatstart;    // first short-sector or EOC
+  uint32_t csfat;        // count short sectors
+  uint32_t difstart;     // first sector master sector table or EOC
+  uint32_t cdif;         // total count
+  uint32_t MSAT[109];    // First 109 MSAT
 };
 
 // https://www.oasis-open.org/standards#opendocumentv1.2

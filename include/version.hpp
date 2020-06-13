@@ -30,6 +30,6 @@ inline std::wstring planck_version() {
   // todo
   return PLANCK_APPNAME;
 }
-} // namespace PLANCK
+} // namespace planck
 
 #endif

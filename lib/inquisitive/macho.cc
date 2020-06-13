@@ -15,8 +15,7 @@ public:
 private:
 };
 
-std::optional<macho_minutiae_t> inquisitive_macho(std::wstring_view sv,
-                                                  bela::error_code &ec) {
+std::optional<macho_minutiae_t> inquisitive_macho(std::wstring_view sv, bela::error_code &ec) {
   //
   return std::nullopt;
 }

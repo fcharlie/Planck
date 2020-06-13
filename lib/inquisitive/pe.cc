@@ -21,7 +21,7 @@
 #endif
 
 #ifndef IMAGE_FILE_MACHINE_TARGET_HOST
-#define IMAGE_FILE_MACHINE_TARGET_HOST                                         \
+#define IMAGE_FILE_MACHINE_TARGET_HOST                                                             \
   0x0001 // Useful for indicating we want to interact with the host and not a
          // WoW guest.
 #endif
@@ -123,8 +123,7 @@ constexpr std::wstring_view Machine(uint32_t index) {
   return L"UNKNOWN";
 }
 // https://docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_image_file_header
-std::vector<std::wstring> Characteristics(uint32_t index,
-                                          uint32_t dllindex = 0) {
+std::vector<std::wstring> Characteristics(uint32_t index, uint32_t dllindex = 0) {
   std::vector<std::wstring> csv;
   constexpr const key_value_t cs[] = {
       {IMAGE_FILE_RELOCS_STRIPPED, L"Relocation info stripped"},
@@ -214,8 +213,7 @@ constexpr std::wstring_view Subsystem(uint32_t index) {
 }
 
 std::wstring fromascii(std::string_view sv) {
-  auto sz =
-      MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), nullptr, 0);
+  auto sz = MultiByteToWideChar(CP_ACP, 0, sv.data(), (int)sv.size(), nullptr, 0);
   std::wstring output;
   output.resize(sz);
   // C++17 must output.data()
@@ -224,8 +222,7 @@ std::wstring fromascii(std::string_view sv) {
 }
 
 static inline PVOID belarva(PVOID m, PVOID b) {
-  return reinterpret_cast<PVOID>(reinterpret_cast<ULONG_PTR>(b) +
-                                 reinterpret_cast<ULONG_PTR>(m));
+  return reinterpret_cast<PVOID>(reinterpret_cast<ULONG_PTR>(b) + reinterpret_cast<ULONG_PTR>(m));
 }
 
 PIMAGE_SECTION_HEADER
@@ -246,15 +243,13 @@ BelaImageRvaToSection(PIMAGE_NT_HEADERS nh, PVOID BaseAddress, ULONG rva) {
 
 // like RtlImageRvaToVa
 PVOID
-BelaImageRvaToVa(PIMAGE_NT_HEADERS nh, PVOID BaseAddress, ULONG rva,
-                 PIMAGE_SECTION_HEADER *sh) {
+BelaImageRvaToVa(PIMAGE_NT_HEADERS nh, PVOID BaseAddress, ULONG rva, PIMAGE_SECTION_HEADER *sh) {
   PIMAGE_SECTION_HEADER section = nullptr;
   if (sh != nullptr) {
     section = *sh;
   }
   if ((section == nullptr) || (rva < bela::swaple(section->VirtualAddress)) ||
-      (rva >= bela::swaple(section->VirtualAddress) +
-                  bela::swaple(section->SizeOfRawData))) {
+      (rva >= bela::swaple(section->VirtualAddress) + bela::swaple(section->SizeOfRawData))) {
     section = BelaImageRvaToSection(nh, BaseAddress, rva);
     if (section == nullptr) {
       return nullptr;
@@ -270,8 +265,7 @@ BelaImageRvaToVa(PIMAGE_NT_HEADERS nh, PVOID BaseAddress, ULONG rva,
 }
 
 inline std::wstring DllName(base::MemView mv, LPVOID nh, ULONG nva) {
-  auto va =
-      BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), nva, nullptr);
+  auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), nva, nullptr);
   if (va == nullptr) {
     return L"";
   }
@@ -286,8 +280,7 @@ inline std::wstring DllName(base::MemView mv, LPVOID nh, ULONG nva) {
 }
 
 inline std::wstring ClrMessage(base::MemView mv, LPVOID nh, ULONG clrva) {
-  auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), clrva,
-                             nullptr);
+  auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (LPVOID)mv.data(), clrva, nullptr);
   auto end = mv.data() + mv.size();
   if (va == nullptr || (uint8_t *)va + sizeof(IMAGE_COR20_HEADER) > end) {
     return L"";
@@ -302,29 +295,25 @@ inline std::wstring ClrMessage(base::MemView mv, LPVOID nh, ULONG clrva) {
   if ((const uint8_t *)clrmsg + clrmsg->Length > end) {
     return L"";
   }
-  return bela::ToWide(std::string_view(
-      (const char *)clrmsg + sizeof(STORAGESIGNATURE), clrmsg->Length));
+  return bela::ToWide(
+      std::string_view((const char *)clrmsg + sizeof(STORAGESIGNATURE), clrmsg->Length));
 }
 
 template <typename NtHeaderT>
-std::optional<pe_minutiae_t> pecoff_dump(base::MemView mv, NtHeaderT *nh,
-                                         bela::error_code &ec) {
+std::optional<pe_minutiae_t> pecoff_dump(base::MemView mv, NtHeaderT *nh, bela::error_code &ec) {
   pe_minutiae_t pm;
   pm.machine = Machine(nh->FileHeader.Machine);
-  pm.characteristics = Characteristics(nh->FileHeader.Characteristics,
-                                       nh->OptionalHeader.DllCharacteristics);
+  pm.characteristics =
+      Characteristics(nh->FileHeader.Characteristics, nh->OptionalHeader.DllCharacteristics);
   pm.osver = {nh->OptionalHeader.MajorOperatingSystemVersion,
               nh->OptionalHeader.MinorOperatingSystemVersion};
   pm.subsystem = Subsystem(nh->OptionalHeader.Subsystem);
-  pm.linkver = {nh->OptionalHeader.MajorLinkerVersion,
-                nh->OptionalHeader.MinorLinkerVersion};
-  pm.imagever = {nh->OptionalHeader.MajorImageVersion,
-                 nh->OptionalHeader.MinorImageVersion};
+  pm.linkver = {nh->OptionalHeader.MajorLinkerVersion, nh->OptionalHeader.MinorLinkerVersion};
+  pm.imagever = {nh->OptionalHeader.MajorImageVersion, nh->OptionalHeader.MinorImageVersion};
   pm.isdll = ((nh->FileHeader.Characteristics & IMAGE_FILE_DLL) != 0);
 
   // https://docs.microsoft.com/zh-cn/windows/desktop/api/winnt/ns-winnt-_image_data_directory
-  auto clre =
-      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COMHEADER]);
+  auto clre = &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COMHEADER]);
   auto end = mv.data() + mv.size();
   if (clre->Size == sizeof(IMAGE_COR20_HEADER)) {
     // Exists IMAGE_COR20_HEADER
@@ -332,11 +321,10 @@ std::optional<pe_minutiae_t> pecoff_dump(base::MemView mv, NtHeaderT *nh,
   }
 
   // Import
-  auto import_ =
-      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
+  auto import_ = &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT]);
   if (import_->Size != 0) {
-    auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
-                               import_->VirtualAddress, nullptr);
+    auto va =
+        BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(), import_->VirtualAddress, nullptr);
     if (va == nullptr || (const uint8_t *)va + import_->Size >= end) {
       return std::make_optional<>(pm);
     }
@@ -353,11 +341,10 @@ std::optional<pe_minutiae_t> pecoff_dump(base::MemView mv, NtHeaderT *nh,
   }
 
   /// Delay import
-  auto delay_ =
-      &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT]);
+  auto delay_ = &(nh->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT]);
   if (delay_->Size != 0) {
-    auto va = BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(),
-                               delay_->VirtualAddress, nullptr);
+    auto va =
+        BelaImageRvaToVa((PIMAGE_NT_HEADERS)nh, (PVOID)mv.data(), delay_->VirtualAddress, nullptr);
     if (va == nullptr || (const uint8_t *)va + delay_->Size >= end) {
       return std::make_optional<>(pm);
     }
@@ -378,12 +365,10 @@ std::optional<pe_minutiae_t> pecoff_dump(base::MemView mv, NtHeaderT *nh,
   return std::make_optional<pe_minutiae_t>(std::move(pm));
 }
 
-std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv,
-                                                bela::error_code &ec) {
+std::optional<pe_minutiae_t> inquisitive_pecoff(std::wstring_view sv, bela::error_code &ec) {
 
   base::MapView mmv;
-  if (!mmv.MappingView(sv, ec,
-                       sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
+  if (!mmv.MappingView(sv, ec, sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS32))) {
     return std::nullopt;
   }
   auto mv = mmv.subview();

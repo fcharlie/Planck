@@ -18,10 +18,9 @@ struct p7z_header_t {
 #pragma pack()
 
 status_t inquisitive_7zinternal(base::MemView mv, inquisitive_result_t &ir) {
-  constexpr const byte_t k7zSignature[k7zSignatureSize] = {'7',  'z',  0xBC,
-                                                           0xAF, 0x27, 0x1C};
-  constexpr const byte_t k7zFinishSignature[k7zSignatureSize] = {
-      '7', 'z', 0xBC, 0xAF, 0x27, 0x1C + 1};
+  constexpr const byte_t k7zSignature[k7zSignatureSize] = {'7', 'z', 0xBC, 0xAF, 0x27, 0x1C};
+  constexpr const byte_t k7zFinishSignature[k7zSignatureSize] = {'7',  'z',  0xBC,
+                                                                 0xAF, 0x27, 0x1C + 1};
   auto hd = mv.cast<p7z_header_t>(0);
   if (hd == nullptr) {
     return None;
@@ -30,8 +29,7 @@ status_t inquisitive_7zinternal(base::MemView mv, inquisitive_result_t &ir) {
     return None;
   }
 
-  auto buf = bela::StringCat(L"7-zip archive data, version ", (int)hd->major,
-                             L".", (int)hd->minor);
+  auto buf = bela::StringCat(L"7-zip archive data, version ", (int)hd->major, L".", (int)hd->minor);
   ir.assign(std::move(buf), types::p7z);
   return Found;
 }
@@ -43,10 +41,8 @@ status_t inquisitive_rarinternal(base::MemView mv, inquisitive_result_t &ir) {
    * 0x00. You need to search for this signature in supposed archive from
    * beginning and up to maximum SFX module size. Just for comparison this is
    * RAR 4.x 7 byte length signature: 0x52 0x61 0x72 0x21 0x1A 0x07 0x00.*/
-  constexpr const byte_t rarSignature[] = {0x52, 0x61, 0x72, 0x21,
-                                           0x1A, 0x07, 0x01, 0x00};
-  constexpr const byte_t rar4Signature[] = {0x52, 0x61, 0x72, 0x21,
-                                            0x1A, 0x07, 0x00};
+  constexpr const byte_t rarSignature[] = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07, 0x01, 0x00};
+  constexpr const byte_t rar4Signature[] = {0x52, 0x61, 0x72, 0x21, 0x1A, 0x07, 0x00};
   if (mv.StartsWith(rarSignature)) {
     ir.assign(L"Roshal Archive (rar), version 5", types::rar);
     return Found;
@@ -217,8 +213,7 @@ struct wim_header_t {
 #pragma pack()
 // https://www.microsoft.com/en-us/download/details.aspx?id=13096
 status_t inquisitive_wiminternal(base::MemView mv, inquisitive_result_t &ir) {
-  constexpr const byte_t wimMagic[] = {'M', 'S',  'W',  'I',
-                                       'M', 0x00, 0x00, 0x00};
+  constexpr const byte_t wimMagic[] = {'M', 'S', 'W', 'I', 'M', 0x00, 0x00, 0x00};
   if (!mv.StartsWith(wimMagic)) {
     return None;
   }
@@ -229,8 +224,7 @@ status_t inquisitive_wiminternal(base::MemView mv, inquisitive_result_t &ir) {
     return None;
   }
 
-  auto name = bela::StringCat(L"Windows Imaging Format, version ",
-                              bela::swaple(hd->dwVersion));
+  auto name = bela::StringCat(L"Windows Imaging Format, version ", bela::swaple(hd->dwVersion));
   auto flag = bela::swaple(hd->dwFlags);
   if ((flag & WimReadOnly) != 0) {
     name.append(L" ReadOnly");
@@ -295,8 +289,7 @@ struct cabinet_header_t {
   // uint8_t  szDiskNext[];     /* (optional) name of next disk */
 };
 
-status_t inquisitive_cabinetinternal(base::MemView mv,
-                                     inquisitive_result_t &ir) {
+status_t inquisitive_cabinetinternal(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t cabMagic[] = {'M', 'S', 'C', 'F', 0, 0, 0, 0};
   if (!mv.StartsWith(cabMagic)) {
     return None;
@@ -305,9 +298,8 @@ status_t inquisitive_cabinetinternal(base::MemView mv,
   if (hd == nullptr) {
     return None;
   }
-  auto name =
-      bela::StringCat(L"Microsoft Cabinet data(cab), version ",
-                      (int)hd->versionMajor, L".", (int)hd->versionMinor);
+  auto name = bela::StringCat(L"Microsoft Cabinet data(cab), version ", (int)hd->versionMajor, L".",
+                              (int)hd->versionMinor);
   ir.assign(std::move(name), types::cab);
   return Found;
 }
@@ -398,8 +390,7 @@ struct sqlite_header_t {
   uint16_t version;
 };
 
-status_t inquisitive_sqliteinternal(base::MemView mv,
-                                    inquisitive_result_t &ir) {
+status_t inquisitive_sqliteinternal(base::MemView mv, inquisitive_result_t &ir) {
   constexpr const byte_t sqliteMagic[] = {'S', 'Q', 'L', 'i', 't', 'e', ' ',
                                           'f', 'o', 'r', 'm', 'a', 't'};
   if (!mv.StartsWith(sqliteMagic)) {
@@ -409,46 +400,39 @@ status_t inquisitive_sqliteinternal(base::MemView mv,
   if (hd == nullptr || hd->sigver[15] != 0) {
     return None;
   }
-  std::wstring name =
-      bela::StringCat(L"SQLite DB, format ", (int)hd->sigver[14]);
+  std::wstring name = bela::StringCat(L"SQLite DB, format ", (int)hd->sigver[14]);
   ir.assign(std::move(name), types::sqlite);
   return Found;
 }
 
 // EPUB file
 inline bool IsEPUB(const byte_t *buf, size_t size) {
-  return size > 57 && buf[0] == 0x50 && buf[1] == 0x4B && buf[2] == 0x3 &&
-         buf[3] == 0x4 && buf[30] == 0x6D && buf[31] == 0x69 &&
-         buf[32] == 0x6D && buf[33] == 0x65 && buf[34] == 0x74 &&
-         buf[35] == 0x79 && buf[36] == 0x70 && buf[37] == 0x65 &&
-         buf[38] == 0x61 && buf[39] == 0x70 && buf[40] == 0x70 &&
-         buf[41] == 0x6C && buf[42] == 0x69 && buf[43] == 0x63 &&
-         buf[44] == 0x61 && buf[45] == 0x74 && buf[46] == 0x69 &&
-         buf[47] == 0x6F && buf[48] == 0x6E && buf[49] == 0x2F &&
-         buf[50] == 0x65 && buf[51] == 0x70 && buf[52] == 0x75 &&
-         buf[53] == 0x62 && buf[54] == 0x2B && buf[55] == 0x7A &&
-         buf[56] == 0x69 && buf[57] == 0x70;
+  return size > 57 && buf[0] == 0x50 && buf[1] == 0x4B && buf[2] == 0x3 && buf[3] == 0x4 &&
+         buf[30] == 0x6D && buf[31] == 0x69 && buf[32] == 0x6D && buf[33] == 0x65 &&
+         buf[34] == 0x74 && buf[35] == 0x79 && buf[36] == 0x70 && buf[37] == 0x65 &&
+         buf[38] == 0x61 && buf[39] == 0x70 && buf[40] == 0x70 && buf[41] == 0x6C &&
+         buf[42] == 0x69 && buf[43] == 0x63 && buf[44] == 0x61 && buf[45] == 0x74 &&
+         buf[46] == 0x69 && buf[47] == 0x6F && buf[48] == 0x6E && buf[49] == 0x2F &&
+         buf[50] == 0x65 && buf[51] == 0x70 && buf[52] == 0x75 && buf[53] == 0x62 &&
+         buf[54] == 0x2B && buf[55] == 0x7A && buf[56] == 0x69 && buf[57] == 0x70;
 }
 
 bool IsSwf(const byte_t *buf, size_t size) {
-  return (size > 2 && (buf[0] == 0x43 || buf[0] == 0x46) && buf[1] == 0x57 &&
-          buf[2] == 0x53);
+  return (size > 2 && (buf[0] == 0x43 || buf[0] == 0x46) && buf[1] == 0x57 && buf[2] == 0x53);
 }
 
 /// Magic only
-status_t inquisitive_archivesinternal(base::MemView mv,
-                                      inquisitive_result_t &ir) {
+status_t inquisitive_archivesinternal(base::MemView mv, inquisitive_result_t &ir) {
   // MSI // 0x4d434923
-  constexpr const byte_t msiMagic[] = {0xD0, 0xCF, 0x11, 0xE0,
-                                       0xA1, 0xB1, 0x1A, 0xE1};
+  constexpr const byte_t msiMagic[] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
   if (mv.StartsWith(msiMagic)) {
     ir.assign(L"Windows Installer packages", types::msi);
     return Found;
   }
   // DEB
-  constexpr const byte_t debMagic[] = {
-      0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A, 0x64, 0x65, 0x62,
-      0x69, 0x61, 0x6E, 0x2D, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79};
+  constexpr const byte_t debMagic[] = {0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E,
+                                       0x0A, 0x64, 0x65, 0x62, 0x69, 0x61, 0x6E,
+                                       0x2D, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79};
   if (mv.StartsWith(debMagic)) {
     ir.assign(L"Debian packages", types::deb);
     return Found;
