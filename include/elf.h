@@ -1,3 +1,7 @@
+// origin musl defined
+// update from
+// https://github.com/llvm/llvm-project/blob/850b150cff3dfb5f2113d9c3c483e2d22b318ced/llvm/include/llvm/BinaryFormat/ELF.h
+//
 #ifndef _ELF_H
 #define _ELF_H
 
@@ -117,6 +121,8 @@ typedef struct {
 #define ELFOSABI_FENIXOS 16
 // The FenixOS highly scalable multi-core OS   64-255 Architecture-specific
 // value range
+#define ELFOSABI_CLOUDABI 17
+#define ELFOSABI_FIRST_ARCH 64
 #define ELFOSABI_AMDGPU_HSA 64
 // AMDGPU OS for HSA compatible compute kernels.
 #define ELFOSABI_AMDGPU_PAL 65
@@ -124,7 +130,10 @@ typedef struct {
 #define ELFOSABI_AMDGPU_MESA3D 66
 // AMDGPU OS for Mesa3D compatible graphics shaders and compute kernels.
 #define ELFOSABI_ARM 97
+#define ELFOSABI_C6000_ELFABI 64
+#define ELFOSABI_C6000_LINUX 64
 #define ELFOSABI_STANDALONE 255
+#define ELFOSABI_LAST_ARCH 255
 
 #define EI_ABIVERSION 8
 
@@ -147,6 +156,7 @@ typedef struct {
 #define EM_386 3
 #define EM_68K 4
 #define EM_88K 5
+#define EM_IAMCU 6
 #define EM_860 7
 #define EM_MIPS 8
 #define EM_S370 9
